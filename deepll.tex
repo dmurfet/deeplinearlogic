@@ -1,0 +1,123 @@
+\documentclass[english,letter paper,12pt,leqno]{article}
+\usepackage{array}
+\usepackage{stmaryrd}
+\usepackage{amsmath, amscd, amssymb, mathrsfs, accents, amsfonts,amsthm}
+\usepackage[all]{xy}
+\usepackage{dsfont}
+\usepackage{tikz}
+\def\nicedashedcolourscheme{\shadedraw[top color=blue!22, bottom color=blue!22, draw=gray, dashed]}
+\def\nicecolourscheme{\shadedraw[top color=blue!22, bottom color=blue!22, draw=white]}
+\def\nicepalecolourscheme{\shadedraw[top color=blue!12, bottom color=blue!12, draw=white]}
+\def\nicenocolourscheme{\shadedraw[top color=gray!2, bottom color=gray!25, draw=white]}
+\def\nicereallynocolourscheme{\shadedraw[top color=white!2, bottom color=white!25, draw=white]}
+\definecolor{Myblue}{rgb}{0,0,0.6}
+\usepackage[a4paper,colorlinks,citecolor=Myblue,linkcolor=Myblue,urlcolor=Myblue,pdfpagemode=None]{hyperref}
+
+\SelectTips{cm}{}
+
+\setlength{\evensidemargin}{0.1in}
+\setlength{\oddsidemargin}{0.1in}
+\setlength{\textwidth}{6.3in}
+\setlength{\topmargin}{0.0in}
+\setlength{\textheight}{8.5in}
+\setlength{\headheight}{0in}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{setup}[theorem]{Setup}
+
+% Labels in tabular
+\newcommand{\tagarray}{\mbox{}\refstepcounter{equation}$(\theequation)$}
+
+\newtheoremstyle{example}{\topsep}{\topsep}
+	{}
+	{}
+	{\bfseries}
+	{.}
+	{2pt}
+	{\thmname{#1}\thmnumber{ #2}\thmnote{ #3}}
+	
+	\theoremstyle{example}
+	\newtheorem{definition}[theorem]{Definition}
+	\newtheorem{example}[theorem]{Example}
+	\newtheorem{remark}[theorem]{Remark}
+	\newtheorem{strat}[theorem]{Strategy}
+
+\numberwithin{equation}{section}
+
+% Operators
+\def\eval{\operatorname{ev}}
+\def\res{\operatorname{Res}}
+\def\Coker{\operatorname{Coker}}
+\def\Ker{\operatorname{Ker}}
+\def\im{\operatorname{Im}}
+\def\can{\operatorname{can}}
+\def\K{\mathbf{K}}
+\def\D{\mathbf{D}}
+\def\N{\mathbf{N}}
+\def\LG{\mathcal{LG}}
+\def\Ab{\operatorname{Ab}}
+\def\stab{\operatorname{stab}}
+\def\Hom{\operatorname{Hom}}
+\def\modd{\operatorname{mod}}
+\def\Modd{\operatorname{Mod}}
+\def\be{\begin{equation}}
+\def\ee{\end{equation}}
+\def\nN{\mathds{N}}
+\def\nZ{\mathds{Z}}
+\def\nQ{\mathds{Q}}
+\def\nR{\mathds{R}}
+\def\nC{\mathds{C}}
+\DeclareMathOperator{\Ext}{Ext}
+\DeclareMathOperator{\Tr}{Tr}
+\DeclareMathOperator{\End}{End}
+\DeclareMathOperator{\rank}{rank}
+\DeclareMathOperator{\tot}{Tot}
+\DeclareMathOperator{\ch}{ch}
+\DeclareMathOperator{\str}{str}
+\DeclareMathOperator{\hmf}{hmf}
+\DeclareMathOperator{\HMF}{HMF}
+\DeclareMathOperator{\hf}{HF}
+\DeclareMathOperator{\At}{At}
+\DeclareMathOperator{\Cat}{Cat}
+\DeclareMathOperator{\Spec}{Spec}
+\DeclareMathOperator{\id}{id}
+
+\begin{document}
+
+% Commands
+\def\Res{\res\!}
+\newcommand{\ud}{\mathrm{d}}
+\newcommand{\Ress}[1]{\res_{#1}\!}
+\newcommand{\cat}[1]{\mathcal{#1}}
+\newcommand{\lto}{\longrightarrow}
+\newcommand{\xlto}[1]{\stackrel{#1}\lto}
+\newcommand{\mf}[1]{\mathfrak{#1}}
+\newcommand{\md}[1]{\mathscr{#1}}
+\def\sus{\l}
+\def\l{\,|\,}
+\def\sgn{\textup{sgn}}
+
+\title{Linear logic and recurrent neural networks}
+\author{Daniel Murfet}
+
+\maketitle
+
+\section{Introduction}
+
+One of the oldest problems in artificial intelligence is \emph{program induction}: given a set of input-output pairs (say of binary sequences), the problem is to produce a program which generalises the given pairs. There is a large literature on this problem \cite{??,??} but it has received renewed attention in the past few years due to the advances in deep learning \cite{??,??,??}. 
+
+Arguably this problem is hard because learning methods are generally continuous, whereas programs (realised as say Turing machines, or $\lambda$-terms, or C programs, etc) are basically discrete. In this paper we initiate a novel two-step approach to the problem. In this first step, we couple a standard recurrent neural network to ``differentiable programmatic components'' which are vectors in a vector space which is the denotation of a type in linear logic. Once the optimisation algorithm has found a good vector representative of programs in this space, we apply the second step, which uses proof search to find a proof in linear logic whose denotation is observationally equivalent to the vector program.
+
+\bibliographystyle{amsalpha}
+\providecommand{\bysame}{\leavevmode\hbox to3em{\hrulefill}\thinspace}
+\providecommand{\href}[2]{#2}
+\begin{thebibliography}{BHLS03}
+  
+
+
+\end{thebibliography}
+
+\end{document}
