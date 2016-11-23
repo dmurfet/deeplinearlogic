@@ -117,13 +117,19 @@ We really only need to add a primitive for the nonlinearity, which we imagine as
 
 We can introduce the connective freely on the left of the turnstile. Cut corresponds to propagating the partitions back to the very left. Well maybe on the left of the turnstile we are only allowed to have a single formula (since we partition it). Also we probably only partition those inputs that are ! So we first have to have only !’s on the left, like with promotion. But then instead of promotion we get a new connective.
 
-- LSTMs and other modifications of RNNs seem to be exploiting higher degree polynomials. As does iteration in semantics of linear logic. One of our aims is to try and explore this connection (if any)
+\begin{itemize}
+\item LSTMs and other modifications of RNNs seem to be exploiting higher degree polynomials. As does iteration in semantics of linear logic. One of our aims is to try and explore this connection (if any)
 
-- simplest possible coupling of programs from linear logic to RNNs
+\item simplest possible coupling of programs from linear logic to RNNs
 
-- full space vs linear combination of known programs 
+\item full space vs linear combination of known programs 
 
-- does it find the known programs if we give it the basic inputs?
+\item does it find the known programs if we give it the basic inputs?
+\end{itemize}
+
+The way an NTM is structured is like making a CPU differentiable. There are time steps, and at each time step a series of operations, such as arithmetic, reading from and writing to memory. But there are different approaches to making differentiable computing, depending on what level you want your model to make differentiable. For example, an NTM is not learning and algorithm but rather the operational semantics of an algorithm. Our approach is slightly closer to the algorithm itself, since we learn a denotation which can be executed by linear algebra.
+
+Or one can view it as: instead of forcing an NTM to learn a complicated series of things just to emulate iteration (which is going to be hard for it to do) we augment the "CPU" by adding an additional step (beyond arithmetic, reading and writing) where it can call out to some functional program that is chosen differentiably.
 
 \bibliographystyle{amsalpha}
 \providecommand{\bysame}{\leavevmode\hbox to3em{\hrulefill}\thinspace}
