@@ -1,4 +1,7 @@
 \BOOKMARK [1][-]{section.1}{Introduction}{}% 1
-\BOOKMARK [1][-]{section.2}{Details}{}% 2
-\BOOKMARK [1][-]{section.3}{From Inputs to Operators}{}% 3
-\BOOKMARK [2][-]{subsection.3.1}{Syntax}{section.3}% 4
+\BOOKMARK [1][-]{section.2}{Architecture}{}% 2
+\BOOKMARK [1][-]{section.3}{Examples}{}% 3
+\BOOKMARK [1][-]{appendix.A}{From Inputs to Operators}{}% 4
+\BOOKMARK [1][-]{appendix.B}{Syntax}{}% 5
+\BOOKMARK [1][-]{appendix.C}{Differentiable CPU}{}% 6
+\BOOKMARK [1][-]{appendix.D}{Old stuff}{}% 7

@@ -1,6 +1,7 @@
 \documentclass[english,letter paper,12pt,leqno]{article}
 \usepackage{array}
 \usepackage{stmaryrd}
+\usepackage{bussproofs}
 \usepackage{amsmath, amscd, amssymb, mathrsfs, accents, amsfonts,amsthm}
 \usepackage[all]{xy}
 \usepackage{dsfont}
@@ -100,6 +101,7 @@
 \def\sus{\l}
 \def\l{\,|\,}
 \def\sgn{\textup{sgn}}
+\newcommand{\den}[1]{\llbracket #1 \rrbracket}
 
 \title{Linear logic and recurrent neural networks}
 \author{Huiyi Hu, Daniel Murfet}
@@ -108,69 +110,71 @@
 
 \section{Introduction}
 
-An old problem in artificial intelligence is \emph{program induction}: given a set of input-output pairs, the problem is to produce a program which generalises the given pairs. There is a large literature on this problem \cite{??,??} but it has received renewed attention in the past few years due to the advances in deep learning \cite{??,??,??}. The general theme of much of this recent work has been to use an RNN or LSTM controllers coupled to additional computational elements, such as memory. 
+An old problem in artificial intelligence is \emph{program induction}: given a set of input-output pairs, the problem is to produce a program which generalises the given pairs. There is a large literature on this problem \cite{??,??} but it has received renewed attention in the past few years due to the advances in deep learning \cite{??,??,??}. The general theme of much of this recent work has been to use an RNN or LSTM controllers coupled to additional computational elements, such as memory or a library of special functions.
 
-Our approach is to augment an RNN controller with a space of functional programs, which can be called at each time step; in principle this should increase the expressive power of the overall system. Several prior works \cite{??,??} have considered making functional elements such as arithmetic available to the controller, but our approach is more general and is based on the development of a connection to linear logic, an intuitionistic logic which under the Curry-Howard correspondence may be viewed as a functional programming language with novel treatment of linear types. The denotational semantics of linear logic naturally involves linear algebra and polynomial matrices \cite{??}, making it a natural candidate for coupling to neural networks.
+Our approach is to augment an RNN controller with a space of functional programs based on the polynomial semantics of intuitionistic linear logic \cite{??}. It is clear in principle that linear logic is well-suited for coupling to neural networks, and the aim of this paper is to demonstrate that in the simplest nontrivial case this coupling is actually of some practical value. Conceptually, one of the fundamental contributions of linear logic is that it demonstrates how to represent a general class of programs in terms of matrices, and multiplication of matrices.
 
 % Arguably this problem is hard because learning methods are generally continuous, whereas programs (realised as say Turing machines, or $\lambda$-terms, or C programs, etc) are basically discrete. In this paper we initiate a novel two-step approach to the problem. In this first step, we couple a standard recurrent neural network to ``differentiable programmatic components'' which are vectors in a vector space which is the denotation of a type in linear logic. Once the optimisation algorithm has found a good vector representative of programs in this space, we apply the second step, which uses proof search to find a proof in linear logic whose denotation is observationally equivalent to the vector program.
 
-\section{Details}
+\section{Architecture}
 
-The architecture is a modified RNN. As usual we use ``weight'' as a synonym for variable, or more precisely, the variables which we will vary during gradient descent. At time $t$ we denote the hidden state by $h^{(t)}$ and the input by $x^{(t)}$. We denote by $\sigma$ the function
+The architecture is a modified RNN. As usual we use ``weight'' as a synonym for variable, or more precisely, the variables which we will vary during gradient descent. At time $t \ge 1$ we denote the hidden state by $h^{(t)}$ and the input by $x^{(t)}$. We denote by $\sigma$ the function
 \begin{gather*}
 \sigma: \mathbb{R}^k \lto \mathbb{R}^k\,\\
 \sigma( X )_i = \frac{1}{2}( X_i + |X_i| )\,.
 \end{gather*}
-In a normal RNN we would have matrices $H, U$ of weights and define the time evolution of the hidden state by the equation
+An RNN is defined by its \emph{evolution equation} which expresses $h^{(t+1)}$ as a function of $h^{(t)}, x^{(t)}$ and its \emph{output equation} which gives the output $y^{(t)}$ as a function of $h^{(t)}$.
+
+\begin{definition} A standard Elman-style RNN \cite{elman} is defined by weight matrices $H, U, B$ and the evolution equation
 \be\label{eq:update_eqn}
-h^{(t+1)} = \sigma\big( H h^{(t)} + U x^{(t+1)} \big)\,.
+h^{(t+1)} = \sigma\big( H h^{(t)} + U x^{(t+1)} + B\big)
 \ee
-Our augmented RNN is defined by adding a new term to this equation. To motivate the modification, recall that one of the guiding principles of recent research is that an RNN or LSTM is analogous to a ``neural CPU'' with internal state $h^{(t)}$. The internal state of a CPU is just the contents of its registers. 
+where $h^{(0)}$ is some specified initial state.
+\end{definition}
+% To motivate the modification, we recall that an RNN is analogous to a \emph{controller} or ``neural CPU'' with internal state $h^{(t)}$ (see Appendix \ref{section:appendix_cpu}). The internal state of the RNN is analogous to the content of the registers of a CPU.
+% The basic operation in linear logic is composition (this is essentially the only way to nontrivially combine separate inputs) which becomes matrix multiplication in the semantics (it is not a coincidence we always end up with ${!}( \alpha \multimap \alpha )$'s as our inputs rather than ${!} \alpha$'s, since the latter can only have trivial proofs).
 
-\begin{remark}
-Recall that an assembly program for an ordinary CPU looks like
-\begin{verbatim}
-LOAD R1, A
-ADD R3, R1, R2
-STORE C, R3
-\end{verbatim}
-Where \verb+R1,R2,R3+ stand for the first three registers of the CPU and \verb+A,B,C+ are numbers representing addresses in memory. Thus series of instructions will result in the CPU fetching a number from memory location \verb+A+ and storing it in \verb+R1+, adding this number to a previously stored number in \verb+R2+ with the result being stored in \verb+R3+, and finally writing that register out to the memory address \verb+C+. In the analogy between a CPU and a vanilla RNN we think of the number read from \verb+A+ as the current input $x^{(t)}$ and the previously stored value in \verb+R2+ as (part of) the internal state $h^{(t-1)}$.
-\end{remark}
+Our augmented RNN adds a new term to the evolution equation, in the style of recent multiplicative RNNs \cite{yuhai,sutskever,irsoy}. The key intuition is that the evolution equation maps inputs to transformations of the internal state. To explain, suppose the input vector space is $\mathscr{I}$ and the hidden state space is $\mathscr{H}$, so that $x^{(t)} \in \mathscr{I}$ and $h^{(t)} \in \mathscr{H}$ for all $t$. If our sequences are of a fixed length $T$ then the RNN computes a function of input sequences
+\[
+\bold{x} = \big( x^{(1)}, \ldots, x^{(T)} \big) \in \mathscr{I}^{\oplus T}\,.
+\]
+The value of the RNN on $\bold{x}$ is computed by applying \eqref{eq:update_eqn} for $0 \le t \le T - 1$ to compute the vector $h^{(T)}$, and then feeding this into a second decoder neural network to output the final value \cite{sutskever2}. For the moment we do not specify the decoder. The key point is that the evolution equation implicitly determines a piecewise-linear function
+\begin{gather*}
+\mathscr{I} \lto \operatorname{Func}(\mathscr{H}, \mathscr{H} )\,,\\
+x \mapsto \sigma\big( H (-) + U x + B\big)\,,
+\end{gather*}
+which specifies how we may view inputs as transforming the internal state of the RNN.
 
-Recent work \cite{??,??} on coupling memory to neural networks takes as its starting point the first of the above instructions \verb+LOAD R1, A+ and makes it ``differentiable'' by having the RNN controller predict at time $t$ both the memory address \verb+A+ and the register \verb+R3+ to write to (in this case for example, as a mask on the vector giving the internal state $h^{(t+1)}$). The same differentiable interpretation can be given of the \verb+STORE+ command. This is done by adding suitable terms to the update equation \eqref{eq:update_eqn}.
-
-In contrast our focus is on the third command, the \verb+ADD+. We increase the expressive power of the update equation by allowing it to predict at time $t$ an operation $p^{(t)}$ (a vector specifying a point in a space of ``programs'') which is to be performed on the input and internal state. This could be used with a differentiable memory, but for the sake of simplicity we do not try this. In order to preserve our analogy with CPU instructions even without \verb+LOAD+ and \verb+STORE+, we could imagine a CPU with a command
-\begin{verbatim}
-ADD R3, A, R2
-\end{verbatim}
-which at once reads the number from address \verb+A+, adds it to the stored value in \verb+R2+ and writes the result to \verb+R3+. Note that without a \verb+LOAD+ instruction, the only way a value could have gotten into \verb+R2+ in a previous time step is as the result of another \verb+ADD+.
+The key idea of compositional matrix-space models in Natural Language Processing (NLP) \cite{??} is to augment the above mapping by learning an embedding of the input space into a space of matrices which acts on the internal state space. Our aim is to generalise this, based on proofs $\pi$ in linear logic of type $\textbf{bint}_\alpha$ where $\alpha$ is a variable whose denotation is $\den{\alpha} = \mathscr{H}$. Such a proof has a presentation in the sequent calculus of the form
+\[
+\AxiomC{$\pi$}
+\noLine\UnaryInfC{$\vdots$}
+\def\extraVskip{5pt}
+\noLine\UnaryInfC{${!}(\alpha \multimap \alpha), {!}(\alpha \multimap \alpha) \vdash \alpha \multimap \alpha$}
+\DisplayProof
+\]
+and its denotation $\den{\pi}$ is a polynomial function
+\[
+\den{\pi}: \End_{\mathbb{R}}(\mathscr{H}) \times \End_{\mathbb{R}}(\mathscr{H}) \lto \End_{\mathbb{R}}(\mathscr{H})\,.
+\]
+where $\End_{\mathbb{R}}(V)$ denotes the space of linear maps from a vector space $V$ to itself.\footnote{To explain what we mean by a ``polynomial function'', suppose $\mathscr{H} = \mathbb{R}^r$ so that $\End_{\mathbb{R}}(\mathscr{H})$ is the space of matrices $M_r(\mathbb{R})$. Then for all $1 \le i,j \le r$, the denotation $\den{\pi}_{i,j}$ is a function of pairs of matrices $X,Y \in M_r(\mathbb{R})$ which is a polynomial in the entries $X_{ab}, Y_{cd}$.}
 \\
 
-The operation to be performed is given by a sequence of vectors
-\be\label{eq:weight_P}
-p^{(t)}_i = \sigma( P_i h^{(t-1)} ) \in \mathbb{R}^{n_P}\,, 1 \le i \le m
-\ee
-in a way that we will now explain. In outline, we think of the entries of $p^{(t)}_i$ as telling us the coefficients of monomials in the entries of $x^{(t)}$ and $h^{(t-1)}$ to use in the modified update equation. For simplicity let us only consider monomials of degree $2$ in what follows, since the general case is similar. We set
-\be\label{eq:weight_E}
-y^{(t)} = E x^{(t)} \oplus h^{(t-1)} \in \mathbb{R}^{n_Y}
-\ee
-where $E$ is another matrix of weights. See Example \ref{??} for an explanation.
+Let $\Pi$ be a finite sequence of proofs $\Pi = (\pi_1,\ldots,\pi_k)$ of $\textbf{bint}_\alpha$.
 
-Let $F$ denote a linear map $F: M_{n_Y}(\mathbb{R}) \lto \mathbb{R}^{n_Y^2}$ which reads off the entries of a matrix into a column vector. In TensorFlow we can represent this using \emph{reshape}. Writing $Y = y^{(t)}$ observe that $Y Y^T$ is an $n_Y \times n_Y$ matrix with $(i,j)$-entry $Y_i Y_j$. We choose $n_P = n_Y^2$ and compute the entry-wise multiplication
-\[
-p^{(t)}_i \odot F(Y Y^T) = p^{(t)}_i \odot F\big( y^{(t)} ( y^{(t)} )^T \big) \in \mathbb{R}^{n_P}\,.
-\]
-Finally, $q^{(t)}$ is the column vector whose $i$th row is $p^{(t)}_i \odot F(Y Y^T)$, that is,
-\[
-q^{(t)} = \begin{pmatrix} p^{(t)}_1 \odot F\big( y^{(t)} ( y^{(t)} )^T \big) \\
-\vdots\\
-p^{(t)}_m \odot F\big( y^{(t)} ( y^{(t)} )^T \big) \end{pmatrix}\,.
-\] 
-In summary, we view $x^{(t)}, h^{(t-1)}$ as respectively the differentiable analogues of \verb+A,R2+ and the sequence $p^{(t)}_1, \ldots, p^{(t)}_m$ as the analogue of the command \verb+ADD+. The output of the command is the vector $q^{(t)}$. We incorporate this output into the update equation as follows:
-\be\label{eq:final_update}
-h^{(t+1)} = \sigma\big( V q^{(t)} + H h^{(t)} + U x^{(t+1)} \big)\,.
+\begin{definition} The \emph{linear logic} RNN associated to $\Pi$ has weight matrices $H,U,B$ as in the standard RNN, together with new weight matrices $V, Q$, and an evolution equation
+\be
+h^{(t+1)} = \sigma\Big( \sum_i Q_i \den{\pi_i}( Vx^{(t)}, Vx^{(t+1)})\big( h^{(t)} \big) + H h^{(t)} + U x^{(t+1)} + B\Big)\,.
 \ee
-Thus $V$ is the differentiable analogue of the register \verb+R3+. The weights are $P_i$ from \eqref{eq:weight_P}, $E$ from \eqref{eq:weight_E} and $V, H, U$ from \eqref{eq:final_update}. This architecture is easily generalised to polynomials of higher degree, by adding additional terms.
+Here the weight matrix $V$ determines a linear map $V: \mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{H})$ and $Q \in \mathbb{R}^k$.
+\end{definition}
+
+\begin{remark} To make it explicit, suppose $\mathscr{I} = \mathbb{R}^{n_I}$ and $\mathscr{H} = \mathbb{R}^{n_H}$, then $H \in M_{n_H \times n_H}(\mathbb{R})$, $U \in M_{n_H \times n_I}(\mathbb{R})$, $B \in M_{n_H \times 1}(\mathbb{R})$, $V \in M_{n_H^2 \times n_I}(\mathbb{R})$, $Q \in M_{k \times 1}(\mathbb{R})$. Since $n_H^2$ may be very large, we can try to act only on some manageable subspace of $\mathscr{H}$ via projections.
+\end{remark}
+
+\newpage
+
+\section{Examples}
 
 \begin{example} Suppose $x^{(t)} = ( a )$ and $h^{(t-1)} = ( b )$ so that $n_Y = 2$ and
 \[
@@ -181,11 +185,6 @@ If $p^{(t)}_1 = \begin{pmatrix} 2 & -1 & 0 & 3 \end{pmatrix}^T$ and $p^{(t)}_2 =
 q^{(t)} = \begin{pmatrix} 2a^2 - ba + 3b^2 \\ a^2 \end{pmatrix}\,.
 \]
 \end{example}
-
-\begin{remark} Although the architecture takes some inspiration from normal CPUs, there is an important distinction: on a normal CPU the program is given as a series of instructions prior to the beginning of execution. In contrast, in the model we have described each command is \emph{predicted} at runtime from the current internal state. Perhaps we can understand the process intuitively as follows: we are co-learning a part of $H$, call it $H_0$, which generates some part of the internal state $h^{(1)}_{0}, h^{(2)}_{0}, \ldots$ giving a path through the state space on which the weight matrix $P$ picks out the right program to run at each time step. The overall algorithm is distributed amongst the weights of $H_0$ and $P$.
-
-This also suggests an alternative algorithm: we do not predict $p^{(t)}$ at each time step, rather we have some fixed number of time steps $T$ and matrices of weights $p^{(1)}, \ldots, p^{(T)}$ which are learned by gradient descent.
-\end{remark}
 
 \begin{example} Let us consider how the system might reproduce the program that repeats every digit of an input binary sequence, e.g.
 \be\label{eq:approx_map}
@@ -213,6 +212,10 @@ V q^{(t)} = (x^{(t)})^2 h^{(t-1)}\,.
 \]
 Note that the right hand side is a cubic polynomial in the entries of $x^{(t)}, h^{(t-1)}$ so we actually need the generalised form of \eqref{eq:final_update}.
 \end{example}
+
+\newpage
+
+\appendix
 
 \section{From Inputs to Operators}
 
@@ -254,7 +257,7 @@ The intuition is that the input should \emph{operate} on the internal state, and
 
 Maybe the linear logic connection is different. Maybe it goes via taking the linear logic denotations as inspiration for how to architect and think about neural networks processing data in particular ways (i.e. we use List to think about RNNs).
 
-\subsection{Syntax}
+\section{Syntax}
 
 To the syntax of linear logic we add a connective which represents the nonlinearity (in our case, ReLU). It can be introduced on the right of the turnstile and is idempotent. It seems like once the inputs are all specified the value is either zero or the true value, so it acts a bit like a weird additive connective. 
 
@@ -262,12 +265,86 @@ We can introduce the connective freely on the left of the turnstile. Cut corresp
 
 Instead of forcing an NTM to learn a complicated series of things just to emulate iteration (which is going to be hard for it to do) we augment the "CPU" by adding an additional step (beyond arithmetic, reading and writing) where it can call out to some functional program that is chosen differentiably.
 
+\section{Differentiable CPU}\label{section:appendix_cpu}
+
+Recall that an assembly program for an ordinary CPU looks like
+\begin{verbatim}
+LOAD R1, A
+ADD R3, R1, R2
+STORE C, R3
+\end{verbatim}
+Where \verb+R1,R2,R3+ stand for the first three registers of the CPU and \verb+A,B,C+ are numbers representing addresses in memory. Thus series of instructions will result in the CPU fetching a number from memory location \verb+A+ and storing it in \verb+R1+, adding this number to a previously stored number in \verb+R2+ with the result being stored in \verb+R3+, and finally writing that register out to the memory address \verb+C+. In the analogy between a CPU and a vanilla RNN we think of the number read from \verb+A+ as the current input $x^{(t)}$ and the previously stored value in \verb+R2+ as (part of) the internal state $h^{(t-1)}$.
+
+Recent work \cite{??,??} on coupling memory to neural networks takes as its starting point the first of the above instructions \verb+LOAD R1, A+ and makes it ``differentiable'' by having the RNN controller predict at time $t$ both the memory address \verb+A+ and the register \verb+R3+ to write to (in this case for example, as a mask on the vector giving the internal state $h^{(t+1)}$). The same differentiable interpretation can be given of the \verb+STORE+ command. This is done by adding suitable terms to the update equation \eqref{eq:update_eqn}.
+
+In contrast our focus is on the third command, the \verb+ADD+. We increase the expressive power of the update equation by allowing it to predict at time $t$ an operation $p^{(t)}$ (a vector specifying a point in a space of ``programs'') which is to be performed on the input and internal state. This could be used with a differentiable memory, but for the sake of simplicity we do not try this. In order to preserve our analogy with CPU instructions even without \verb+LOAD+ and \verb+STORE+, we could imagine a CPU with a command
+\begin{verbatim}
+ADD R3, A, R2
+\end{verbatim}
+which at once reads the number from address \verb+A+, adds it to the stored value in \verb+R2+ and writes the result to \verb+R3+. Note that without a \verb+LOAD+ instruction, the only way a value could have gotten into \verb+R2+ in a previous time step is as the result of another \verb+ADD+.
+
+\begin{remark} Although the architecture takes some inspiration from normal CPUs, there is an important distinction: on a normal CPU the program is given as a series of instructions prior to the beginning of execution. In contrast, in the model we have described each command is \emph{predicted} at runtime from the current internal state. Perhaps we can understand the process intuitively as follows: we are co-learning a part of $H$, call it $H_0$, which generates some part of the internal state $h^{(1)}_{0}, h^{(2)}_{0}, \ldots$ giving a path through the state space on which the weight matrix $P$ picks out the right program to run at each time step. The overall algorithm is distributed amongst the weights of $H_0$ and $P$.
+
+This also suggests an alternative algorithm: we do not predict $p^{(t)}$ at each time step, rather we have some fixed number of time steps $T$ and matrices of weights $p^{(1)}, \ldots, p^{(T)}$ which are learned by gradient descent.
+\end{remark}
+
+\section{Old stuff}
+
+The operation to be performed is given by a sequence of vectors
+\be\label{eq:weight_P}
+p^{(t)}_i = \sigma( P_i h^{(t-1)} ) \in \mathbb{R}^{n_P}\,, 1 \le i \le m
+\ee
+in a way that we will now explain. In outline, we think of the entries of $p^{(t)}_i$ as telling us the coefficients of monomials in the entries of $x^{(t)}$ and $h^{(t-1)}$ to use in the modified update equation. For simplicity let us only consider monomials of degree $2$ in what follows, since the general case is similar. We set
+\be\label{eq:weight_E}
+y^{(t)} = E x^{(t)} \oplus h^{(t-1)} \in \mathbb{R}^{n_Y}
+\ee
+where $E$ is another matrix of weights. See Example \ref{??} for an explanation.
+
+Let $F$ denote a linear map $F: M_{n_Y}(\mathbb{R}) \lto \mathbb{R}^{n_Y^2}$ which reads off the entries of a matrix into a column vector. In TensorFlow we can represent this using \emph{reshape}. Writing $Y = y^{(t)}$ observe that $Y Y^T$ is an $n_Y \times n_Y$ matrix with $(i,j)$-entry $Y_i Y_j$. We choose $n_P = n_Y^2$ and compute the entry-wise multiplication
+\[
+p^{(t)}_i \odot F(Y Y^T) = p^{(t)}_i \odot F\big( y^{(t)} ( y^{(t)} )^T \big) \in \mathbb{R}^{n_P}\,.
+\]
+Finally, $q^{(t)}$ is the column vector whose $i$th row is $p^{(t)}_i \odot F(Y Y^T)$, that is,
+\[
+q^{(t)} = \begin{pmatrix} p^{(t)}_1 \odot F\big( y^{(t)} ( y^{(t)} )^T \big) \\
+\vdots\\
+p^{(t)}_m \odot F\big( y^{(t)} ( y^{(t)} )^T \big) \end{pmatrix}\,.
+\] 
+In summary, we view $x^{(t)}, h^{(t-1)}$ as respectively the differentiable analogues of \verb+A,R2+ and the sequence $p^{(t)}_1, \ldots, p^{(t)}_m$ as the analogue of the command \verb+ADD+. The output of the command is the vector $q^{(t)}$. We incorporate this output into the update equation as follows:
+\be\label{eq:final_update}
+h^{(t+1)} = \sigma\big( V q^{(t)} + H h^{(t)} + U x^{(t+1)} \big)\,.
+\ee
+Thus $V$ is the differentiable analogue of the register \verb+R3+. The weights are $P_i$ from \eqref{eq:weight_P}, $E$ from \eqref{eq:weight_E} and $V, H, U$ from \eqref{eq:final_update}. This architecture is easily generalised to polynomials of higher degree, by adding additional terms.
+
+
 \bibliographystyle{amsalpha}
 \providecommand{\bysame}{\leavevmode\hbox to3em{\hrulefill}\thinspace}
 \providecommand{\href}[2]{#2}
 \begin{thebibliography}{BHLS03}
-  
 
+\bibitem{elman}
+J.~Elman, \textsl{Finding structure in time}, Cognitive science, 14(2):179–211, 1990.
+
+\bibitem{ntm}
+A.~Graves, G.~Wayne and I.~Danihelka, \textsl{Neural turing machines}, arXiv preprint arXiv:1410.5401 (2014).
+
+\bibitem{armmik}
+A.~Joulin and T.~Mikolov, \textsl{Inferring algorithmic patterns with stack-augmented recurrent nets}, Advances in Neural Information Processing Systems, 2015.
+
+\bibitem{graves_etal}
+A.~Graves, \textsl{Hybrid computing using a neural network with dynamic external memory}, Nature 538.7626 (2016): 471--476.
+
+\bibitem{yuhai}
+Y.~Wu, S.~Zhang, Y.~Zhang, Y.~Bengio and R.~R.~Salakhutdinov, \textsl{On multiplicative integration with recurrent neural networks}, In Advances In Neural Information Processing Systems, pp. 2856-2864. 2016.
+
+\bibitem{irsoy}
+O.~Irsoy and C.~Cardie, \textsl{Modeling compositionality with multiplicative recurrent neural networks}, arXiv preprint arXiv:1412.6577 (2014).
+
+\bibitem{sutskever}
+I.~Sutskever, J.~Martens and G.~E.~Hinton, \textsl{Generating text with recurrent neural networks} Proceedings of the 28th International Conference on Machine Learning (ICML-11). 2011.
+
+\bibitem{sutskever2}
+I.~Sutskever, O.~Vinyals and Q.~V.~Le, \textsl{Sequence to sequence learning with neural networks}, Advances in neural information processing systems, 2014.
 
 \end{thebibliography}
 
