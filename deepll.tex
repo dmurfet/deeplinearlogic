@@ -138,134 +138,59 @@ Our augmented RNN adds a new term to the evolution equation, in the style of rec
 \[
 \bold{x} = \big( x^{(1)}, \ldots, x^{(T)} \big) \in \mathscr{I}^{\oplus T}\,.
 \]
-The value of the RNN on $\bold{x}$ is computed by applying \eqref{eq:update_eqn} for $0 \le t \le T - 1$ to compute the vector $h^{(T)}$, and then feeding this into a second decoder neural network to output the final value \cite{sutskever2}. For the moment we do not specify the decoder. The key point is that the evolution equation implicitly determines a piecewise-linear function
+The value of the RNN on $\bold{x}$ is computed by applying \eqref{eq:update_eqn} for $0 \le t \le T - 1$ to compute the vector $h^{(T)}$, and then feeding this into a second decoder neural network to output the final value \cite{sutskever2}. For the moment we do not specify the decoder. The point is that the evolution equation implicitly determines a piecewise-linear function
 \begin{gather*}
 \mathscr{I} \lto \operatorname{Func}(\mathscr{H}, \mathscr{H} )\,,\\
 x \mapsto \sigma\big( H (-) + U x + B\big)\,,
 \end{gather*}
-which specifies how we may view inputs as transforming the internal state of the RNN.
+which specifies how we may view inputs as transforming the internal state of the RNN. Modifications of the RNN architecture can be viewed as allowing more complicated (for example, piecewise-polynomial of higher degree) transformations of the internal state.
 
-The key idea of compositional matrix-space models in Natural Language Processing (NLP) \cite{??} is to augment the above mapping by learning an embedding of the input space into a space of matrices which acts on the internal state space. Our aim is to generalise this, based on proofs $\pi$ in linear logic of type $\textbf{bint}_\alpha$ where $\alpha$ is a variable whose denotation is $\den{\alpha} = \mathscr{H}$. Such a proof has a presentation in the sequent calculus of the form
-\[
-\AxiomC{$\pi$}
-\noLine\UnaryInfC{$\vdots$}
-\def\extraVskip{5pt}
-\noLine\UnaryInfC{${!}(\alpha \multimap \alpha), {!}(\alpha \multimap \alpha) \vdash \alpha \multimap \alpha$}
-\DisplayProof
-\]
-and its denotation $\den{\pi}$ is a polynomial function
+For example, compositional matrix-space models in NLP \cite{irsoy} add a new term built from an auxiliary learned linear mapping of the input space $\mathscr{I}$ into the space of linear operators on the state space $\End_{\mathbb{R}}(\mathscr{H})$. Our approach is similar, but we allow a particular class of non-linear maps $\mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{H})$ selected by linear logic. The class of maps we consider are the denotations of proofs $\pi$ in intuitionistic linear logic of type
+\be
+\textbf{bint}_\alpha = {!}(\alpha \multimap \alpha) \multimap \big({!}(\alpha \multimap \alpha) \multimap (\alpha \multimap \alpha)\big)\,.
+\ee
+A full explanation of linear logic is not necessary. We mention only that under the Curry-Howard correspondence a proof $\pi$ of the above type can be thought of as a functional program taking two inputs (of type $\alpha \multimap \alpha$) and giving an output of the same type.
+
+The \emph{denotation} of such a proof is a polynomial function
 \[
 \den{\pi}: \End_{\mathbb{R}}(\mathscr{H}) \times \End_{\mathbb{R}}(\mathscr{H}) \lto \End_{\mathbb{R}}(\mathscr{H})\,.
 \]
-where $\End_{\mathbb{R}}(V)$ denotes the space of linear maps from a vector space $V$ to itself.\footnote{To explain what we mean by a ``polynomial function'', suppose $\mathscr{H} = \mathbb{R}^r$ so that $\End_{\mathbb{R}}(\mathscr{H})$ is the space of matrices $M_r(\mathbb{R})$. Then for all $1 \le i,j \le r$, the denotation $\den{\pi}_{i,j}$ is a function of pairs of matrices $X,Y \in M_r(\mathbb{R})$ which is a polynomial in the entries $X_{ab}, Y_{cd}$.}
-\\
-
-Let $\Pi$ be a finite sequence of proofs $\Pi = (\pi_1,\ldots,\pi_k)$ of $\textbf{bint}_\alpha$.
-
-\begin{definition} The \emph{linear logic} RNN associated to $\Pi$ has weight matrices $H,U,B$ as in the standard RNN, together with new weight matrices $V, Q$, and an evolution equation
+where $\End_{\mathbb{R}}(V)$ denotes the space of linear operators on $V$.\footnote{To explain what we mean by a ``polynomial function'', suppose $\mathscr{H} = \mathbb{R}^r$ so that $\End_{\mathbb{R}}(\mathscr{H})$ is the space of matrices $M_r(\mathbb{R})$. Then for all $1 \le i,j \le r$, the denotation $\den{\pi}_{i,j}$ is a function of pairs of matrices $X,Y \in M_r(\mathbb{R})$ which is a polynomial in the entries $X_{ab}, Y_{cd}$.} For every binary sequence $S \in \{0,1\}^*$ there is a corresponding proof $t_S$ of type $\textbf{bint}_\alpha$, and for example the denotation of $t_{01101}$ is the polynomial function
 \be
-h^{(t+1)} = \sigma\Big( \sum_i Q_i \den{\pi_i}( Vx^{(t)}, Vx^{(t+1)})\big( h^{(t)} \big) + H h^{(t)} + U x^{(t+1)} + B\Big)\,.
+\den{t_{01101}}(X,Y) = X Y Y X Y\,.
 \ee
-Here the weight matrix $V$ determines a linear map $V: \mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{H})$ and $Q \in \mathbb{R}^k$.
+It is these polynomial functions that we will couple into the RNN. 
+
+Let $\Pi$ be a finite sequence of proofs $\Pi = (\pi_1,\ldots,\pi_k)$ of $\textbf{bint}_\alpha$. When we say that we allow the RNN controller to call this library of functional programs, what we actually mean is that it can predict a linear combination $p^{(t)}$ of the polynomial programs $\den{\pi_i}$ to be applied to its internal state, as follows:
+
+\begin{definition} The \emph{linear logic} RNN associated to $\Pi$ has weight matrices $H,U,B$ as in the standard RNN, together with new weight matrices $V, Q, C$, and an evolution equation defined in two parts:
+\begin{align}
+p^{(t+1)} &= \sigma\big( Q h^{(t)} + C \big)\,,\\
+h^{(t+1)} &= \sigma\Big( \sum_i p^{(t+1)}_i \den{\pi_i}( Vx^{(t)}, Vx^{(t+1)})\big( h^{(t)} \big) + H h^{(t)} + U x^{(t+1)} + B\Big)\,.
+\end{align}
+Here $V$ is a linear map $\mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{H})$ and $p^{(t)} \in \mathbb{R}^k$ for all $t$.
 \end{definition}
 
-\begin{remark} To make it explicit, suppose $\mathscr{I} = \mathbb{R}^{n_I}$ and $\mathscr{H} = \mathbb{R}^{n_H}$, then $H \in M_{n_H \times n_H}(\mathbb{R})$, $U \in M_{n_H \times n_I}(\mathbb{R})$, $B \in M_{n_H \times 1}(\mathbb{R})$, $V \in M_{n_H^2 \times n_I}(\mathbb{R})$, $Q \in M_{k \times 1}(\mathbb{R})$. Since $n_H^2$ may be very large, we can try to act only on some manageable subspace of $\mathscr{H}$ via projections.
-\end{remark}
+Note that the RNN evolution equation for $h^{(t+1)}$ involves both the current input $x^{(t+1)}$ and the previous input $x^{(t)}$. We do this in order to allow the RNN to learn local transformations of an input sequence, for instance, the transformation of a sequence $a_0 a_1 a_2 a_3 \cdots$ which swaps every pair of symbols, to get $a_1 a_0 a_3 a_2 \cdots$ might use $\den{t_{10}}$. More complicated transformations could be learned by adapting the equation to a function of $x^{(i)}, \ldots, x^{(t+1)}$ with a more complicated type than $\textbf{bint}_\alpha$.
 
-\newpage
-
-\section{Examples}
-
-\begin{example} Suppose $x^{(t)} = ( a )$ and $h^{(t-1)} = ( b )$ so that $n_Y = 2$ and
-\[
-y^{(t)} = \begin{pmatrix} a & b \end{pmatrix}^T\,, \qquad Y Y^T = \begin{pmatrix} a^2 & ba \\ ab & b^2 \end{pmatrix}\,, \qquad F( Y Y^T ) = \begin{pmatrix} a^2 & ba & ab & b^2 \end{pmatrix}^T\,.
-\]
-If $p^{(t)}_1 = \begin{pmatrix} 2 & -1 & 0 & 3 \end{pmatrix}^T$ and $p^{(t)}_2 = \begin{pmatrix} 1 & 0 & 0 & 0 \end{pmatrix}^T$ then
-\[
-q^{(t)} = \begin{pmatrix} 2a^2 - ba + 3b^2 \\ a^2 \end{pmatrix}\,.
-\]
-\end{example}
-
-\begin{example} Let us consider how the system might reproduce the program that repeats every digit of an input binary sequence, e.g.
-\be\label{eq:approx_map}
-0110 \longmapsto 00111100\,.
+\begin{remark} To make it explicit, suppose $\mathscr{I} = \mathbb{R}^{n_I}$ and $\mathscr{H} = \mathbb{R}^{n_H}$, then $H \in M_{n_H \times n_H}(\mathbb{R})$, $U \in M_{n_H \times n_I}(\mathbb{R})$, $B \in M_{n_H \times 1}(\mathbb{R})$, $V \in M_{n_H^2 \times n_I}(\mathbb{R})$, $Q \in M_{k \times n_H}(\mathbb{R})$, $C \in \mathbb{R}^k$. Since $n_H^2$ may be large, we can act on a subspace by choosing a decomposition $\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{H}_1$ and letting $\rho: \mathscr{H} \lto \mathscr{H}_1, \iota: \mathscr{H}_1 \lto \mathscr{H}$ be respectively be the projection to and inclusion of the subspace $\mathscr{H}_1$. Then we replace the evolution equation by
+\be
+h^{(t+1)} = \sigma\Big( \sum_i p^{(t+1)}_i \iota \den{\pi_i}( Vx^{(t)}, Vx^{(t+1)})\big( \rho h^{(t)} \big) + H h^{(t)} + U x^{(t+1)} + B\Big)\,.
 \ee
-We take the inputs $x \in \mathbb{R}^2$ with $e_1 = (1,0)$ standing for the binary digit $1$ and $e_0 = (0,1)$ standing for $0$. We suppose that the system has learned the embedding matrix $E$ such that $A = E(e_1)$ and $B = E(e_0)$ are matrices in $M_n(\mathbb{R}_{>0})$ with the property that the subgroup they generate under multiplication is a free group on two letters. This condition just means that the map
-\[
-\Psi: \{0,1\}^* \lto M_n( \mathbb{R} )
-\]
-from binary sequences to matrices, defined inductively for $s \in \{0,1\}$ by
-\[
-\Psi( s S ) = \begin{cases} B \Psi(S) & s = 0 \\ A \Psi(S) & s = 1 \end{cases}
-\]
-is injective. The space of matrices $\mathscr{H} = M_n(\mathbb{R})$ is the internal state of our RNN. To extract output from the RNN we apply a series of fully-connected layers with the final internal state $h^{(T)}$ as input, and we think of this series of layers as approximating a function $\Psi': M_n(\mathbb{R}) \lto \{0,1\}^*$ with the property that $\Psi' \circ \Psi = 1$, that is, which can read off from a product of matrices $ABA$ the corresponding binary sequence $101$. So, in order to approximate the function \eqref{eq:approx_map} our RNN needs to take the inputs
-\[
-x^{(1)} = B, x^{(2)} = A, x^{(3)} = A, x^{(4)} = B
-\]
-and produce the final internal state
-\[
-h^{(T)} = BBAAAABB \in M_n(\mathbb{R})\,.
-\]
-This can be be done if we assume that in the update equation \eqref{eq:final_update} has weights $H, U = 0$ and $V$ is chosen so that
-\[
-V q^{(t)} = (x^{(t)})^2 h^{(t-1)}\,.
-\]
-Note that the right hand side is a cubic polynomial in the entries of $x^{(t)}, h^{(t-1)}$ so we actually need the generalised form of \eqref{eq:final_update}.
-\end{example}
+with $\den{\pi}$ now a function $\End_{\mathbb{R}}(\mathscr{H}_1) \times \End_{\mathbb{R}}(\mathscr{H}_1) \lto \End_{\mathbb{R}}(\mathscr{H}_1)$.
+
+If we write $n_H' = \dim(\mathscr{H}_1)$ then the number of weights in the linear logic RNN is
+\be
+n_H^2 + n_H n_I + n_H + (n_H')^2 n_I + kn_H + k\,,
+\ee
+where $k$ is the number of proofs we are indexing over.
+\end{remark}
 
 \newpage
 
 \appendix
 
-\section{From Inputs to Operators}
-
-We understand how to build ordinary deep nets in semantics of linear logic if we add one more connective. Perhaps the right question to ask is: how to add RNNs, with shared weights? Well, that's clear. We are just iterating the map $\Phi$, which we can represent as the promotion of one of the things we already understand. 
-
-This helps somewhat because we should only do things consistent with this picture, let it dictate the ``right way'' to do things.
-
-Or we can just have $P = p^{(t)}$ not depend on time at all, nor on the previous stae. The main point is that the programs we can plug in are denotations of type
-\[
-{!} \mathscr{H} \otimes \mathscr{I} \lto \mathscr{H}\,.
-\]
-We probably don't understand enough examples right now to know whether these should be linear in $\md{I}$. For example, we just map basis elements of $\mathscr{I}$ to particular matrices, which we may then choose to raise to some power.
-
-Given vector spaces $V, W$ let $\Hom(V,W)$ denote the space of linear maps and $\Func(V,W)$ the set of all functions. Let $\mathscr{H}$ denote the state space of the RNN, so that $h^{(t)} \in \mathscr{H}$ for all $t$. We view the evolution equation \eqref{eq:update_eqn} of the ordinary RNN as a function defined on the space $\mathscr{I}$ of possible inputs
-\begin{gather*}
-\Phi: \mathscr{I} \lto \Func( \mathscr{H}, \mathscr{H} )\,,\\
-\Phi( x )( h ) = \sigma\big( H h + U x \big)\,.
-\end{gather*}
-In this sense the RNN, viewed as a system of weights $U,H$, defines a mapping from \emph{states} (the inputs) to \emph{operators} on $\mathscr{H}$. From such a mapping we obtain an operator on $\mathscr{H}$ from any list of elements of $\mathscr{I}$ in the usual way:
-
-\begin{example} The list type in System F is \cite{??}
-\[
-\operatorname{List}_U = \Pi X . (U \rightarrow X \rightarrow X) \rightarrow ( X \rightarrow X )\,.
-\]
-We can emulate the denotation of a binary sequence as follows: associate with $X$ the space $\mathbb{R}^2$ and choose two matrices $A, B \in \mathbb{R}^k$. We consider an augmented RNN as above which, given the list $(0,0,1)$ outputs the associated matrix $AAB$. The idea is that e.g. at the last time step we should have
-\[
-h^{(t)} = AB \oplus (\cdots)\,, x^{(t+1)} = (1, 0)
-\]
-we need to produce $A$ from $(1,0)$ and then
-\[
-h^{(t+1)} = A h^{(t)}.
-\]
-\end{example}
-
-\begin{example} Do the same, but apply $A^2$ which means we use a cubic function of the inputs (since we need to square the $A$ we get).
-\end{example}
-
-The intuition is that the input should \emph{operate} on the internal state, and the particular operation may be a complicated function of the input we get. That is, we need to provide the state to operator correspondence. So our V term is the thing that provides this service. And which mapping to use depends itself on our internal state. That is, we need to predict the state to operator correspondence. 
-
-Maybe the linear logic connection is different. Maybe it goes via taking the linear logic denotations as inspiration for how to architect and think about neural networks processing data in particular ways (i.e. we use List to think about RNNs).
-
-\section{Syntax}
-
-To the syntax of linear logic we add a connective which represents the nonlinearity (in our case, ReLU). It can be introduced on the right of the turnstile and is idempotent. It seems like once the inputs are all specified the value is either zero or the true value, so it acts a bit like a weird additive connective. 
-
-We can introduce the connective freely on the left of the turnstile. Cut corresponds to propagating the partitions back to the very left. Well maybe on the left of the turnstile we are only allowed to have a single formula (since we partition it). Also we probably only partition those inputs that are ! So we first have to have only !’s on the left, like with promotion. But then instead of promotion we get a new connective.
-
-Instead of forcing an NTM to learn a complicated series of things just to emulate iteration (which is going to be hard for it to do) we augment the "CPU" by adding an additional step (beyond arithmetic, reading and writing) where it can call out to some functional program that is chosen differentiably.
-
-\section{Differentiable CPU}\label{section:appendix_cpu}
+\section{Background on CPUs}\label{section:appendix_cpu}
 
 Recall that an assembly program for an ordinary CPU looks like
 \begin{verbatim}
@@ -316,6 +241,32 @@ h^{(t+1)} = \sigma\big( V q^{(t)} + H h^{(t)} + U x^{(t+1)} \big)\,.
 \ee
 Thus $V$ is the differentiable analogue of the register \verb+R3+. The weights are $P_i$ from \eqref{eq:weight_P}, $E$ from \eqref{eq:weight_E} and $V, H, U$ from \eqref{eq:final_update}. This architecture is easily generalised to polynomials of higher degree, by adding additional terms.
 
+\begin{example} Let us consider how the system might reproduce the program that repeats every digit of an input binary sequence, e.g.
+\be\label{eq:approx_map}
+0110 \longmapsto 00111100\,.
+\ee
+We take the inputs $x \in \mathbb{R}^2$ with $e_1 = (1,0)$ standing for the binary digit $1$ and $e_0 = (0,1)$ standing for $0$. We suppose that the system has learned the embedding matrix $E$ such that $A = E(e_1)$ and $B = E(e_0)$ are matrices in $M_n(\mathbb{R}_{>0})$ with the property that the subgroup they generate under multiplication is a free group on two letters. This condition just means that the map
+\[
+\Psi: \{0,1\}^* \lto M_n( \mathbb{R} )
+\]
+from binary sequences to matrices, defined inductively for $s \in \{0,1\}$ by
+\[
+\Psi( s S ) = \begin{cases} B \Psi(S) & s = 0 \\ A \Psi(S) & s = 1 \end{cases}
+\]
+is injective. The space of matrices $\mathscr{H} = M_n(\mathbb{R})$ is the internal state of our RNN. To extract output from the RNN we apply a series of fully-connected layers with the final internal state $h^{(T)}$ as input, and we think of this series of layers as approximating a function $\Psi': M_n(\mathbb{R}) \lto \{0,1\}^*$ with the property that $\Psi' \circ \Psi = 1$, that is, which can read off from a product of matrices $ABA$ the corresponding binary sequence $101$. So, in order to approximate the function \eqref{eq:approx_map} our RNN needs to take the inputs
+\[
+x^{(1)} = B, x^{(2)} = A, x^{(3)} = A, x^{(4)} = B
+\]
+and produce the final internal state
+\[
+h^{(T)} = BBAAAABB \in M_n(\mathbb{R})\,.
+\]
+This can be be done if we assume that in the update equation \eqref{eq:final_update} has weights $H, U = 0$ and $V$ is chosen so that
+\[
+V q^{(t)} = (x^{(t)})^2 h^{(t-1)}\,.
+\]
+Note that the right hand side is a cubic polynomial in the entries of $x^{(t)}, h^{(t-1)}$ so we actually need the generalised form of \eqref{eq:final_update}.
+\end{example}
 
 \bibliographystyle{amsalpha}
 \providecommand{\bysame}{\leavevmode\hbox to3em{\hrulefill}\thinspace}
