@@ -129,7 +129,10 @@ An RNN is defined by its \emph{evolution equation} which expresses $h^{(t+1)}$ a
 \be\label{eq:update_eqn}
 h^{(t+1)} = \sigma\big( H h^{(t)} + U x^{(t+1)} + B\big)
 \ee
-where $h^{(0)}$ is some specified initial state.
+where $h^{(0)}$ is some specified initial state. The outputs are defined by
+\be\label{eq:output_rnn}
+y^{(t)} = \sigma\big( L h^{(t)} + M \big)\,.
+\ee
 \end{definition}
 % To motivate the modification, we recall that an RNN is analogous to a \emph{controller} or ``neural CPU'' with internal state $h^{(t)}$ (see Appendix \ref{section:appendix_cpu}). The internal state of the RNN is analogous to the content of the registers of a CPU.
 % The basic operation in linear logic is composition (this is essentially the only way to nontrivially combine separate inputs) which becomes matrix multiplication in the semantics (it is not a coincidence we always end up with ${!}( \alpha \multimap \alpha )$'s as our inputs rather than ${!} \alpha$'s, since the latter can only have trivial proofs).
@@ -138,52 +141,67 @@ Our augmented RNN adds a new term to the evolution equation, in the style of rec
 \[
 \bold{x} = \big( x^{(1)}, \ldots, x^{(T)} \big) \in \mathscr{I}^{\oplus T}\,.
 \]
-The value of the RNN on $\bold{x}$ is computed by applying \eqref{eq:update_eqn} for $0 \le t \le T - 1$ to compute the vector $h^{(T)}$, and then feeding this into a second decoder neural network to output the final value \cite{sutskever2}. For the moment we do not specify the decoder. The point is that the evolution equation implicitly determines a piecewise-linear function
+The value of the RNN on the input $\bold{x}$ is computed by applying \eqref{eq:update_eqn} for $0 \le t \le T - 1$, accumulating the values $\bold{y} = (y^{(1)}, \ldots, y^{(T)})$ from each time step, and finally applying a fully-connected layer and the softmax function $\tau$ obtain the output
+\[
+o^{(t)} = \tau( E y^{(t)} + F )\,.
+\]
+This is a sequence of vectors $\bold{o} = (o^{(1)},\ldots,o^{(T)}) \in \mathscr{I}^{\oplus T}$ where each $o^{(t)}$ has the property that its components in our chosen basis add to $1$. We view such a vector as a probability distribution over the basis, sampling from which gives the output of the RNN on $\bold{x}$.
+\\
+
+Note that the evolution equation implicitly determines a piecewise-linear function
 \begin{gather*}
 \mathscr{I} \lto \operatorname{Func}(\mathscr{H}, \mathscr{H} )\,,\\
 x \mapsto \sigma\big( H (-) + U x + B\big)\,,
 \end{gather*}
-which specifies how we may view inputs as transforming the internal state of the RNN. Modifications of the RNN architecture can be viewed as allowing more complicated (for example, piecewise-polynomial of higher degree) transformations of the internal state.
+which specifies how we may view inputs as transforming the internal state of the RNN. One class of modifications of the RNN architecture adds more complicated (for example, piecewise-polynomial of higher degree) transformations of the internal state.
 
-For example, compositional matrix-space models in NLP \cite{irsoy} add a new term built from an auxiliary learned linear mapping of the input space $\mathscr{I}$ into the space of linear operators on the state space $\End_{\mathbb{R}}(\mathscr{H})$. Our approach is similar, but we allow a particular class of non-linear maps $\mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{H})$ selected by linear logic. The class of maps we consider are the denotations of proofs $\pi$ in intuitionistic linear logic of type
-\be
+For example, compositional matrix-space models in NLP \cite{irsoy} add a new term to \eqref{eq:update_eqn} built from an auxiliary learned linear map from the input space $\mathscr{I}$ into the space of linear operators on the state space $\End_{\mathbb{R}}(\mathscr{H})$. Our approach is similar, but we use a particular class of \emph{non-linear} maps obtained as the denotations of proofs in linear logic. In principle proofs of any type could be coupled with an RNN controller, but here we consider only proofs of the following two types:
+\begin{gather*}
+\textbf{int}_\alpha = {!}(\alpha \multimap \alpha) \multimap (\alpha \multimap \alpha)\,,\\
 \textbf{bint}_\alpha = {!}(\alpha \multimap \alpha) \multimap \big({!}(\alpha \multimap \alpha) \multimap (\alpha \multimap \alpha)\big)\,.
-\ee
-A full explanation of linear logic is not necessary. We mention only that under the Curry-Howard correspondence a proof $\pi$ of the above type can be thought of as a functional program taking two inputs (of type $\alpha \multimap \alpha$) and giving an output of the same type.
+\end{gather*}
+Under the Curry-Howard correspondence a proof $\pi$ of type $\textbf{bint}_\alpha$ can be thought of as a functional program taking two inputs of type $\alpha \multimap \alpha$ and giving an output of the same type. Conceptually proofs of type $\textbf{int}_\alpha$ and $\textbf{bint}_\alpha$ encode certain kinds of iteration. Rather than attempt to give a review of linear logic here, we give some examples.
 
-The \emph{denotation} of such a proof is a polynomial function
+\begin{example}\label{example_1} The \emph{denotation} of a proof $\pi$ of type $\textbf{int}_\alpha$ is a function
+\[
+\den{\pi}: \End_{\mathbb{R}}(\mathscr{H}) \lto \End_{\mathbb{R}}(\mathscr{H})
+\]
+which is a polynomial function of the entries of the input matrix. That is, writing $\mathscr{H} = \mathbb{R}^{n_H}$ and identifying $\End_{\mathbb{R}}(\mathscr{H})$ with $M_{n_H}(\mathbb{R})$ we have that $\den{\pi}(X)_{ij}: M_{n_H}(\mathbb{R}) \lto \mathbb{R}$ is a polynomial in the entries $X_{kl}$ for $1 \le i, j \le n_H$. For every integer $n \ge 0$ there is a proof $\underline{n}$ of type $\textbf{int}_\alpha$ called the \emph{Church numeral}, whose denotation is the function $\den{\underline{n}}(X) = X^n$.
+\end{example}
+
+\begin{example}\label{example_2} The denotation of a proof $\pi$ of type $\textbf{bint}_\alpha$ is a polynomial function
 \[
 \den{\pi}: \End_{\mathbb{R}}(\mathscr{H}) \times \End_{\mathbb{R}}(\mathscr{H}) \lto \End_{\mathbb{R}}(\mathscr{H})\,.
 \]
-where $\End_{\mathbb{R}}(V)$ denotes the space of linear operators on $V$.\footnote{To explain what we mean by a ``polynomial function'', suppose $\mathscr{H} = \mathbb{R}^r$ so that $\End_{\mathbb{R}}(\mathscr{H})$ is the space of matrices $M_r(\mathbb{R})$. Then for all $1 \le i,j \le r$, the denotation $\den{\pi}_{i,j}$ is a function of pairs of matrices $X,Y \in M_r(\mathbb{R})$ which is a polynomial in the entries $X_{ab}, Y_{cd}$.} For every binary sequence $S \in \{0,1\}^*$ there is a corresponding proof $t_S$ of type $\textbf{bint}_\alpha$, and for example the denotation of $t_{01101}$ is the polynomial function
-\be
+For every binary sequence $S \in \{0,1\}^*$ there is a corresponding proof $t_S$ of type $\textbf{bint}_\alpha$, where $\den{t_S}$ sends a pair of matrices $X,Y$ to the product described by $S$, reading $X$ for $0$ and $Y$ for $1$. For example,
+\[
 \den{t_{01101}}(X,Y) = X Y Y X Y\,.
-\ee
-It is these polynomial functions that we will couple into the RNN. 
+\]
+\end{example}
 
-Let $\Pi$ be a finite sequence of proofs $\Pi = (\pi_1,\ldots,\pi_k)$ of $\textbf{bint}_\alpha$. When we say that we allow the RNN controller to call this library of functional programs, what we actually mean is that it can predict a linear combination $p^{(t)}$ of the polynomial programs $\den{\pi_i}$ to be applied to its internal state, as follows:
+An important insight, made especially clear in linear logic, is that the complexity of an algorithm computing a function on binary sequences $\{0,1\}^T \lto \{0,1\}^T$ has to do with the ``level of iteration'' that is used in the algorithm. The most elementary forms of iteration are simply repetitions, as in the proofs of type $\textbf{int}_\alpha, \textbf{bint}_\alpha$ above, but there are much more powerful forms of iteration which lead to more complex algorithms.
 
-\begin{definition} The \emph{linear logic} RNN associated to $\Pi$ has weight matrices $H,U,B$ as in the standard RNN, together with new weight matrices $V, Q, C$, and an evolution equation defined in two parts:
-\begin{align}
-p^{(t+1)} &= \sigma\big( Q h^{(t)} + C \big)\,,\\
-h^{(t+1)} &= \sigma\Big( \sum_i p^{(t+1)}_i \den{\pi_i}( Vx^{(t)}, Vx^{(t+1)})\big( h^{(t)} \big) + H h^{(t)} + U x^{(t+1)} + B\Big)\,.
-\end{align}
-Here $V$ is a linear map $\mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{H})$ and $p^{(t)} \in \mathbb{R}^k$ for all $t$.
+The intuition guiding this paper is that an RNN controller will have an easier time approximating functions of a certain complexity, if it has access to iterators (from linear logic) of a similar level of complexity. At the lowest level these iterators take the form of polynomial operations on matrices, since we are taking our cue from compositional matrix-space models by mapping input symbols to matrices acting on the hidden state. The abstract theory suggests how to couple more sophisticated iterators to an RNN, but our focus in this paper is on proving the simplest version of the concept.
+\\
+
+Let $\Lambda = (\lambda_1,\ldots,\lambda_l)$ be a sequence of proofs of $\textbf{int}_\alpha$ and let $\Pi = (\pi_1,\ldots,\pi_k)$ be proofs of $\textbf{bint}_\alpha$. When we say that we allow the RNN controller to call this library of functional programs, what we actually mean is that it can predict a linear combination $p^{(t)}$ of the polynomial programs $\den{\lambda_i}$ to be applied to its internal state, and similarly for the $\pi_i$.
+
+\begin{definition} The \emph{linear logic} RNN coupled to $\Lambda, \Pi$ has weight matrices $H,U,B$ as in the standard RNN, plus new weights $V, P, Q, C, D$ and an evolution equation:
+\begin{gather*}
+p^{(t+1)} = \sigma\big( P h^{(t)} + C \big)\,,\\
+q^{(t+1)} = \sigma\big( Q h^{(t)} + D \big)\,,\\
+h^{(t+1)} = \sigma\Big( Z + H h^{(t)} + U x^{(t+1)} + B\Big)
+\end{gather*}
+where
+\begin{align*}
+Z &= \sum_{i=1}^l p^{(t+1)}_i \den{\lambda_i}( Vx^{(t+1)} )\big( h^{(t)} \big) + \sum_{i=1}^k q^{(t+1)}_i \den{\pi_i}( Vx^{(t)}, Vx^{(t+1)})\big( h^{(t)} \big)\,.
+\end{align*}
+The weight matrix $V$ gives a linear map $\mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{H})$ and $p^{(t)} \in \mathbb{R}^l, q^{(t)} \in \mathbb{R}^k$. The outputs $y^{(t)}$ of the linear logic RNN are defined by the same equation \eqref{eq:output_rnn} as before.
 \end{definition}
 
 Note that the RNN evolution equation for $h^{(t+1)}$ involves both the current input $x^{(t+1)}$ and the previous input $x^{(t)}$. We do this in order to allow the RNN to learn local transformations of an input sequence, for instance, the transformation of a sequence $a_0 a_1 a_2 a_3 \cdots$ which swaps every pair of symbols, to get $a_1 a_0 a_3 a_2 \cdots$ might use $\den{t_{10}}$. More complicated transformations could be learned by adapting the equation to a function of $x^{(i)}, \ldots, x^{(t+1)}$ with a more complicated type than $\textbf{bint}_\alpha$.
 
-\begin{remark} To make it explicit, suppose $\mathscr{I} = \mathbb{R}^{n_I}$ and $\mathscr{H} = \mathbb{R}^{n_H}$, then $H \in M_{n_H \times n_H}(\mathbb{R})$, $U \in M_{n_H \times n_I}(\mathbb{R})$, $B \in M_{n_H \times 1}(\mathbb{R})$, $V \in M_{n_H^2 \times n_I}(\mathbb{R})$, $Q \in M_{k \times n_H}(\mathbb{R})$, $C \in \mathbb{R}^k$. Since $n_H^2$ may be large, we can act on a subspace by choosing a decomposition $\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{H}_1$ and letting $\rho: \mathscr{H} \lto \mathscr{H}_1, \iota: \mathscr{H}_1 \lto \mathscr{H}$ be respectively be the projection to and inclusion of the subspace $\mathscr{H}_1$. Then we replace the evolution equation by
-\be
-h^{(t+1)} = \sigma\Big( \sum_i p^{(t+1)}_i \iota \den{\pi_i}( Vx^{(t)}, Vx^{(t+1)})\big( \rho h^{(t)} \big) + H h^{(t)} + U x^{(t+1)} + B\Big)\,.
-\ee
-with $\den{\pi}$ now a function $\End_{\mathbb{R}}(\mathscr{H}_1) \times \End_{\mathbb{R}}(\mathscr{H}_1) \lto \End_{\mathbb{R}}(\mathscr{H}_1)$.
-
-If we write $n_H' = \dim(\mathscr{H}_1)$ then the number of weights in the linear logic RNN is
-\be
-n_H^2 + n_H n_I + n_H + (n_H')^2 n_I + kn_H + k\,,
-\ee
-where $k$ is the number of proofs we are indexing over.
+\begin{remark} If $\mathscr{I} = \mathbb{R}^{n_I}$ and $\mathscr{H} = \mathbb{R}^{n_H}$ then $V \in M_{n_H^2 \times n_I}(\mathbb{R})$. To avoid an explosion of weights due to the large integer $n_H^2$, we can map $\mathscr{I}$ to operators on a subspace of $\mathscr{H}$. This is done by choosing a decomposition $\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{H}_1$ and letting $\rho: \mathscr{H} \lto \mathscr{H}_1, \iota: \mathscr{H}_1 \lto \mathscr{H}$ be respectively be the projection to and inclusion of the subspace $\mathscr{H}_1$. In the evolution equation we use $\iota \den{\lambda_i}( Vx^{(t+1)} )\big( \rho h^{(t)} \big)$ with $\den{\lambda_i}$ now a function $\End_{\mathbb{R}}(\mathscr{H}_1) \lto \End_{\mathbb{R}}(\mathscr{H}_1)$.
 \end{remark}
 
 \newpage
