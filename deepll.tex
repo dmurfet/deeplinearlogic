@@ -173,9 +173,9 @@ which is a polynomial function of the entries of the input matrix. That is, writ
 \[
 \den{\pi}: \End_{\mathbb{R}}(\mathscr{H}) \times \End_{\mathbb{R}}(\mathscr{H}) \lto \End_{\mathbb{R}}(\mathscr{H})\,.
 \]
-For every binary sequence $S \in \{0,1\}^*$ there is a corresponding proof $t_S$ of type $\textbf{bint}_\alpha$, where $\den{t_S}$ sends a pair of matrices $X,Y$ to the product described by $S$, reading $X$ for $0$ and $Y$ for $1$. For example,
+For every binary sequence $S \in \{0,1\}^*$ there is a corresponding proof $\underline{S}$ of type $\textbf{bint}_\alpha$, where $\den{\underline{S}}$ sends a pair of matrices $X,Y$ to the product described by $S$, reading $X$ for $0$ and $Y$ for $1$. For example,
 \[
-\den{t_{01101}}(X,Y) = X Y Y X Y\,.
+\den{\underline{01101}}(X,Y) = X Y Y X Y\,.
 \]
 \end{example}
 
@@ -196,10 +196,17 @@ where
 \begin{align*}
 Z &= \sum_{i=1}^l p^{(t+1)}_i \den{\lambda_i}( Vx^{(t+1)} )\big( h^{(t)} \big) + \sum_{i=1}^k q^{(t+1)}_i \den{\pi_i}( Vx^{(t)}, Vx^{(t+1)})\big( h^{(t)} \big)\,.
 \end{align*}
-The weight matrix $V$ gives a linear map $\mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{H})$ and $p^{(t)} \in \mathbb{R}^l, q^{(t)} \in \mathbb{R}^k$. The outputs $y^{(t)}$ of the linear logic RNN are defined by the same equation \eqref{eq:output_rnn} as before.
+The weight matrix $V$ is interpreted as a linear map $\mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{H})$ so that $Vx^{(t)}$ denotes a matrix of size $n_H \times n_H$ if $\mathscr{H} = \mathbb{R}^{n_h}$. The outputs $y^{(t)}$ of the linear logic RNN are defined by the same equation \eqref{eq:output_rnn} as before.
 \end{definition}
 
 Note that the RNN evolution equation for $h^{(t+1)}$ involves both the current input $x^{(t+1)}$ and the previous input $x^{(t)}$. We do this in order to allow the RNN to learn local transformations of an input sequence, for instance, the transformation of a sequence $a_0 a_1 a_2 a_3 \cdots$ which swaps every pair of symbols, to get $a_1 a_0 a_3 a_2 \cdots$ might use $\den{t_{10}}$. More complicated transformations could be learned by adapting the equation to a function of $x^{(i)}, \ldots, x^{(t+1)}$ with a more complicated type than $\textbf{bint}_\alpha$.
+
+\begin{example} If $\Lambda = \{ \underline{1}, \underline{2} \}$ and $\Pi = \{ \underline{010} \}$ then $p^{(t)} \in \mathbb{R}^2, q^{(t)} \in \mathbb{R}$ and
+\[
+Z = p_1^{(t)}( V x^{(t)} )h^{(t)} + p_2^{(t)} ( V x^{(t)} )^2 h^{(t)} + q^{(t)} (Vx^{(t)})(Vx^{(t+1)})(Vx^{(t)})h^{(t)}\,.
+\]
+To be clear, here $(Vx^{(t)}) h^{(t)}$ is a matrix multiplication. This term is identical to those in multiplicative RNNs \cite{??}.
+\end{example}
 
 \begin{remark} If $\mathscr{I} = \mathbb{R}^{n_I}$ and $\mathscr{H} = \mathbb{R}^{n_H}$ then $V \in M_{n_H^2 \times n_I}(\mathbb{R})$. To avoid an explosion of weights due to the large integer $n_H^2$, we can map $\mathscr{I}$ to operators on a subspace of $\mathscr{H}$. This is done by choosing a decomposition $\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{H}_1$ and letting $\rho: \mathscr{H} \lto \mathscr{H}_1, \iota: \mathscr{H}_1 \lto \mathscr{H}$ be respectively be the projection to and inclusion of the subspace $\mathscr{H}_1$. In the evolution equation we use $\iota \den{\lambda_i}( Vx^{(t+1)} )\big( \rho h^{(t)} \big)$ with $\den{\lambda_i}$ now a function $\End_{\mathbb{R}}(\mathscr{H}_1) \lto \End_{\mathbb{R}}(\mathscr{H}_1)$.
 \end{remark}
