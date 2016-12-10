@@ -211,6 +211,34 @@ To be clear, here $(Vx^{(t)}) h^{(t)}$ is a matrix multiplication. This term is 
 \begin{remark} If $\mathscr{I} = \mathbb{R}^{n_I}$ and $\mathscr{H} = \mathbb{R}^{n_H}$ then $V \in M_{n_H^2 \times n_I}(\mathbb{R})$. To avoid an explosion of weights due to the large integer $n_H^2$, we can map $\mathscr{I}$ to operators on a subspace of $\mathscr{H}$. This is done by choosing a decomposition $\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{H}_1$ and letting $\rho: \mathscr{H} \lto \mathscr{H}_1, \iota: \mathscr{H}_1 \lto \mathscr{H}$ be respectively be the projection to and inclusion of the subspace $\mathscr{H}_1$. In the evolution equation we use $\iota \den{\lambda_i}( Vx^{(t+1)} )\big( \rho h^{(t)} \big)$ with $\den{\lambda_i}$ now a function $\End_{\mathbb{R}}(\mathscr{H}_1) \lto \End_{\mathbb{R}}(\mathscr{H}_1)$.
 \end{remark}
 
+\begin{remark} Here we give a comparison to other similar modifications of RNNs:
+\begin{itemize}
+\item The \emph{second-order RNN} \cite{highorderrec,pollack,firstvsecond,secondorder} adds to the evolution equation a vector in $\mathscr{H}$ whose $i$th coordinate is given by the formula
+\be\label{eq:2ndorderrnn}
+\sum_j \sum_k W_{ijk} h^{(t)}_j x^{(t+1)}_k.
+\ee
+That is, $W$ may be interpreted as a tensor in
+\[
+\mathscr{I}^* \otimes \mathscr{H}^* \otimes \mathscr{H} \cong \Hom_{\mathbb{R}}(\mathscr{I} , \End_{\mathbb{R}}(\mathscr{H}))\,,
+\]
+and the term we add to the evolution equation is $W(x^{(t+1)})(h^{(t)})$. Thus the second-order RNN learns a mapping of inputs to operators on its state space. The same equation \eqref{eq:2ndorderrnn} is referred to as the Tensor RNN in \cite{sutskever}.
+
+\item The \emph{multiplicative integation} RNN of \cite{yuhai} has a term
+\be
+H h^{(t)} \odot U x^{(t+1)}
+\ee
+where $\odot$ is the Hadamard product, i.e. the entry-wise product. 
+
+\item The Tensor RNN \cite{sutskever} takes as its intuition the idea a vector in $\mathscr{H}$ whose $i$th coordinate is
+\[
+\sum_j \sum_m (x^{(t+1)})_m W_{ijm} h^{(t)}_j
+\]
+where $W_{hh}^{(1)}, \ldots, W^{(M)}_{hh}$ is a sequence of matrices.
+
+\end{itemize}
+In \cite{yuhai} they claim the second-order RNN is hard to optimise \cite[p.8]{yuhai}, which makes our higher-order terms even scarier.
+\end{remark}
+
 \newpage
 
 \appendix
@@ -321,6 +349,18 @@ I.~Sutskever, J.~Martens and G.~E.~Hinton, \textsl{Generating text with recurren
 
 \bibitem{sutskever2}
 I.~Sutskever, O.~Vinyals and Q.~V.~Le, \textsl{Sequence to sequence learning with neural networks}, Advances in neural information processing systems, 2014.
+
+\bibitem{firstvsecond}
+M.~W.~Goudreau, C.~L.~Giles, S.~T.~Chakradhar and D.~Chen, \textsl{First-order versus second-order single-layer recurrent neural networks}, IEEE Transactions on Neural Networks, 5(3), 511--513, 1994.
+
+\bibitem{secondorder}
+C.~L.~Giles, D.~Chen, C.~B.~Miller, H.~H.~Chen, G.~Z.~Sun, Y.~C.~Lee, \textsl{Second-order recurrent neural networks for grammatical inference}, In Neural Networks, 1991., IJCNN-91-Seattle International Joint Conference on (Vol. 2, pp. 273-281). IEEE.
+
+\bibitem{highorderrec}
+C.~L.~Giles, G.~Z.~Sun, H.~H.~Chen, Y.~C.~Lee, D.~Chen, \textsl{Higher order recurrent networks and grammatical inference}, In NIPS (pp. 380-387) 1989.
+
+\bibitem{pollack}
+J.~B.~Pollack, \textsl{The induction of dynamical recognizers}, Machine Learning, 7(2-3), 227-252 (1991). 
 
 \end{thebibliography}
 
