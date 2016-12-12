@@ -261,29 +261,29 @@ The complexity of an algorithm is rooted in the kind of \emph{iteration} that it
 
 % It is not clear how to make this precise, but it does provide a natural path towards richer augmentations of RNNs, by coupling them to iteration at higher types.
 
-Let $\Lambda = (\lambda_1,\ldots,\lambda_l)$ be a sequence of proofs of $\textbf{int}_\alpha$ and let $\Pi = (\pi_1,\ldots,\pi_k)$ be proofs of $\textbf{bint}_\alpha$. When we say that we allow the RNN controller to call this library of functional programs, what we actually mean is that it can predict a linear combination $p^{(t)}$ of the polynomial programs $\den{\lambda_i}$ to be applied to its internal state, and similarly for the $\pi_i$.
+Let $\Lambda = (\lambda_1,\ldots,\lambda_l)$ be a sequence of proofs of $\textbf{int}_\alpha$ and let $\Pi = (\pi_1,\ldots,\pi_k)$ be proofs of $\textbf{bint}_\alpha$. When we say that we allow the RNN controller to call this library of functional programs, what we actually mean is that it can predict at each time step diagonal matrices $\{p^{(t)}_\lambda\}_{\lambda \in \Lambda}$ and $\{q^{(t)}_\pi\}_{\pi \in \Pi}$ that determine which programs are used.
 
 \begin{definition} The \emph{linear logic} RNN coupled to $\Lambda, \Pi$ has weight matrices $H,U,B$ as in the standard RNN, plus new weights $V, P, Q, C, D, I, J$ and an evolution equation:
 \begin{gather*}
-p^{(t+1)} = \sigma\big( P h^{(t)} + C \big)\,,\\
-q^{(t+1)} = \sigma\big( Q h^{(t)} + D \big)\,,\\
+p^{(t+1)}_\lambda = \sigma\big( P_\lambda h^{(t)} + C_\lambda \big)\,,\\
+q^{(t+1)}_\pi = \sigma\big( Q_\pi h^{(t)} + D_\pi \big)\,,\\
 h^{(t+1)} = \sigma\Big( Z + H h^{(t)} + U x^{(t+1)} + B\Big)
 \end{gather*}
 where
 \begin{align*}
-Z &= \sum_{i=1}^l p^{(t+1)}_i I\den{\lambda_i}( Vx^{(t+1)} )\big( Jh^{(t)} \big) + \sum_{i=1}^k q^{(t+1)}_i I\den{\pi_i}( Vx^{(t)}, Vx^{(t+1)})\big( Jh^{(t)} \big)\,.
+Z &= \sum_{\lambda \in \Lambda} Ip^{(t+1)}_\lambda\den{\lambda}( Vx^{(t+1)} )\big( Jh^{(t)} \big) + \sum_{\pi \in \Pi} Iq^{(t+1)}_\pi\den{\pi}( Vx^{(t)}, Vx^{(t+1)})\big( Jh^{(t)} \big)\,.
 \end{align*}
-The weight matrices $V,I,J$ are interpreted as linear maps as in \eqref{eq:threelinearmaps}, and we follow the multiplicative RNN in assuming that $V$ maps inputs to diagonal matrices. The outputs $y^{(t)}$ of the linear logic RNN are defined by the same equation \eqref{eq:output_rnn} as before.
+The weight matrices $V,I,J$ are interpreted as linear maps as in \eqref{eq:threelinearmaps}, and we follow the multiplicative RNN in assuming that $V$ maps inputs to diagonal matrices. The operators $p^{(t)}_\lambda$ and $q^{(t)}_\pi$ are diagonal matrices in $\End_{\mathbb{R}}(\mathscr{K})$. The outputs $y^{(t)}$ of the linear logic RNN are defined by the same equation \eqref{eq:output_rnn} as before.
 \end{definition}
 
 Note that the RNN evolution equation for $h^{(t+1)}$ involves both the current input $x^{(t+1)}$ and the previous input $x^{(t)}$. We do this in order to allow the RNN to learn local transformations of an input sequence, for instance, the transformation of a sequence $a_0 a_1 a_2 a_3 \cdots$ which swaps every pair of symbols, to get $a_1 a_0 a_3 a_2 \cdots$ might use $\den{\underline{10}}$. More complicated transformations could be learned by adapting the equation to a function of $x^{(i)}, \ldots, x^{(t+1)}$ with a more complicated type than $\textbf{bint}_\alpha$.
 
-\begin{example} If $\Lambda = \{ \underline{1}, \underline{2} \}$ and $\Pi = \{ \underline{010} \}$ then $p^{(t)} \in \mathbb{R}^2, q^{(t)} \in \mathbb{R}$ and
+\begin{example} If $\Lambda = \{ \underline{1}, \underline{2} \}$ and $\Pi = \{ \underline{010} \}$ then
 \begin{align*}
-Z &= p_1^{(t)} I\big( V(x^{(t)})( Jh^{(t)}) \big) + p_2^{(t)} I\big( V(x^{(t)})^2(J h^{(t)}) \big)\\
-&\qquad + q^{(t)} I\Big( \big\{ V(x^{(t)}) \circ V(x^{(t+1)}) \circ V(x^{(t)}) \big\}( J h^{(t)}) \Big)\,.
+Z &= I\big(p_1^{(t)} V(x^{(t)})( Jh^{(t)}) \big) + I\big( p_2^{(t)} V(x^{(t)})^2(J h^{(t)}) \big)\\
+&\qquad + I\Big( q^{(t)}_{010} \big\{ V(x^{(t)}) \circ V(x^{(t+1)}) \circ V(x^{(t)}) \big\}( J h^{(t)}) \Big)\,.
 \end{align*}
-The first summand here is the same as \eqref{eq:new_term_mRNN}, which shows that the linear logic RNN with $\Lambda = \{ \underline{1} \}, \Pi = \emptyset$ and the weight $p^{(t)}_1$ fixed to be $1$, is just the multiplicative RNN of \cite{sutskever}.
+The first summand here is the same as \eqref{eq:new_term_mRNN}, which shows that the linear logic RNN with $\Lambda = \{ \underline{1} \}, \Pi = \emptyset$ and the weight $p^{(t)}_1$ fixed to the identity, is the multiplicative RNN of \cite{sutskever}.
 \end{example}
 
 %\begin{remark} If $\mathscr{I} = \mathbb{R}^{n_I}$ and $\mathscr{H} = \mathbb{R}^{n_H}$ then $V \in M_{n_H^2 \times n_I}(\mathbb{R})$. To avoid an explosion of weights due to the large integer $n_H^2$, we can map $\mathscr{I}$ to operators on a subspace of $\mathscr{H}$. This is done by choosing a decomposition $\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{H}_1$ and letting $\rho: \mathscr{H} \lto \mathscr{H}_1, \iota: \mathscr{H}_1 \lto \mathscr{H}$ be respectively be the projection to and inclusion of the subspace $\mathscr{H}_1$. In the evolution equation we use $\iota \den{\lambda_i}( Vx^{(t+1)} )\big( \rho h^{(t)} \big)$ with $\den{\lambda_i}$ now a function $\End_{\mathbb{R}}(\mathscr{H}_1) \lto \End_{\mathbb{R}}(\mathscr{H}_1)$.
