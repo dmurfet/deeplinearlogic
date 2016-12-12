@@ -110,11 +110,9 @@
 
 \section{Introduction}
 
-An old problem in artificial intelligence is \emph{program induction}: given a set of input-output pairs, the problem is to produce a program which generalises the given pairs. There is a large literature on this problem \cite{??,??} but it has received renewed attention in the past few years due to the advances in deep learning \cite{??,??,??}. The general theme of much of this recent work has been to use an RNN or LSTM controllers coupled to additional computational elements, such as memory or a library of special functions.
+In this paper we investigate a natural approach to the synthesis of functional programming and neural networks, based on semantics of the former in differential categories. We apply this to the problem of \emph{program induction}: given a set of input-output pairs, the problem is to produce a program which generalises the given pairs. There is a large literature on this problem \cite{??,??} but it has received renewed attention in the past few years due to the advances in deep learning \cite{??,??,??}. The general theme of much of this recent work has been to use an RNN or LSTM controllers coupled to additional computational elements, such as memory or a library of special functions. 
 
-Our approach is to augment an RNN controller with a space of functional programs based on the polynomial semantics of intuitionistic linear logic \cite{??}. It is clear in principle that linear logic is well-suited for coupling to neural networks, and the aim of this paper is to demonstrate that in the simplest nontrivial case this coupling is actually of some practical value. % Conceptually, one of the fundamental contributions of linear logic is that it demonstrates how to represent a general class of programs in terms of matrices, and multiplication of matrices.
-
-% Arguably this problem is hard because learning methods are generally continuous, whereas programs (realised as say Turing machines, or $\lambda$-terms, or C programs, etc) are basically discrete. In this paper we initiate a novel two-step approach to the problem. In this first step, we couple a standard recurrent neural network to ``differentiable programmatic components'' which are vectors in a vector space which is the denotation of a type in linear logic. Once the optimisation algorithm has found a good vector representative of programs in this space, we apply the second step, which uses proof search to find a proof in linear logic whose denotation is observationally equivalent to the vector program.
+Our approach is to augment an RNN controller with a library of functional programs using the polynomial semantics of differential linear logic \cite{murfet_logic,murfetclift}. Differential $\lambda$-calculus \cite{difflambda} and the related system of differential linear logic \cite{ehrhard-survey} may be viewed as functional programming languages in which programs naturally admit derivatives. These derivatives exist at both the syntactic and semantic level, and the differential structure of the language is what guarantees that the programs are compatible with backpropagation. The existence of this general theory demonstrates the naturality of our approach, but in the present paper the programs involved are so simple that we will not need to invoke the theory; for more details see Section \ref{section:differential_linear}.
 
 \section{Architecture}
 
@@ -162,7 +160,7 @@ h^{(t+1)} = \sigma\big( V( x^{(t+1)} )(h^{(t)}) + H h^{(t)} + U x^{(t+1)} + B\bi
 with $y^{(t)}, o^{(t)}$ as before.
 \end{definition}
 
-The problem with second-order RNNs is that they may be difficult to train if the state space is large, since $\dim(\End_{\mathbb{R}}(\mathscr{H})) = \dim(\mathscr{H})^2$. The \emph{multiplicative RNN} is introduced in \cite{sutskever} as a more tractable model: the central idea is the same, but an auxiliary space $\mathscr{K}$ is introduced and the RNN learns three linear maps
+The problem with second-order RNNs is that they may be difficult to train if the state space is large, since $\dim(\End_{\mathbb{R}}(\mathscr{H})) = \dim(\mathscr{H})^2$. The \emph{multiplicative RNN} is introduced in \cite{sutskever} as a more tractable model. The central idea is the same, but an auxiliary space $\mathscr{K}$ is introduced and the RNN learns three linear maps
 \be\label{eq:threelinearmaps}
 V: \mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{K})\,, \quad I: \mathscr{K} \lto \mathscr{H}\,, \quad J: \mathscr{H} \lto \mathscr{K}\,.
 \ee
@@ -185,10 +183,10 @@ The relevance of this ``compositionality'' to NLP is remarked on in \cite{irsoy}
 
 In order to improve the expressive strength of an RNN, that is, allow it to approximate more complex functions from sequences of input symbols to sequences of output symbols, a natural idea is to provide a library of functional programs that can be ``called'' at each time step. The main problem lies in arranging for these programs to be differentiable, so that gradients can be backpropagated through them at training time.
 
-The natural solution is to have an abstract, symbolic \emph{source} language in which the relevant functional programs can be written, together with a concrete, differentiable \emph{target} category in which the programs can be interpreted. This interpretation should respect the structure of the functional programs: for example, composition or plugging of programs should be interpreted as composition of differentiable maps. The purpose of the source language is to ensure expressive strength, that is, to provide a library of differentiable maps sufficiently rich to encode nontrivial symbolic transformations. The purpose of the target category is to facilitate a straightforward coupling into the RNN.
+One natural approach is to have an abstract, symbolic \emph{source} language in which the relevant functional programs can be written, together with a concrete, differentiable \emph{target} category in which the programs can be interpreted. This interpretation should respect the structure of the functional programs: for example, composition or plugging of programs should be interpreted as composition of differentiable maps. The purpose of the source language is to ensure expressive strength, that is, to provide a library of differentiable maps sufficiently rich to encode nontrivial symbolic transformations. The purpose of the target category is to facilitate a straightforward coupling into the RNN.
 \\
 
-A natural candidate for the source language is linear logic \cite{girard} which is known to have denotational semantics in differentiable maps \cite{??,??}. We use the particular semantics developed in \cite{murfet_logic,murfet_coalg}. The second-order RNN encourages us to view symbols as operators on a vector space, and this aligns very well with the intuition provided by linear logic.
+A candidate for the source language is linear logic \cite{girard} which has denotational semantics in differentiable maps \cite{ehrhard-survey}. We use the particular semantics developed in \cite{murfet_logic,murfet_coalg,murfetclift}. The second-order RNN encourages us to view symbols as operators on a vector space, and this aligns very well with the intuition provided by linear logic.
 
 The \emph{types} of intuitionistic linear logic (ILL) are built from atomic variables $\alpha, \beta, \ldots$ by applying binary connectives $\otimes, \multimap$ (tensor, Hom) and a unary connective ${!}$ (called bang). For example, for any type $A$ we have the types
 \begin{gather*}
@@ -199,12 +197,12 @@ respectively of integers on $A$, and binary integers on $A$. The semantics will 
 
 A program $\pi$ of type $M$, written $\pi : M$, is built from atomic pieces by rules that we will not explain here. The simplest rule is composition or \emph{plugging}: given programs $M : \alpha \multimap \beta$ and $N: \beta \multimap \gamma$ we have a combined program $N M: \alpha \multimap \gamma$. A program of type ${!} A \multimap B$ takes inputs of type $A$ and returns outputs of type $B$. The same is true of a program of type $A \multimap B$ but in addition it satisfies a \emph{linearity constraint} in that it uses its input \emph{precisely once}. So the ${!}$ connective marks inputs that may be reused freely (or not used at all). All inputs and outputs are themselves programs of the appropriate type.
 
-\begin{example} A program $\pi$ of type $\textbf{int}_A$ takes an input $M$ of type $A \multimap A$ that may be used non-linearly, and outputs a program of type $A \multimap A$. For each integer $n \ge 0$ there is a program $\underline{n} : \textbf{int}_A$ called the $n$th \emph{Church numeral}, with the property that it maps an input $M$ to the $n$-fold repetition $M^n$ \cite{??}.
+\begin{example} A program $\pi$ of type $\textbf{int}_A$ takes an input $M$ of type $A \multimap A$ that may be used non-linearly, and outputs a program of type $A \multimap A$. For each integer $n \ge 0$ there is a program $\underline{n} : \textbf{int}_A$ called the $n$th \emph{Church numeral}, with the property that it maps an input $M$ to the $n$-fold repetition $M^n$.
 
 The Church numeral is an \emph{iterator} (something like a \emph{for} loop in imperative programming) which takes a program $M$ and iterates it $n$ times.
 \end{example}
 
-\begin{example} A program $\pi$ of type $\textbf{bint}_\alpha$ maps an input of type $\alpha \multimap \alpha$ to a program of type $\textbf{int}_\alpha = {!}(\alpha \multimap \alpha) \multimap (\alpha \multimap \alpha)$. So, given two programs $M,N$ of type $\alpha \multimap \alpha$, we can apply the output $\rho$ of $\pi$ on $M$ to $N$, to get a program of type $\rho( N ) = \pi(M)(N) : \alpha \multimap \alpha$. 
+\begin{example} A program $\pi$ of type $\textbf{bint}_\alpha$ maps an input of type $\alpha \multimap \alpha$ to a program of type $\textbf{int}_\alpha = {!}(\alpha \multimap \alpha) \multimap (\alpha \multimap \alpha)$. So, given two programs $M,N$ of type $\alpha \multimap \alpha$, we can apply the output $\pi(M)$ to $N$, to get a program of type $\pi(M)(N) : \alpha \multimap \alpha$. 
 
 Given a binary sequence $S \in \{0,1\}^*$ there is a program $\underline{S} : \textbf{bint}_\alpha$ with the property that it maps an input pair $(M,N)$ to the program which intertwines copies of $M,N$ according to $S$. For example, $\underline{01101}$ sends $(M,N)$ to the program $M N N M N$.
 \end{example}
@@ -295,7 +293,11 @@ The first summand here is the same as \eqref{eq:new_term_mRNN}, which shows that
 \begin{remark} Although intuitionistic linear logic is a weak system in terms of expressive strength, this is not a problem in the current context, since the difficulty of training the RNN with polynomial functions of high degree makes it infeasible to make use of even this much ``strength''. Eventually it would be interesting to come up with differentiable semantics for second-order logic and try to use this to improve the generalisation ability of neural networks, but we do not currently see how to do this.
 \end{remark}
 
-\newpage
+\subsection{Differential linear logic}\label{section:differential_linear}
+
+In functional programming languages like differential $\lambda$-calculus \cite{difflambda} and differential linear logic \cite{ehrhard-survey} it is possible to differentiate programs with respect to their inputs, even if the programs are higher-order (that is, take functions as input and return them as output). 
+
+This is not as exotic as it might sound: it is a generalisation of automatic differentiation \cite{griewank} which is widely used to compute derivatives of complicated real-valued functions, for example in the backpropagation algorithms of machine learning packages like TensorFlow \cite[\S 4.1]{tensorflow}. The idea is to augment every computation in a code fragment so that derivatives with respect to a chosen variable are computed along with the main result. In TensorFlow this is done by adding special nodes in the dataflow graph.\footnote{See the ``gradients'' method of tensorflow/python/ops/gradients.py in TensorFlow 0.10} The idea of differential $\lambda$-calculus is similar, but more complex \cite{manzyuk}. It would be interesting to explore augmenting the dataflow graph of TensorFlow directly with terms of differential linear logic, in a way that generalises the coupling between semantics and RNNs in this paper.
 
 \appendix
 
@@ -398,6 +400,27 @@ M.~Balog, A.~L.~Gaunt, M.~Brockschmidt, S.~Nowozin and D.~Tarlow, \textsl{DeepCo
 
 \bibitem{ntp}
 T.~Rockt\"aschel and S.~Riedel, \textsl{Learning Knowledge Base Inference with Neural Theorem Provers}, In NAACL Workshop on Automated Knowledge Base Construction (AKBC) 2016.
+
+\bibitem{ehrhard-survey}
+T.~Ehrhard, \textsl{An introduction to Differential Linear Logic: proof-nets, models and antiderivatives}, \href{https://arxiv.org/abs/1606.01642}{[arXiv:1606.01642]} (2016).
+
+\bibitem{murfetclift}
+J.~Clift and D.~Murfet, \textsl{The Sweedler semantics is a natural model of differential linear logic}, preprint.
+
+\bibitem{tensorflow}
+Abadi, Martín, et al. \textsl{TensorFlow: A system for large-scale machine learning} arXiv preprint arXiv:1605.08695 (2016).
+
+\bibitem{tensorflow2}
+Abadi, Martın, et al. \textsl{Tensorflow: Large-scale machine learning on heterogeneous distributed systems}, arXiv preprint arXiv:1603.04467 (2016).
+
+\bibitem{griewank}
+A.~Griewank and A.~Walther, \textsl{Evaluating derivatives: principles and techniques of algorithmic differentiation}, Siam (2008).
+
+\bibitem{difflambda}
+T.~Ehrhard and L.~Regnier, \textsl{The differential $\lambda$-calculus}, Theoretical Computer Science 309, pp. 1--41, (2003).
+
+\bibitem{manzyuk}
+O.~Manzyuk, \textsl{A simply typed $\lambda$-calculus of forward automatic differentiation}, In Mathematical Foundations of Programming Semantics Twenty-eighth Annual Conference, pages 259--73, Bath, UK, June 6–9 2012. \href{http://dauns.math.tulane.edu/~mfps/mfps28proc.pdf}{[URL]}.
 
 \end{thebibliography}
 
