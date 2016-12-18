@@ -237,7 +237,7 @@ For every binary sequence $S \in \{0,1\}^*$ the denotation $\den{\underline{S}}$
 \]
 \end{example}
 
-The idea of the second-order RNN is to view the input and output symbols as linear operators on a vector space $\mathscr{K}$ (which, following the idea of the multiplicative RNN, we take as possibly different from the hidden state space $\mathscr{H}$). Linear logic gives us a source language in which to create programs, whose denotations are differentiable maps taking linear operators as input and providing linear operators as output. This map from input to output may not itself be linear, as the above examples show. It is these ``differentiable'' shadows of symbolic transformations in linear logic that we will couple to the RNN.
+The idea of the second-order RNN is to view the input and output symbols as linear operators on a vector space $\mathscr{K}$ (which, following the idea of the multiplicative RNN, we take as possibly different from the hidden state space $\mathscr{H}$). Linear logic gives us a source language in which to create programs, whose denotations are differentiable maps taking linear operators as input and providing linear operators as output. This map from input to output may not itself be linear, as the above examples show. It is these differentiable shadows of symbolic transformations in linear logic that we will couple to the RNN.
 \vspace{0.2cm}
 
 Let us conclude with an example involving more complicated types:
@@ -271,10 +271,10 @@ where
 \begin{align*}
 Z &= \sum_{\lambda \in \Lambda} Ip^{(t+1)}_\lambda\den{\lambda}( Vx^{(t+1)} )\big( Jh^{(t)} \big) + \sum_{\pi \in \Pi} Iq^{(t+1)}_\pi\den{\pi}( Vx^{(t)}, Vx^{(t+1)})\big( Jh^{(t)} \big)\,.
 \end{align*}
-The weight matrices $V,I,J$ are interpreted as linear maps as in \eqref{eq:threelinearmaps}, and we follow the multiplicative RNN in assuming that $V$ maps inputs to diagonal matrices. The operators $p^{(t)}_\lambda$ and $q^{(t)}_\pi$ are diagonal matrices in $\End_{\mathbb{R}}(\mathscr{K})$. The outputs $y^{(t)}$ of the linear logic RNN are defined by the same equation \eqref{eq:output_rnn} as before.
+The weight matrices $V,I,J$ are interpreted as linear maps as in \eqref{eq:threelinearmaps}. The operators $p^{(t)}_\lambda$ and $q^{(t)}_\pi$ are diagonal matrices in $\End_{\mathbb{R}}(\mathscr{K})$. The outputs $y^{(t)}$ of the linear logic RNN are defined by the same equation \eqref{eq:output_rnn} as before.
 \end{definition}
 
-Note that the RNN evolution equation for $h^{(t+1)}$ involves both the current input $x^{(t+1)}$ and the previous input $x^{(t)}$. We do this in order to allow the RNN to learn local transformations of an input sequence, for instance, the transformation of a sequence $a_0 a_1 a_2 a_3 \cdots$ which swaps every pair of symbols, to get $a_1 a_0 a_3 a_2 \cdots$ might use $\den{\underline{10}}$. More complicated transformations could be learned by adapting the equation to a function of $x^{(i)}, \ldots, x^{(t+1)}$ with a more complicated type than $\textbf{bint}_\alpha$.
+Note that the RNN evolution equation for $h^{(t+1)}$ involves both the current input $x^{(t+1)}$ and the previous input $x^{(t)}$. We do this in order to allow the RNN to learn local transformations of an input sequence. % for instance, the transformation of a sequence $a_0 a_1 a_2 a_3 \cdots$ which swaps every pair of symbols, to get $a_1 a_0 a_3 a_2 \cdots$ might use $\den{\underline{10}}$. More complicated transformations could be learned by adapting the equation to a function of $x^{(i)}, \ldots, x^{(t+1)}$ with a more complicated type than $\textbf{bint}_\alpha$.
 
 \begin{example} If $\Lambda = \{ \underline{1}, \underline{2} \}$ and $\Pi = \{ \underline{010} \}$ then
 \begin{align*}
@@ -284,13 +284,21 @@ Z &= I\big(p_1^{(t)} V(x^{(t)})( Jh^{(t)}) \big) + I\big( p_2^{(t)} V(x^{(t)})^2
 The first summand here is the same as \eqref{eq:new_term_mRNN}, which shows that the linear logic RNN with $\Lambda = \{ \underline{1} \}, \Pi = \emptyset$ and the weight $p^{(t)}_1$ fixed to the identity, is the multiplicative RNN of \cite{sutskever}.
 \end{example}
 
+\begin{remark} To avoid too many weights and thus slow training, we follow the multiplicative RNN in assuming that $V$ maps inputs to diagonal matrices. But the whole point of adding the ability to call programs from $\Pi$ is that binary integers intertwine $V(x^{(t)})$ and $V(x^{(t+1)})$ in some useful way, which is compromised if these two matrices commute with one another.
+
+So in practice we have two auxiliary spaces $\mathscr{K}_1,\mathscr{K}_2$ and two sets of weights $V_i,I_i,J_i$. The index $i = 1$ corresponds to $\Lambda$, and $V_1: \mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{K}_1)$ factors through the subspace of matrices diagonal in a chosen basis. The map $V_2$ is not restricted in this way, but to compensate we take $\dim(\mathscr{K}_2) < \dim(\mathscr{K}_1)$.
+\end{remark}
+
 %\begin{remark} If $\mathscr{I} = \mathbb{R}^{n_I}$ and $\mathscr{H} = \mathbb{R}^{n_H}$ then $V \in M_{n_H^2 \times n_I}(\mathbb{R})$. To avoid an explosion of weights due to the large integer $n_H^2$, we can map $\mathscr{I}$ to operators on a subspace of $\mathscr{H}$. This is done by choosing a decomposition $\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{H}_1$ and letting $\rho: \mathscr{H} \lto \mathscr{H}_1, \iota: \mathscr{H}_1 \lto \mathscr{H}$ be respectively be the projection to and inclusion of the subspace $\mathscr{H}_1$. In the evolution equation we use $\iota \den{\lambda_i}( Vx^{(t+1)} )\big( \rho h^{(t)} \big)$ with $\den{\lambda_i}$ now a function $\End_{\mathbb{R}}(\mathscr{H}_1) \lto \End_{\mathbb{R}}(\mathscr{H}_1)$.
 %\end{remark}
 
 \begin{remark} A more powerful system would substitute a neural theorem prover along the lines of \cite{alemi,ntp} in place of the library of functional programs $\Pi, \Lambda$. At each time step the RNN controller would predict a continuous vector, which when fed into the neural theorem prover as a set of parameters, generates a symbolic program whose denotation is then coupled back into the RNN \cite{tarlow}.
 \end{remark}
 
-\begin{remark} Although intuitionistic linear logic is a weak system in terms of expressive strength, this is not a problem in the current context, since the difficulty of training the RNN with polynomial functions of high degree makes it infeasible to make use of even this much ``strength''. Eventually it would be interesting to come up with differentiable semantics for second-order logic and try to use this to improve the generalisation ability of neural networks, but we do not currently see how to do this.
+\begin{remark} Although intuitionistic linear logic is a weak system in terms of expressive strength the difficulty of training the RNN with polynomial functions of high degree makes it infeasible to make use of even this much strength. It would, however, be very interesting to define differentiable semantics for second-order logic and try to use this to improve the generalisation ability of neural networks.
+\end{remark}
+
+\begin{remark} Restricting ourselves to the $\textbf{int}_\alpha$ augmentation for the moment, let us discuss what kind of functions $f: \{0,1\}^* \lto \{0,1\}^*$ we would expect that it would be easier for the LLRNN to learn (all other things being equal) compared to an ordinary RNN. The LLRNN has the ability to predict, using its internal state, how many times to iterate the input-derived operator that is to be applied to the hidden state. Thus a function $f$ which, for instance, sends $0$s to $1$ unless they are preceded by a $0$ in which case they go to $0$, should be helped.
 \end{remark}
 
 \subsection{Differential linear logic}\label{section:differential_linear}
