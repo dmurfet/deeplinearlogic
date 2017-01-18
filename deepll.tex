@@ -4,6 +4,7 @@
 \usepackage{bussproofs}
 \usepackage{amsmath, amscd, amssymb, mathrsfs, accents, amsfonts,amsthm}
 \usepackage[all]{xy}
+\usepackage{mathtools}
 \usepackage{dsfont}
 \usepackage{tikz}
 \def\nicedashedcolourscheme{\shadedraw[top color=blue!22, bottom color=blue!22, draw=gray, dashed]}
@@ -102,6 +103,15 @@
 \def\l{\,|\,}
 \def\sgn{\textup{sgn}}
 \newcommand{\den}[1]{\llbracket #1 \rrbracket}
+\def\inta{\textbf{int}}
+\def\binta{\textbf{bint}}
+\def\comp{\underline{\textup{comp}}}
+\def\mult{\underline{\textup{mult}}}
+\def\repeat{\underline{\textup{repeat}}}
+\def\master{\underline{\textup{master}}}
+
+\DeclarePairedDelimiter\bra{\langle}{\rvert}
+\DeclarePairedDelimiter\ket{\lvert}{\rangle}
 
 \title{Linear logic and recurrent neural networks}
 \author{Huiyi Hu, Daniel Murfet}
@@ -110,9 +120,14 @@
 
 \section{Introduction}
 
-In this paper we investigate a natural approach to the synthesis of functional programming and neural networks, based on semantics of the former in differential categories. We apply this to the problem of \emph{program induction}: given a set of input-output pairs, the problem is to produce a program which generalises the given pairs. There is a large literature on this problem \cite{??,??} but it has received renewed attention in the past few years due to the advances in deep learning \cite{??,??,??}. The general theme of much of this recent work has been to use an RNN or LSTM controllers coupled to additional computational elements, such as memory or a library of special functions. 
+In recent years deep neural networks have proven to be proficient at learning hierarchical vector representations of natural data, including images and language \cite{dlnature}. If we follow Leibniz \cite{frege} in believing that reasoning is the algebraic manipulation of such representations or ``symbols" then it is natural to look for systems which augment the capacity of neural networks for performing these kinds of manipulations. There are by now numerous proposals for how to achieve this, including neural Turing machines \cite{ntm}, stack-augmented recurrent neural networks \cite{joulin} and others \cite{graves_etal, grefen, weston, tarlow}. In this paper we investigate a new conceptual approach, based on the Curry-Howard isomorphism and linear logic.
 
-Our approach is to augment an RNN controller with a library of functional programs using the polynomial semantics of differential linear logic \cite{murfet_logic,murfetclift}. Differential $\lambda$-calculus \cite{difflambda} and the related system of differential linear logic \cite{ehrhard-survey} may be viewed as functional programming languages in which programs naturally admit derivatives. These derivatives exist at both the syntactic and semantic level, and the differential structure of the language is what guarantees that the programs are compatible with backpropagation. The existence of this general theory demonstrates the naturality of our approach, but in the present paper the programs involved are so simple that we will not need to invoke the theory; for more details see Section \ref{section:differential_linear}.
+The Curry-Howard isomorphism \cite{sorensen} gives a bijection between a prototypical system of formal reasoning (Gentzen's natural deduction) and a prototypical algorithmic system (Church's simply-typed lambda calculus). For this reason the lambda calculus and derivative languages such as LISP have played an important role in the symbolic approach to reasoning in the modern field of artificial intelligence. While these methods may have been overshadowed in recent decades by the rise of the connectionist approach, now called deep learning, it has been argued that a synthesis of the two approaches is necessary to achieve general reasoning in a connectionist system \cite{minsky}. The main obstacle to this synthesis is the discrepancy between the discrete symbolic nature of natural deduction, or equivalently lambda calculus, and the differentiable nature of neural networks. One way to overcome this obstacle is to augment a neural network not directly with symbolic logic, but rather with a \emph{differentiable model} of logic; and the most natural way to construct such a model is not to work directly with simply-typed lambda calculus but rather with a refinement due to Girard known as linear logic \cite{girard} which has a canonical model (called a denotational semantics) in differentiable maps between vector spaces \cite{ehrhard-survey,blutecon,murfetclift}. 
+\\
+
+We demonstrate one concrete realisation of these ideas in the form of an recurrent neural network (RNN) controller \cite{elman} which predicts at time $t$ a linear combination of denotations of linear logic programs (or proofs) to be applied to vectors which are themselves predicted from the hidden state of the RNN at time $t-1$ and the input symbol at time $t$. The output of the linear logic program is a linear operator, which is applied to the hidden state at time $t-1$ to generate a vector which is then added to the usual update equation of the RNN. This architecture borrows its basic features from various sources, including the second-order RNN \cite{joulin}, neural machine translation system \cite{??}, matrix-vector models in natural language processing \cite{??} and the multiplicative RNN \cite{??}. We apply it to the classical problem \cite{??} of approximating a function $f: A^* \lto A^*$ of sequences in some alphabet $A$.
+
+% Our approach is to augment an RNN controller with a library of functional programs using the polynomial semantics of differential linear logic \cite{murfet_ll,murfetclift}. Differential $\lambda$-calculus \cite{difflambda} and the related system of differential linear logic \cite{ehrhard-survey} may be viewed as functional programming languages in which programs naturally admit derivatives. These derivatives exist at both the syntactic and semantic level, and the differential structure of the language is what guarantees that the programs are compatible with backpropagation. The existence of this general theory demonstrates the naturality of our approach, but in the present paper the programs involved are so simple that we will not need to invoke the theory; for more details see Section \ref{section:differential_linear}.
 
 \section{Architecture}
 
@@ -179,135 +194,270 @@ V(x')(h^{(t)}) &= V(x')\big( V(x)(h^{(t-1)}) + \cdots)\\
 The relevance of this ``compositionality'' to NLP is remarked on in \cite{irsoy}.
 \end{remark}
 
-\subsection{Linear logic}
 
-In order to improve the expressive strength of an RNN, that is, allow it to approximate more complex functions from sequences of input symbols to sequences of output symbols, a natural idea is to provide a library of functional programs that can be ``called'' at each time step. The main problem lies in arranging for these programs to be differentiable, so that gradients can be backpropagated through them at training time.
+\subsection{The linear logic RNN}
 
-One natural approach is to have an abstract, symbolic \emph{source} language in which the relevant functional programs can be written, together with a concrete, differentiable \emph{target} category in which the programs can be interpreted. This interpretation should respect the structure of the functional programs: for example, composition or plugging of programs should be interpreted as composition of differentiable maps. The purpose of the source language is to ensure expressive strength, that is, to provide a library of differentiable maps sufficiently rich to encode nontrivial symbolic transformations. The purpose of the target category is to facilitate a straightforward coupling into the RNN.
-\\
+At each time step the second-order RNN generates from its input a linear operator which is applied to to the hidden state. The Linear Logic Recurrent Neural Network (LLRNN) generalises this by generating at each time step a sequence of \emph{commands} (which are linear combinations of denotations of linear logic programs) which are applied to a sequence of \emph{input operators} by a fixed \emph{master algorithm}. The commands depend only on the previous hidden state, while the input operators depend only on the inputs $x^{(t+1)}, x^{(t)}, \ldots, x^{(t-s+2)}$ for some \emph{window length} $s$.
 
-A candidate for the source language is linear logic \cite{girard} which has denotational semantics in differentiable maps \cite{ehrhard-survey}. We use the particular semantics developed in \cite{murfet_logic,murfet_coalg,murfetclift}. The second-order RNN encourages us to view symbols as operators on a vector space, and this aligns very well with the intuition provided by linear logic.
+We refer to \cite{murfet_ll,murfetclift} for reviews of the relevant parts of linear logic, and the proof that proof denotations give smooth maps. Recall that the \emph{types} of intuitionistic linear logic are built from atomic variables via binary connectives $\otimes, \multimap$ (tensor, Hom) and a unary connective ${!}$ (called bang). The denotational semantics $\den{-}$ of linear logic in the category $\cat{V}$ of vector spaces from \cite[\S 5.1, \S 5.3]{murfet_ll} is defined as follows: for a variable $x$ the denotation $\den{x}$ is a chosen finite-dimensional vector space, and
+\begin{align*}
+\den{A \multimap B} &= \Hom_k(\den{A},\den{B})\,,\\
+\den{A \otimes B} &= \den{A} \otimes \den{B}\,,\\
+\den{{!}A} &= {!} \den{A}\,,
+\end{align*}
+where ${!} V$ denotes the universal cocommutative counital coalgebra mapping to $V$. For any proof $\pi$ of type $A$ the denotation is a vector $\den{\pi} \in \den{A}$. Moreover to a proof $\pi$ of type ${!} A \multimap B$ we naturally associate \cite[Definition 5.10]{murfet_ll} a function $\den{\pi}_{nl}: \den{A} \lto \den{B}$.
 
-The \emph{types} of intuitionistic linear logic (ILL) are built from atomic variables $\alpha, \beta, \ldots$ by applying binary connectives $\otimes, \multimap$ (tensor, Hom) and a unary connective ${!}$ (called bang). For example, for any type $A$ we have the types
+\begin{definition} The Linear Logic Recurrent Neural Network (LLRNN) is determined by the following data:
+\begin{itemize}
+\item types $P_1,\ldots,P_r$ called the \emph{command types};
+\item types $B_1,\ldots,B_s$, called the \emph{input types};
+\item a type $A$ with $\den{A} = \mathscr{H}$, the hidden state space;
+\item a proof $\underline{\mathrm{master}}$ of the sequent
+\be
+{!} P_1, \ldots, \, {!}P_r,\, {!}(B_1 \multimap B_1), \ldots,\, {!}(B_s \multimap B_s) \vdash A \multimap A\,.
+\ee
+\item Finite-dimensional subspaces for $1 \le i \le r$ and $1 \le j \le s$
+\be
+\mathscr{P}_i \subseteq \den{P_i}\,, \quad \mathscr{B}_j \subseteq \den{B_j \multimap B_j} = \End_{\mathbb{R}}(\den{B_j})
+\ee
+which are spanned by the denotations of linear logic proofs. We refer to the elements of $\mathscr{P}_i$ as \emph{command vectors} and elements of $\mathscr{B_j}$ as \emph{input operators}.
+\end{itemize}
+\end{definition}
+From this data we obtain the function
+\be
+\den{\underline{\mathrm{master}}}_{nl}: \mathscr{P}_1 \times \cdots \times \mathscr{P}_r \times \mathscr{B}_1 \times \cdots \times \mathscr{B}_s \lto \End_{\mathbb{R}}(\mathscr{H})
+\ee
+by restriction. At each time step the RNN will generate from the hidden state a sequence of command vectors, and from the current and previous inputs a sequence of input operators. This is done via weight matrices $\{W_i\}_{1 \le i \le r}$ and $\{V_j\}_{1 \le j \le s}$ which determine linear maps
+\begin{align*}
+W_i: \mathscr{H} \lto \mathscr{P}_i, \qquad
+V_j: \mathscr{I} \lto \mathscr{B}_j\,.
+\end{align*}
+Finally, the evolution equation is given by
+\be
+h^{(t+1)} = \sigma\Big( Z + H h^{(t)} + U x^{(t+1)} + B\Big)
+\ee
+where the new term $Z$ is
+\begin{align*}
+Z &= \den{\underline{\mathrm{master}}}_{nl}\Big( W_1(h^{(t)}), \ldots, W_r(h^{(t)}), V_1(x^{(t+1)}), V_2(x^{(t)}), \ldots, V_s(x^{(t-s+2)})\Big)(h^{(t)})\,.
+\end{align*}
+
+The fundamental fact which makes this model reasonable is the following:
+
+\begin{proposition} The function $\den{\master}_{nl}$ is smooth.
+\end{proposition}
+\begin{proof}
+This follows from the hypothesis that $\mathscr{P}_i, \mathscr{B}_j$ are generated by denotations of linear logic proofs, and the smoothness of these denotations \cite{murfetclift}.
+\end{proof}
+
+Moreover, the derivatives of $\den{\master}_{nl}$ can be computed symbolically using the cut-elimination algorithm of differential linear logic, and it is therefore feasible to implement a general LLRNN in a software package like TensorFlow. 
+
+As defined the LLRNN is a class of models, depending on the choices of the command and input types, the master algorithm, and the spaces of command vectors and input operators. We will now give several examples of LLRNN models defined by various choices of these parameters. For an introduction to linear logic see \cite{prooftypes, murfet_ll} and for more details on the following examples see \cite[\S 3]{murfetclift}. The types we will use are
 \begin{gather*}
 \textbf{int}_A = {!}(A \multimap A) \multimap (A \multimap A)\,,\\
 \textbf{bint}_A = {!}(A \multimap A) \multimap \big({!}(A \multimap A) \multimap (A \multimap A)\big)\,,
 \end{gather*}
-respectively of integers on $A$, and binary integers on $A$. The semantics will map $A$ to a vector space, and $A \multimap A$ to the space of linear operators on that vector space.
+called respectively the types of \emph{integers} on $A$, and \emph{binary integers} on $A$. 
 
-A program $\pi$ of type $M$, written $\pi : M$, is built from atomic pieces by rules that we will not explain here. The simplest rule is composition or \emph{plugging}: given programs $M : \alpha \multimap \beta$ and $N: \beta \multimap \gamma$ we have a combined program $N M: \alpha \multimap \gamma$. A program of type ${!} A \multimap B$ takes inputs of type $A$ and returns outputs of type $B$. The same is true of a program of type $A \multimap B$ but in addition it satisfies a \emph{linearity constraint} in that it uses its input \emph{precisely once}. So the ${!}$ connective marks inputs that may be reused freely (or not used at all). All inputs and outputs are themselves programs of the appropriate type.
-
-\begin{example} A program $\pi$ of type $\textbf{int}_A$ takes an input $M$ of type $A \multimap A$ that may be used non-linearly, and outputs a program of type $A \multimap A$. For each integer $n \ge 0$ there is a program $\underline{n} : \textbf{int}_A$ called the $n$th \emph{Church numeral}, with the property that it maps an input $M$ to the $n$-fold repetition $M^n$.
-
-The Church numeral is an \emph{iterator} (something like a \emph{for} loop in imperative programming) which takes a program $M$ and iterates it $n$ times.
+\begin{example}\label{example_1} The denotation of a proof $\pi$ of type $\textbf{int}_A$ is a function
+\[
+\den{\pi}_{nl}: \End_{\mathbb{R}}(\den{A}) \lto \End_{\mathbb{R}}(\den{A})
+\]
+which is a polynomial function of the entries of the input matrix. For example, with $\underline{n}$ for $n \ge 0$ the Church numeral of type $\inta_A$, we have $\den{\underline{n}}_{nl}(X) = X^n$. %To be clear, writing $\mathscr{K} = \mathbb{R}^{n_H}$ and identifying $\End_{\mathbb{R}}(\mathscr{K})$ with the space of matrices $M_{n_H}(\mathbb{R})$, the denotation of any proof of $\textbf{int}_\alpha$ will be a function $\den{\pi}(X)_{ij}: M_{n_H}(\mathbb{R}) \lto \mathbb{R}$ which is a polynomial in the entries $X_{kl}$ for $1 \le i, j \le n_H$.
 \end{example}
 
-\begin{example} A program $\pi$ of type $\textbf{bint}_\alpha$ maps an input of type $\alpha \multimap \alpha$ to a program of type $\textbf{int}_\alpha = {!}(\alpha \multimap \alpha) \multimap (\alpha \multimap \alpha)$. So, given two programs $M,N$ of type $\alpha \multimap \alpha$, we can apply the output $\pi(M)$ to $N$, to get a program of type $\pi(M)(N) : \alpha \multimap \alpha$. 
-
-Given a binary sequence $S \in \{0,1\}^*$ there is a program $\underline{S} : \textbf{bint}_\alpha$ with the property that it maps an input pair $(M,N)$ to the program which intertwines copies of $M,N$ according to $S$. For example, $\underline{01101}$ sends $(M,N)$ to the program $M N N M N$.
-\end{example}
-
-% Like the simply-typed $\lambda$-calculus which it refines, linear logic is a ``higher-order'' functional programming language. It is a rather weak language, but this is not a concern for the present purpose (see Remark \ref{??}).
-
-A \emph{denotational semantics} of this language selects for each type $A$ some mathematical object $\den{A}$ and for a program of type $A \multimap B$ a transformation $\den{A} \lto \den{B}$ \cite{mellies}. The precise kind of mathematical object, and transformations between them, is determined by the kind of category we take as the target of the semantics. In this paper we use the Sweedler semantics in vector spaces of \cite{murfet_logic,murfet_coalg} and the polynomial semantics which refines it. We will not give the details, since we only need a small number of examples.
-
-Starting with an atomic type $\alpha$ whose denotation $\den{A} = \mathscr{K}$ is some finite-dimensional vector space over $\mathbb{R}$, we have
-\begin{align*}
-\den{A \multimap A} = \Hom_{\mathbb{R}}( \den{A}, \den{A} ) = \End_{\mathbb{R}}(\mathscr{K})\,.
-\end{align*}
-
-\begin{example}\label{example_1} The denotation of a proof $\pi$ of type $\textbf{int}_\alpha$ is a function
+\begin{example}\label{example_2} The denotation of a proof $\pi$ of type $\textbf{bint}_A$ is a polynomial function
 \[
-\den{\pi}: \End_{\mathbb{R}}(\mathscr{K}) \lto \End_{\mathbb{R}}(\mathscr{K})
+\den{\pi}_{nl}: \End_{\mathbb{R}}(\den{A}) \times \End_{\mathbb{R}}(\den{A}) \lto \End_{\mathbb{R}}(\den{A})\,.
 \]
-which is a polynomial function of the entries of the input matrix. For example,
+For every binary sequence $S \in \{0,1\}^*$ the denotation $\den{\underline{S}}$ sends a pair of matrices $X,Y$ to the product described by $S$, reading $X$ for $0$ and $Y$ for $1$ in reverse order. For example,
 \[
-\den{\underline{n}}(X) = X^n\,.
-\]
-To be clear, writing $\mathscr{K} = \mathbb{R}^{n_H}$ and identifying $\End_{\mathbb{R}}(\mathscr{K})$ with the space of matrices $M_{n_H}(\mathbb{R})$, the denotation of any proof of $\textbf{int}_\alpha$ will be a function $\den{\pi}(X)_{ij}: M_{n_H}(\mathbb{R}) \lto \mathbb{R}$ which is a polynomial in the entries $X_{kl}$ for $1 \le i, j \le n_H$.
-\end{example}
-
-\begin{example}\label{example_2} The denotation of a proof $\pi$ of type $\textbf{bint}_\alpha$ is a polynomial function
-\[
-\den{\pi}: \End_{\mathbb{R}}(\mathscr{K}) \times \End_{\mathbb{R}}(\mathscr{K}) \lto \End_{\mathbb{R}}(\mathscr{K})\,.
-\]
-For every binary sequence $S \in \{0,1\}^*$ the denotation $\den{\underline{S}}$ sends a pair of matrices $X,Y$ to the product described by $S$, reading $X$ for $0$ and $Y$ for $1$. For example,
-\[
-\den{\underline{01101}}(X,Y) = X Y Y X Y\,.
+\den{\underline{01101}}(X,Y) = Y X Y Y X\,.
 \]
 \end{example}
 
-The idea of the second-order RNN is to view the input and output symbols as linear operators on a vector space $\mathscr{K}$ (which, following the idea of the multiplicative RNN, we take as possibly different from the hidden state space $\mathscr{H}$). Linear logic gives us a source language in which to create programs, whose denotations are differentiable maps taking linear operators as input and providing linear operators as output. This map from input to output may not itself be linear, as the above examples show. It is these differentiable shadows of symbolic transformations in linear logic that we will couple to the RNN.
-\vspace{0.2cm}
-
-Let us conclude with an example involving more complicated types:
-
-\begin{example} There is a program
-\[
-\underline{subst}: \textbf{bint}_\alpha \multimap \Big( {!}\textbf{bint}_\alpha \multimap \big( {!}\textbf{bint}_\alpha \multimap \textbf{bint}_\alpha \big)\Big)
-\]
-which given three input sequences $\underline{S}, \underline{T}, \underline{U}$ uses the pattern of the sequence $S$ to intertwine copies of $T,U$. A program, say $\underline{T}$, of type $\textbf{bint}_\alpha$ may be ``promoted'' to a program of type ${!} \textbf{bint}_\alpha$, denoted $[\underline{T}]$. Then, for example,
-\[
-\underline{subst}( \underline{010}, [\underline{T}], [\underline{U}] ) = \underline{T \cdot U \cdot T} : \textbf{bint}_\alpha
-\]
-where $\cdot$ means concatenation.
-\end{example}
-
-\subsection{The linear logic RNN}
-
-The complexity of an algorithm is rooted in the kind of \emph{iteration} that it employs; for an exposition in the context of linear logic see \cite[\S]{murfet_logic}. The most elementary forms of iteration are simply repetitions, as in the proofs of type $\textbf{int}_\alpha, \textbf{bint}_\alpha$ above. Our proposal is that in order to enable an RNN controller to learn functions of a certain complexity, one should provide it with access to iterators of a ``similar level'' of complexity.
-
-% It is not clear how to make this precise, but it does provide a natural path towards richer augmentations of RNNs, by coupling them to iteration at higher types.
-
-Let $\Lambda = (\lambda_1,\ldots,\lambda_l)$ be a sequence of proofs of $\textbf{int}_\alpha$ and let $\Pi = (\pi_1,\ldots,\pi_k)$ be proofs of $\textbf{bint}_\alpha$. When we say that we allow the RNN controller to call this library of functional programs, what we actually mean is that it can predict at each time step diagonal matrices $\{p^{(t)}_\lambda\}_{\lambda \in \Lambda}$ and $\{q^{(t)}_\pi\}_{\pi \in \Pi}$ that determine which programs are used.
-
-\begin{definition} The \emph{linear logic} RNN coupled to $\Lambda, \Pi$ has weight matrices $H,U,B$ as in the standard RNN, plus new weights $V, P, Q, C, D, I, J$ and an evolution equation:
-\begin{gather*}
-p^{(t+1)}_\lambda = \sigma\big( P_\lambda h^{(t)} + C_\lambda \big)\,,\\
-q^{(t+1)}_\pi = \sigma\big( Q_\pi h^{(t)} + D_\pi \big)\,,\\
-h^{(t+1)} = \sigma\Big( Z + H h^{(t)} + U x^{(t+1)} + B\Big)
-\end{gather*}
-where
-\begin{align*}
-Z &= \sum_{\lambda \in \Lambda} Ip^{(t+1)}_\lambda\den{\lambda}( Vx^{(t+1)} )\big( Jh^{(t)} \big) + \sum_{\pi \in \Pi} Iq^{(t+1)}_\pi\den{\pi}( Vx^{(t)}, Vx^{(t+1)})\big( Jh^{(t)} \big)\,.
-\end{align*}
-The weight matrices $V,I,J$ are interpreted as linear maps as in \eqref{eq:threelinearmaps}. The operators $p^{(t)}_\lambda$ and $q^{(t)}_\pi$ are diagonal matrices in $\End_{\mathbb{R}}(\mathscr{K})$. The outputs $y^{(t)}$ of the linear logic RNN are defined by the same equation \eqref{eq:output_rnn} as before.
-\end{definition}
-
-Note that the RNN evolution equation for $h^{(t+1)}$ involves both the current input $x^{(t+1)}$ and the previous input $x^{(t)}$. We do this in order to allow the RNN to learn local transformations of an input sequence. % for instance, the transformation of a sequence $a_0 a_1 a_2 a_3 \cdots$ which swaps every pair of symbols, to get $a_1 a_0 a_3 a_2 \cdots$ might use $\den{\underline{10}}$. More complicated transformations could be learned by adapting the equation to a function of $x^{(i)}, \ldots, x^{(t+1)}$ with a more complicated type than $\textbf{bint}_\alpha$.
-
-\begin{example} If $\Lambda = \{ \underline{1}, \underline{2} \}$ and $\Pi = \{ \underline{010} \}$ then
-\begin{align*}
-Z &= I\big(p_1^{(t)} V(x^{(t)})( Jh^{(t)}) \big) + I\big( p_2^{(t)} V(x^{(t)})^2(J h^{(t)}) \big)\\
-&\qquad + I\Big( q^{(t)}_{010} \big\{ V(x^{(t)}) \circ V(x^{(t+1)}) \circ V(x^{(t)}) \big\}( J h^{(t)}) \Big)\,.
-\end{align*}
-The first summand here is the same as \eqref{eq:new_term_mRNN}, which shows that the linear logic RNN with $\Lambda = \{ \underline{1} \}, \Pi = \emptyset$ and the weight $p^{(t)}_1$ fixed to the identity, is the multiplicative RNN of \cite{sutskever}.
-\end{example}
-
-\begin{remark} To avoid too many weights and thus slow training, we follow the multiplicative RNN in assuming that $V$ maps inputs to diagonal matrices. But the whole point of adding the ability to call programs from $\Pi$ is that binary integers intertwine $V(x^{(t)})$ and $V(x^{(t+1)})$ in some useful way, which is compromised if these two matrices commute with one another.
-
-So in practice we have two auxiliary spaces $\mathscr{K}_1,\mathscr{K}_2$ and two sets of weights $V_i,I_i,J_i$. The index $i = 1$ corresponds to $\Lambda$, and $V_1: \mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{K}_1)$ factors through the subspace of matrices diagonal in a chosen basis. The map $V_2$ is not restricted in this way, but to compensate we take $\dim(\mathscr{K}_2) < \dim(\mathscr{K}_1)$.
+\begin{remark} The subspaces $\mathscr{P}_i$ should be viewed as chosen ``libraries'' of denotations of linear logic programs, that the RNN controller is able to call. For example, if $P_i = \binta_A$ then we might take for $\mathscr{P}_i$ the subspace spanned by $\den{\underline{01}}, \den{\underline{110}}$.
 \end{remark}
+
+\begin{example}[(Second-order RNN)] With $r = 0,s = 1$ and $B_1 = A$ take the master algorithm to be the proof of ${!}(A \multimap A) \vdash A \multimap A$ which is given by dereliction, so that with $\mathscr{B}_1 = \End_{\mathbb{R}}(\mathscr{H})$ we have $\den{\underline{\mathrm{master}}}_{nl}$ equal to the identity map on $\End_{\mathbb{R}}(\mathscr{H})$ and
+\[
+Z = V_1(x^{(t+1)})(h^{(t)})\,.
+\]
+That is, the LLRNN with these settings is just the second-order RNN.
+\end{example}
+
+\begin{example}[(Higher-order RNN)] With $r = 1, s = 1$ we take the master algorithm to be the proof of the sequent
+\[
+{!}\inta_A, \, {!}(A \multimap A) \vdash A \multimap A
+\]
+with the property that for $n \ge 0$ and $\alpha \in \End_{\mathbb{R}}(\mathscr{H})$,
+\be
+\den{\master}_{nl}\big( \den{\underline{n}}, \alpha \big) = \alpha^n\,.
+\ee
+That is, the master evaluates the given Church numeral on the given linear operator. We take $\mathscr{P} = \operatorname{span}(\den{\underline{1}}, \ldots, \den{\underline{L}})$ for some integer $L$ and $\mathscr{B} = \End_{\mathbb{R}}(\mathscr{H})$. Then the LLRNN learns a linear map $W: \mathscr{H} \lto \mathscr{P}$, whose value on a vector $h$ we denote
+\[
+W(h) = \sum_{i=1}^L W(h)_i \den{\underline{i}}
+\]
+and a linear trasformation $V: \mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{H})$ as in the second-order RNN. Then
+\begin{align*}
+Z &= \den{\master}_{nl}\big( W(h^{(t)}), V(x^{(t+1)}) \big)(h^{(t)})\\
+&= \sum_{i=1}^L W(h^{(t)})_i V(x^{(t+1)})^{i}(h^{(t)})\,.
+\end{align*}
+When $L = 1$ this is just the second-order RNN.
+\end{example}
+
+\begin{example}[(Stack-augmented RNN)] We can emulate the stack-augmented RNN \cite{joulin} with appropriate choices of the defining data of the LLRNN. We begin with a decomposition of the hidden state space as $\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{S}$ where the ``memory stack''
+\be
+\mathscr{S} = k[z]/z^{N+1} = k1 \oplus kz \oplus \cdots \oplus kz^N
+\ee
+is equipped with the push and pop operators $p_{+},p_{-}: \mathscr{S} \lto \mathscr{S}$ with matrices
+\[
+p_{+} = \begin{pmatrix} 0 & 0 & \cdots & 0 & 0 \\
+1 & 0 & \cdots & 0 & 0 \\
+0 & 1 & \cdots & 0 & 0\\
+\vdots & & \ddots & & \vdots \\
+0 & 0 & \cdots & 1 & 0\\
+\end{pmatrix}\,,\qquad
+p_{-} = \begin{pmatrix} 0 & 1 & 0 & \cdots & 0 \\
+0 & 0 & 1 & \cdots & 0 \\
+\vdots &  &  & \ddots & \vdots \\
+0 & 0 & 0 & \cdots & 1\\
+0 & 0 & 0 & \cdots & 0
+\end{pmatrix}\,.
+\]
+We also constrain the weight matrix $H$ to be of the form
+\[
+H = \begin{pmatrix} H_0 & 0 \\ 0 & 0 \end{pmatrix}
+\]
+with respect to the direct sum decomposition $\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{S}$. 
+
+The master program is a proof (which we omit) of
+\be
+{!}1, \,{!}( \inta_A \oplus \inta_A ), \,{!}(S \multimap S), \,{!}(S \multimap S) \vdash A \multimap A
+\ee
+with the property that $\den{S} = \mathscr{S}$ and
+\[
+\den{\master}_{nl}(\tau, \den{\underline{m}} \oplus \den{\underline{n}}, \alpha, \beta ) = \tau J(1) + J \circ \alpha^m \circ \beta^n \circ I\,,
+\]
+where $I: \mathscr{H} \lto \mathscr{S}$ and $J: \mathscr{S} \lto \mathscr{H}$ are the projections and injections respectively. We note that for $\lambda, \mu \in k$
+\[
+\den{\master}_{nl}( \tau, \lambda\den{\underline{1}} \oplus \den{\underline{0}} + \mu \den{\underline{0}} \oplus \den{\underline{1}}, \alpha, \beta ) = \tau J(1) + \lambda J \circ \alpha \circ I + \mu J \circ \beta \circ I\,.
+\]
+The command types are $P_1 = 1, P_2 = \inta_A \oplus \inta_A$ and the input types are $B_1 = B_2 = S$. We take $\mathscr{B}_j = \End_{\mathbb{R}}(\mathscr{S})$ for $j \in \{1,2\}$, $\mathscr{P}_1 = k$ and
+\be
+\mathscr{P}_2 = \operatorname{span}( \den{\underline{1}} \oplus \den{\underline{0}}, \den{\underline{0}} \oplus \den{\underline{1}} ) \subseteq \den{\inta_A} \oplus \den{\inta_A}\,.
+\ee
+We assume the weight matrices $V_j$ are fixed during training with the image of every basis element equal to $p_{+}$ for $j = 1$ and $p_{-}$ for $j = 2$. 
+
+Now let us explain why this emulates a stack-based memory. At time $t$, we write
+\[
+h^{(t)} = (h_0^{(t)}, s^{(t)})^T
+\]
+and view $h_0^{(t)}$ as the internal state of the RNN and $s^{(t)} = (s_0^{(t)}, \ldots, s_N^{(t)})^T$ as the contents of the stack at time $t$. Suppose that the command vectors generated by the controller are the scalar $W_1(h^{(t)}) \in k$ and
+\[
+W_2(h^{(t)}) = \lambda \den{\underline{1}} \oplus \den{\underline{0}} + \mu \den{\underline{0}} \oplus \den{\underline{1}}
+\]
+for some $\lambda,\mu \in k$.
+Then with $\alpha = p_{+}$ and $\beta = p_{-}$ and  we have
+\begin{align*}
+H h^{(t)} + Z &= J\den{\master}_{nl}\big( W_1(h^{(t)}), W_2(h^{(t)}), p_+, p_-\big)I( h^{(t)} )\\
+&= H h^{(t)} + W_1(h^{(t)}) J(1) + J\big( \lambda p_+ + \mu p_{-} \big)I( h_0^{(t)}, s^{(t)})^T\\
+&= H h^{(t)} + J\begin{pmatrix} W_1(h^{(t)}) + \mu s_1^{(t)}, & \lambda s_0^{(t)} + \mu s_2^{(t)}, & \cdots, & \lambda s_{N-1}^{(t)} \end{pmatrix}^T\\
+&= \begin{pmatrix}
+H_0 h_0^{(t)}, &
+W_1(h^{(t)}) + \mu s_1^{(t)}, & 
+\lambda s_0^{(t)} + \mu s_2^{(t)},
+\cdots,\,
+\lambda s_{N-1}^{(t)}
+\end{pmatrix}
+\end{align*}
+which agrees with the hidden state of the stack-augmented RNN \cite{joulin} with hidden-to-hidden weight matrix $H_0$, after it has predicted with probability $\lambda$ to push $W_1(h^{(t)})$ onto the stack, and with probability $\mu$ to pop the stack. To store vectors in a vector space $V$ rather than a scalar at each stack position, we simply replace $\mathscr{S}$ by $\mathscr{S} \otimes V$.
+\end{example}
+
+\begin{remark} The complexity of an algorithm is rooted in the kind of \emph{iteration} that it employs; for an exposition in the context of linear logic see \cite[\S]{murfet_ll}. The most elementary forms of iteration are simply repetitions, as in the proofs of type $\textbf{int}_\alpha, \textbf{bint}_\alpha$ above. Our proposal is that in order to enable an RNN controller to learn functions of a certain complexity, one should provide it with access to iterators of a ``similar level'' of complexity.
+\end{remark}
+
+%\begin{example} If $\Lambda = \{ \underline{1}, \underline{2} \}$ and $\Pi = \{ \underline{010} \}$ then
+%\begin{align*}
+%Z &= I\big(p_1^{(t)} V(x^{(t)})( Jh^{(t)}) \big) + I\big( p_2^{(t)} V(x^{(t)})^2(J h^{(t)}) \big)\\
+%&\qquad + I\Big( q^{(t)}_{010} \big\{ V(x^{(t)}) \circ V(x^{(t+1)}) \circ V(x^{(t)}) \big\}( J h^{(t)}) \Big)\,.
+%\end{align*}
+%The first summand here is the same as \eqref{eq:new_term_mRNN}, which shows that the linear logic RNN with $\Lambda = \{ \underline{1} \}, \Pi = \emptyset$ and the weight $p^{(t)}_1$ fixed to the identity, is the multiplicative RNN of \cite{sutskever}.
+%\end{example}
+
+%\begin{remark} To avoid too many weights and thus slow training, we follow the multiplicative RNN in assuming that $V$ maps inputs to diagonal matrices. But the whole point of adding the ability to call programs from $\Pi$ is that binary integers intertwine $V(x^{(t)})$ and $V(x^{(t+1)})$ in some useful way, which is compromised if these two matrices commute with one another.
+
+%So in practice we have two auxiliary spaces $\mathscr{K}_1,\mathscr{K}_2$ and two sets of weights $V_i,I_i,J_i$. The index $i = 1$ corresponds to $\Lambda$, and $V_1: \mathscr{I} \lto \End_{\mathbb{R}}(\mathscr{K}_1)$ factors through the subspace of matrices diagonal in a chosen basis. The map $V_2$ is not restricted in this way, but to compensate we take $\dim(\mathscr{K}_2) < \dim(\mathscr{K}_1)$.
+%\end{remark}
 
 %\begin{remark} If $\mathscr{I} = \mathbb{R}^{n_I}$ and $\mathscr{H} = \mathbb{R}^{n_H}$ then $V \in M_{n_H^2 \times n_I}(\mathbb{R})$. To avoid an explosion of weights due to the large integer $n_H^2$, we can map $\mathscr{I}$ to operators on a subspace of $\mathscr{H}$. This is done by choosing a decomposition $\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{H}_1$ and letting $\rho: \mathscr{H} \lto \mathscr{H}_1, \iota: \mathscr{H}_1 \lto \mathscr{H}$ be respectively be the projection to and inclusion of the subspace $\mathscr{H}_1$. In the evolution equation we use $\iota \den{\lambda_i}( Vx^{(t+1)} )\big( \rho h^{(t)} \big)$ with $\den{\lambda_i}$ now a function $\End_{\mathbb{R}}(\mathscr{H}_1) \lto \End_{\mathbb{R}}(\mathscr{H}_1)$.
 %\end{remark}
 
-\begin{remark} A more powerful system would substitute a neural theorem prover along the lines of \cite{alemi,ntp} in place of the library of functional programs $\Pi, \Lambda$. At each time step the RNN controller would predict a continuous vector, which when fed into the neural theorem prover as a set of parameters, generates a symbolic program whose denotation is then coupled back into the RNN \cite{tarlow}.
+\begin{remark} A more powerful system would substitute a neural theorem prover along the lines of \cite{alemi,ntp} in place of the libraries of functional programs $\mathscr{P}_i$. At each time step the RNN controller would predict a continuous vector, which when fed into the neural theorem prover as a set of parameters, generates a symbolic program whose denotation is then coupled back into the RNN \cite{tarlow}.
 \end{remark}
 
-\begin{remark} Although intuitionistic linear logic is a weak system in terms of expressive strength the difficulty of training the RNN with polynomial functions of high degree makes it infeasible to make use of even this much strength. It would, however, be very interesting to define differentiable semantics for second-order logic and try to use this to improve the generalisation ability of neural networks.
+%\begin{remark} Although intuitionistic linear logic is a weak system in terms of expressive strength the difficulty of training the RNN with polynomial functions of high degree makes it infeasible to make use of even this much strength. It would, however, be very interesting to define differentiable semantics for second-order logic and try to use this to improve the generalisation ability of neural networks.
+%\end{remark}
+
+%\begin{remark} Restricting ourselves to the $\textbf{int}_\alpha$ augmentation for the moment, let us discuss what kind of functions $f: \{0,1\}^* \lto \{0,1\}^*$ we would expect that it would be easier for the LLRNN to learn (all other things being equal) compared to an ordinary RNN. The LLRNN has the ability to predict, using its internal state, how many times to iterate the input-derived operator that is to be applied to the hidden state. Thus a function $f$ which, for instance, sends $0$s to $1$ unless they are preceded by a $0$ in which case they go to $0$, should be helped.
+%\end{remark}
+
+%Let $\Lambda = (\lambda_1,\ldots,\lambda_l)$ be a sequence of proofs of $\textbf{int}_\alpha$ and let $\Pi = (\pi_1,\ldots,\pi_k)$ be proofs of $\textbf{bint}_\alpha$. When we say that we allow the RNN controller to call this library of functional programs, what we actually mean is that it can predict at each time step diagonal matrices $\{p^{(t)}_\lambda\}_{\lambda \in \Lambda}$ and $\{q^{(t)}_\pi\}_{\pi \in \Pi}$ that determine which programs are used.
+
+%\begin{definition} The \emph{linear logic} RNN coupled to $\Lambda, \Pi$ has weight matrices $H,U,B$ as in the standard RNN, plus new weights $V, P, Q, C, D, I, J$ and an evolution equation:
+%\begin{gather*}
+%p^{(t+1)}_\lambda = \sigma\big( P_\lambda h^{(t)} + C_\lambda \big)\,,\\
+%q^{(t+1)}_\pi = \sigma\big( Q_\pi h^{(t)} + D_\pi \big)\,,\\
+%h^{(t+1)} = \sigma\Big( Z + H h^{(t)} + U x^{(t+1)} + B\Big)
+%\end{gather*}
+%where
+%\begin{align*}
+%Z &= \sum_{\lambda \in \Lambda} Ip^{(t+1)}_\lambda\den{\lambda}( Vx^{(t+1)} )\big( Jh^{(t)} \big) + \sum_{\pi \in \Pi} Iq^{(t+1)}_\pi\den{\pi}( Vx^{(t)}, Vx^{(t+1)})\big( Jh^{(t)} \big)\,.
+%\end{align*}
+%The weight matrices $V,I,J$ are interpreted as linear maps as in \eqref{eq:threelinearmaps}. The operators $p^{(t)}_\lambda$ and $q^{(t)}_\pi$ are diagonal matrices in $\End_{\mathbb{R}}(\mathscr{K})$. The outputs $y^{(t)}$ of the linear logic RNN are defined by the same equation \eqref{eq:output_rnn} as before.
+%\end{definition}
+
+%Note that the RNN evolution equation for $h^{(t+1)}$ involves both the current input $x^{(t+1)}$ and the previous input $x^{(t)}$. We do this in order to allow the RNN to learn local transformations of an input sequence. % for instance, the transformation of a sequence $a_0 a_1 a_2 a_3 \cdots$ which swaps every pair of symbols, to get $a_1 a_0 a_3 a_2 \cdots$ might use $\den{\underline{10}}$. More complicated transformations could be learned by adapting the equation to a function of $x^{(i)}, \ldots, x^{(t+1)}$ with a more complicated type than $\textbf{bint}_\alpha$.
+
+\begin{remark} In functional programming languages like differential $\lambda$-calculus \cite{difflambda} and differential linear logic \cite{ehrhard-survey} it is possible to differentiate programs with respect to their inputs, even if the programs are higher-order (that is, take functions as input and return them as output). This is a generalisation of automatic differentiation \cite{griewank} which is widely used to compute derivatives of complicated real-valued functions, for example in the backpropagation algorithms of machine learning packages like TensorFlow \cite[\S 4.1]{tensorflow}. The idea is to augment every computation in a code fragment so that derivatives with respect to a chosen variable are computed along with the main result. In TensorFlow this is done by adding special nodes in the dataflow graph.\footnote{See the ``gradients'' method of tensorflow/python/ops/gradients.py in TensorFlow 0.10} The idea of differential $\lambda$-calculus is similar, but more complex \cite{manzyuk}. It would be interesting to explore augmenting the dataflow graph of TensorFlow directly with terms of differential linear logic, in a way that generalises the coupling between semantics and RNNs in this paper.
 \end{remark}
 
-\begin{remark} Restricting ourselves to the $\textbf{int}_\alpha$ augmentation for the moment, let us discuss what kind of functions $f: \{0,1\}^* \lto \{0,1\}^*$ we would expect that it would be easier for the LLRNN to learn (all other things being equal) compared to an ordinary RNN. The LLRNN has the ability to predict, using its internal state, how many times to iterate the input-derived operator that is to be applied to the hidden state. Thus a function $f$ which, for instance, sends $0$s to $1$ unless they are preceded by a $0$ in which case they go to $0$, should be helped.
-\end{remark}
+%In order to improve the expressive strength of an RNN, that is, allow it to approximate more complex functions from sequences of input symbols to sequences of output symbols, a natural idea is to provide a library of functional programs that can be ``called'' at each time step. The main problem lies in arranging for these programs to be differentiable, so that gradients can be backpropagated through them at training time.
+%One natural approach is to have an abstract, symbolic \emph{source} language in which the relevant functional programs can be written, together with a concrete, differentiable \emph{target} category in which the programs can be interpreted. This interpretation should respect the structure of the functional programs: for example, composition or plugging of programs should be interpreted as composition of differentiable maps. The purpose of the source language is to ensure expressive strength, that is, to provide a library of differentiable maps sufficiently rich to encode nontrivial symbolic transformations. The purpose of the target category is to facilitate a straightforward coupling into the RNN.
+%A candidate for the source language is linear logic \cite{girard} which has denotational semantics in differentiable maps \cite{ehrhard-survey}. We use the particular semantics developed in \cite{murfet_ll,murfet_coalg,murfetclift}. The second-order RNN encourages us to view symbols as operators on a vector space, and this aligns very well with the intuition provided by linear logic.
 
-\subsection{Differential linear logic}\label{section:differential_linear}
+%In this section we give a brief sketch of linear logic. A program $\pi$ of type $M$, written $\pi : M$, is built from atomic pieces by rules that we will not explain here. The simplest rule is composition or \emph{plugging}: given programs $M : \alpha \multimap \beta$ and $N: \beta \multimap \gamma$ we have a combined program $N M: \alpha \multimap \gamma$. A program of type ${!} A \multimap B$ takes inputs of type $A$ and returns outputs of type $B$. The same is true of a program of type $A \multimap B$ but in addition it satisfies a \emph{linearity constraint} in that it uses its input \emph{precisely once}. So the ${!}$ connective marks inputs that may be reused freely (or not used at all). All inputs and outputs are themselves programs of the appropriate type.
 
-In functional programming languages like differential $\lambda$-calculus \cite{difflambda} and differential linear logic \cite{ehrhard-survey} it is possible to differentiate programs with respect to their inputs, even if the programs are higher-order (that is, take functions as input and return them as output). 
+%\begin{example} A program $\pi$ of type $\textbf{int}_A$ takes an input $M$ of type $A \multimap A$ that may be used non-linearly, and outputs a program of type $A \multimap A$. For each integer $n \ge 0$ there is a program $\underline{n} : \textbf{int}_A$ called the $n$th \emph{Church numeral}, with the property that it maps an input $M$ to the $n$-fold repetition $M^n$. The Church numeral is an \emph{iterator} (something like a \emph{for} loop in imperative programming) which takes a program $M$ and iterates it $n$ times.
+%\end{example}
 
-This is not as exotic as it might sound: it is a generalisation of automatic differentiation \cite{griewank} which is widely used to compute derivatives of complicated real-valued functions, for example in the backpropagation algorithms of machine learning packages like TensorFlow \cite[\S 4.1]{tensorflow}. The idea is to augment every computation in a code fragment so that derivatives with respect to a chosen variable are computed along with the main result. In TensorFlow this is done by adding special nodes in the dataflow graph.\footnote{See the ``gradients'' method of tensorflow/python/ops/gradients.py in TensorFlow 0.10} The idea of differential $\lambda$-calculus is similar, but more complex \cite{manzyuk}. It would be interesting to explore augmenting the dataflow graph of TensorFlow directly with terms of differential linear logic, in a way that generalises the coupling between semantics and RNNs in this paper.
+%\begin{example} A program $\pi$ of type $\textbf{bint}_\alpha$ maps an input of type $\alpha \multimap \alpha$ to a program of type $\textbf{int}_\alpha = {!}(\alpha \multimap \alpha) \multimap (\alpha \multimap \alpha)$. So, given two programs $M,N$ of type $\alpha \multimap \alpha$, we can apply the output $\pi(M)$ to $N$, to get a program of type $\pi(M)(N) : \alpha \multimap \alpha$. 
 
-\appendix
+%Given a binary sequence $S \in \{0,1\}^*$ there is a program $\underline{S} : \textbf{bint}_\alpha$ with the property that it maps an input pair $(M,N)$ to the program which intertwines copies of $M,N$ according to $S$. For example, $\underline{01101}$ sends $(M,N)$ to the program $M N N M N$.
+%\end{example}
+
+% Like the simply-typed $\lambda$-calculus which it refines, linear logic is a ``higher-order'' functional programming language. It is a rather weak language, but this is not a concern for the present purpose (see Remark \ref{??}).
+
+% A \emph{denotational semantics} of this language selects for each type $A$ some mathematical object $\den{A}$ and for a program of type $A \multimap B$ a transformation $\den{A} \lto \den{B}$ \cite{mellies}. The precise kind of mathematical object, and transformations between them, is determined by the kind of category we take as the target of the semantics. In this paper we use the Sweedler semantics in vector spaces of \cite{murfet_ll,murfet_coalg}. Starting with an atomic type $\alpha$ whose denotation $\den{A} = \mathscr{K}$ is some finite-dimensional vector space over $\mathbb{R}$, we have
+% \begin{align*}
+%\den{A \multimap A} = \Hom_{\mathbb{R}}( \den{A}, \den{A} ) = \End_{\mathbb{R}}(\mathscr{K})\,.
+%\end{align*}
+
+
+
+%The idea of the second-order RNN is to view the input and output symbols as linear operators on a vector space $\mathscr{K}$. Linear logic gives us a language in which to create programs, whose denotations are differentiable maps taking linear operators as input and providing linear operators as output. These maps may not themselves be linear, as the above examples show. 
+
+%Let us conclude with an example involving more complicated types:
+
+%\begin{example} There is a program
+%\[
+%\underline{subst}: \textbf{bint}_\alpha \multimap \Big( {!}\textbf{bint}_\alpha \multimap \big( {!}\textbf{bint}_\alpha \multimap \textbf{bint}_\alpha \big)\Big)
+%\]
+%which given three input sequences $\underline{S}, \underline{T}, \underline{U}$ uses the pattern of the sequence $S$ to intertwine copies of $T,U$. A program, say $\den{\underline{T}}$, of type $\textbf{bint}_\alpha$ may be ``promoted'' to a program of type ${!} \textbf{bint}_\alpha$, denoted $\ket{\emptyset}_{\den{\underline{T}}}$. Then, for example,
+%\[
+%\underline{subst}( \underline{010}, [\underline{T}], [\underline{U}] ) = \underline{T \cdot U \cdot T} : \textbf{bint}_\alpha
+%\]
+%where $\cdot$ means concatenation.
+%\end{example}
 
 \section{Background on CPUs}\label{section:appendix_cpu}
 
@@ -327,15 +477,27 @@ ADD R3, A, R2
 \end{verbatim}
 which at once reads the number from address \verb+A+, adds it to the stored value in \verb+R2+ and writes the result to \verb+R3+. Note that without a \verb+LOAD+ instruction, the only way a value could have gotten into \verb+R2+ in a previous time step is as the result of another \verb+ADD+.
 
-\begin{remark} Although the architecture takes some inspiration from normal CPUs, there is an important distinction: on a normal CPU the program is given as a series of instructions prior to the beginning of execution. In contrast, in the model we have described each command is \emph{predicted} at runtime from the current internal state. Perhaps we can understand the process intuitively as follows: we are co-learning a part of $H$, call it $H_0$, which generates some part of the internal state $h^{(1)}_{0}, h^{(2)}_{0}, \ldots$ giving a path through the state space on which the weight matrix $P$ picks out the right program to run at each time step. The overall algorithm is distributed amongst the weights of $H_0$ and $P$.
+%\begin{remark} Although the architecture takes some inspiration from normal CPUs, there is an important distinction: on a normal CPU the program is given as a series of instructions prior to the beginning of execution. In contrast, in the model we have described each command is \emph{predicted} at runtime from the current internal state. Perhaps we can understand the process intuitively as follows: we are co-learning a part of $H$, call it $H_0$, which generates some part of the internal state $h^{(1)}_{0}, h^{(2)}_{0}, \ldots$ giving a path through the state space on which the weight matrix $P$ picks out the right program to run at each time step. The overall algorithm is distributed amongst the weights of $H_0$ and $P$.
 
-This also suggests an alternative algorithm: we do not predict $p^{(t)}$ at each time step, rather we have some fixed number of time steps $T$ and matrices of weights $p^{(1)}, \ldots, p^{(T)}$ which are learned by gradient descent.
-\end{remark}
+%This also suggests an alternative algorithm: we do not predict $p^{(t)}$ at each time step, rather we have some fixed number of time steps $T$ and matrices of weights $p^{(1)}, \ldots, p^{(T)}$ which are learned by gradient descent.
+%\end{remark}
 
 \bibliographystyle{amsalpha}
 \providecommand{\bysame}{\leavevmode\hbox to3em{\hrulefill}\thinspace}
 \providecommand{\href}[2]{#2}
 \begin{thebibliography}{BHLS03}
+
+\bibitem{frege}
+G.~Frege, \textsl{Begriffschrift, a formula language, modeled upon that of arithmetic, for pure thought}, (1879). An english translation appears in \textsl{From Frege to G\"odel. A source book in mathematical logic, 1879--1931}, Edited by J.~van Heijenoort, Harvard University Press, 1967.t
+
+\bibitem{blutecon}
+R.~Blute, T.~Ehrhard and C.~Tasson, \textsl{A convenient differential category}, arXiv preprint \href{https://arxiv.org/abs/1006.3140}{[arXiv:1006.3140]}, 2010.
+
+\bibitem{sorensen}
+M.~H.~S\o rensen and P.~Urzyczyn, \textsl{Lectures on the Curry-Howard isomorphism} (Vol. 149), Elsevier, (2006).
+
+\bibitem{dlnature}
+Y.~LeCun, Y.~Bengio and G.~Hinton, \textsl{Deep learning},  Nature, 521(7553), pp.436--444 (2015).
 
 \bibitem{elman}
 J.~Elman, \textsl{Finding structure in time}, Cognitive science, 14(2):179–211, 1990.
@@ -373,7 +535,7 @@ C.~L.~Giles, G.~Z.~Sun, H.~H.~Chen, Y.~C.~Lee, D.~Chen, \textsl{Higher order rec
 \bibitem{pollack}
 J.~B.~Pollack, \textsl{The induction of dynamical recognizers}, Machine Learning, 7(2-3), 227-252 (1991). 
 
-\bibitem{murfet_logic}
+\bibitem{murfet_ll}
 D.~Murfet, \textsl{Logic and linear algebra: an introduction}, preprint (2014) [arXiv: 1407.2650].
 
 \bibitem{murfet_coalg}
@@ -413,7 +575,7 @@ T.~Rockt\"aschel and S.~Riedel, \textsl{Learning Knowledge Base Inference with N
 T.~Ehrhard, \textsl{An introduction to Differential Linear Logic: proof-nets, models and antiderivatives}, \href{https://arxiv.org/abs/1606.01642}{[arXiv:1606.01642]} (2016).
 
 \bibitem{murfetclift}
-J.~Clift and D.~Murfet, \textsl{The Sweedler semantics is a natural model of differential linear logic}, preprint.
+J.~Clift and D.~Murfet, \textsl{Cofree coalgebras and differential linear logic}, preprint.
 
 \bibitem{tensorflow}
 Abadi, Martín, et al. \textsl{TensorFlow: A system for large-scale machine learning} arXiv preprint arXiv:1605.08695 (2016).
@@ -429,6 +591,12 @@ T.~Ehrhard and L.~Regnier, \textsl{The differential $\lambda$-calculus}, Theoret
 
 \bibitem{manzyuk}
 O.~Manzyuk, \textsl{A simply typed $\lambda$-calculus of forward automatic differentiation}, In Mathematical Foundations of Programming Semantics Twenty-eighth Annual Conference, pages 259--73, Bath, UK, June 6–9 2012. \href{http://dauns.math.tulane.edu/~mfps/mfps28proc.pdf}{[URL]}.
+
+\bibitem{minsky}
+M.~Minsky, \textsl{Logical versus analogical or symbolic versus connectionist or neat versus scruffy}, AI magazine, 12(2), 34 (1991).
+
+\bibitem{prooftypes}
+J.-Y.~Girard, Y.~Lafont and P.~Taylor, \textsl{Proofs and Types}, Cambridge Tracts in Theoretical Computer Science 7, Cambridge University Press, 1989.
 
 \end{thebibliography}
 
