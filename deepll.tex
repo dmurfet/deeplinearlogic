@@ -133,12 +133,17 @@ We demonstrate one concrete realisation of these ideas in the form of an recurre
 
 \subsection{The second-order RNN}
 
-As usual we use ``weight'' as a synonym for variable, or more precisely, the variables which we will vary during gradient descent. At time $t \ge 1$ we denote the hidden state by $h^{(t)}$ and the input by $x^{(t)}$. We denote by $\sigma$ the function
+As usual we use ``weight'' as a synonym for variable, or more precisely, the variables which we will vary during gradient descent. We denote by $\sigma$ the function
 \begin{gather*}
 \sigma: \mathbb{R}^k \lto \mathbb{R}^k\,\\
-\sigma( X )_i = \frac{1}{2}( X_i + |X_i| )\,.
+\sigma( \bold{x} )_i = \frac{1}{2}( x_i + |x_i| )
 \end{gather*}
-An RNN is defined by its \emph{evolution equation} which expresses $h^{(t+1)}$ as a function of $h^{(t)}, x^{(t)}$ and its \emph{output equation} which gives the output $y^{(t)}$ as a function of $h^{(t)}$.
+and by $\zeta$ the \emph{softmax} function
+\begin{gather*}
+\zeta: \mathbb{R}^k \lto \mathbb{R}^k\,,\\
+\zeta(\bold{x})_i = \frac{e^{x_i}}{\sum_{j=1}^k e^{x_j}}\,.
+\end{gather*}
+An RNN is defined by its \emph{evolution equation} which expresses $h^{(t+1)}$ as a function of $h^{(t)}, x^{(t)}$ and its \emph{output equation} which gives the output $y^{(t)}$ as a function of $h^{(t)}$. At time $t \ge 1$ we denote the hidden state by $h^{(t)}$ and the input by $x^{(t)}$. 
 
 \begin{definition} A standard Elman-style RNN \cite{elman} is defined by weight matrices $H, U, B$ and the evolution equation
 \be\label{eq:update_eqn}
@@ -183,7 +188,7 @@ Moreover $V$ factors through the subspace of diagonalisable matrices in some cho
 \be\label{eq:new_term_mRNN}
 I\big( V(x^{(t+1)})( J h^{(t)} ) \big)\,.
 \ee
-The multiplicative RNN has been applied to character-level text generation \cite{sutskever} and sentiment analysis \cite{irsoy}. This is not to be confused with the \emph{multiplicative integation} RNN of \cite{yuhai} which adds a term $H h^{(t)} \odot U x^{(t+1)}$ to the evolution equation.
+The multiplicative RNN has been applied to character-level text generation \cite{sutskever} and sentiment analysis \cite{irsoy}. This is not to be confused with the \emph{multiplicative integration} RNN of \cite{yuhai} which adds a term $H h^{(t)} \odot U x^{(t+1)}$ to the evolution equation.
 
 \begin{remark}
 The second-order RNN transforms input symbols into linear operators on its hidden state. Observe that consecutive symbols $x = x^{(t)}$ and $x' = x^{(t+1)}$ in the input become composed operators on the hidden state, since (ignoring the non-linearity)
@@ -210,24 +215,25 @@ where ${!} V$ denotes the universal cocommutative counital coalgebra mapping to 
 \begin{definition} The Linear Logic Recurrent Neural Network (LLRNN) is determined by the following data:
 \begin{itemize}
 \item types $P_1,\ldots,P_r$ called the \emph{command types};
-\item types $B_1,\ldots,B_s$, called the \emph{input types};
+\item types $B_1,\ldots,B_s$, called the \emph{data types};
+\item a type $C$, called the \emph{input type};
 \item a type $A$ with $\den{A} = \mathscr{H}$, the hidden state space;
 \item a proof $\underline{\mathrm{master}}$ of the sequent
 \be
-{!} P_1, \ldots, \, {!}P_r,\, {!}(B_1 \multimap B_1), \ldots,\, {!}(B_s \multimap B_s) \vdash A \multimap A\,.
+{!} P_1, \ldots, \, {!}P_r,\, {!} B_1, \ldots,\, {!} B_s,\, {!} C \vdash A \multimap A\,.
 \ee
 \item Finite-dimensional subspaces for $1 \le i \le r$ and $1 \le j \le s$
 \be
-\mathscr{P}_i \subseteq \den{P_i}\,, \quad \mathscr{B}_j \subseteq \den{B_j \multimap B_j} = \End_{\mathbb{R}}(\den{B_j})
+\mathscr{P}_i \subseteq \den{P_i}\,, \quad \mathscr{B}_j \subseteq \den{B_j}\,, \quad \mathscr{C} \subseteq \den{C}
 \ee
-which are spanned by the denotations of linear logic proofs. We refer to the elements of $\mathscr{P}_i$ as \emph{command vectors} and elements of $\mathscr{B_j}$ as \emph{input operators}.
+which are spanned by the denotations of linear logic proofs. We refer to the elements of $\mathscr{P}_i$ as \emph{command vectors} and elements of $\mathscr{B}_j$ as \emph{data vectors}.
 \end{itemize}
 \end{definition}
-From this data we obtain the function
+From this data we obtain the following function by restriction:
 \be
-\den{\underline{\mathrm{master}}}_{nl}: \mathscr{P}_1 \times \cdots \times \mathscr{P}_r \times \mathscr{B}_1 \times \cdots \times \mathscr{B}_s \lto \End_{\mathbb{R}}(\mathscr{H})
+\den{\underline{\mathrm{master}}}_{nl}: \mathscr{P}_1 \times \cdots \times \mathscr{P}_r \times \mathscr{B}_1 \times \cdots \times \mathscr{B}_s \times \mathscr{C} \lto \End_{\mathbb{R}}(\mathscr{H})\,.
 \ee
-by restriction. At each time step the RNN will generate from the hidden state a sequence of command vectors, and from the current and previous inputs a sequence of input operators. This is done via weight matrices $\{W_i\}_{1 \le i \le r}$ and $\{V_j\}_{1 \le j \le s}$ which determine linear maps
+The coupling of the master algorithm to the RNN controller is by weight matrices, which are linear maps
 \begin{align*}
 W_i: \mathscr{H} \lto \mathscr{P}_i, \qquad
 V_j: \mathscr{I} \lto \mathscr{B}_j\,.
@@ -240,6 +246,9 @@ where the new term $Z$ is
 \begin{align*}
 Z &= \den{\underline{\mathrm{master}}}_{nl}\Big( W_1(h^{(t)}), \ldots, W_r(h^{(t)}), V_1(x^{(t+1)}), V_2(x^{(t)}), \ldots, V_s(x^{(t-s+2)})\Big)(h^{(t)})\,.
 \end{align*}
+
+\begin{remark} TODO: actually the inputs to the master algorithm should also have non-linearities. We should just have $B_i$ instead of $B_i \multimap B_i$ and the difference is that the commands have a softmax and the others have a ReLU. Well but in the case of memories we should allow there to be ReLU predictions from the hidden state.
+\end{remark}
 
 The fundamental fact which makes this model reasonable is the following:
 
@@ -305,7 +314,7 @@ Z &= \den{\master}_{nl}\big( W(h^{(t)}), V(x^{(t+1)}) \big)(h^{(t)})\\
 When $L = 1$ this is just the second-order RNN.
 \end{example}
 
-\begin{example}[(Stack-augmented RNN)] We can emulate the stack-augmented RNN \cite{joulin} with appropriate choices of the defining data of the LLRNN. We begin with a decomposition of the hidden state space as $\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{S}$ where the ``memory stack''
+\begin{example}[(Stack-augmented RNN)] Thinking of an RNN as a state machine automata, and by analogy with a pushdown automata, an RNN can be augmented with an external stack memory \cite{highorderrec}. We can emulate the more recent version of this idea in \cite{joulin} with appropriate choices of the defining data of the LLRNN. We begin with a decomposition of the hidden state space as $\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{S}$ where the ``memory stack''
 \be
 \mathscr{S} = k[z]/z^{N+1} = k1 \oplus kz \oplus \cdots \oplus kz^N
 \ee
@@ -373,7 +382,57 @@ W_1(h^{(t)}) + \mu s_1^{(t)}, &
 which agrees with the hidden state of the stack-augmented RNN \cite{joulin} with hidden-to-hidden weight matrix $H_0$, after it has predicted with probability $\lambda$ to push $W_1(h^{(t)})$ onto the stack, and with probability $\mu$ to pop the stack. To store vectors in a vector space $V$ rather than a scalar at each stack position, we simply replace $\mathscr{S}$ by $\mathscr{S} \otimes V$.
 \end{example}
 
-\begin{remark} The complexity of an algorithm is rooted in the kind of \emph{iteration} that it employs; for an exposition in the context of linear logic see \cite[\S]{murfet_ll}. The most elementary forms of iteration are simply repetitions, as in the proofs of type $\textbf{int}_\alpha, \textbf{bint}_\alpha$ above. Our proposal is that in order to enable an RNN controller to learn functions of a certain complexity, one should provide it with access to iterators of a ``similar level'' of complexity.
+\begin{example}[(Neural Turing Machine)] A Neural Turing Machine (NTM) with only location-based memory addressing \cite{ntm} can be realised in the LLRNN framework as follows. We introduce the \emph{address space} $\mathscr{W} = \mathbb{Z}/N\mathbb{Z} \otimes_{\mathbb{Z}} \mathbb{R}$ and \emph{memory coefficient space} $\mathscr{V}$ in terms of which the \emph{memory space} is the tensor product
+\[
+\mathscr{S} = \mathscr{W}^* \otimes \mathscr{V} \cong \Hom_{\mathbb{R}}(\mathscr{W}, \mathscr{V})\,.
+\]
+For example, in the notation of \cite{ntm} we may take $\mathscr{W} = \mathbb{R}^N$ and $\mathscr{V} = \mathbb{R}^M$ so that ``memory'' tensors in $\mathscr{S}$ are naturally identified with $N \times M$ matrices. 
+
+The internal state space of the RNN is decomposed as
+\[
+\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{W} \oplus \mathscr{W}^* \oplus \mathscr{S}
+\]
+and the state of the controller at time $t$ is written
+\[
+h^{(t)} = (h_0^{(t)}, r^{(t)}, w^{(t)}, M^{(t)}) \in \mathscr{H}\,.
+\]
+The components of this vector are interpreted as the \emph{RNN controller internal state} $h_0^{(t)}$, \emph{read address weights} $r^{(t)}$, \emph{write address weights} $w^{(t)}$ and \emph{memory contents} $M^{(t)}$. The linear maps $H, U$ are constrained so as to be determined by linear maps $H_0: \mathscr{H}_0 \lto \mathscr{H}_0$ and $U_0: \mathscr{I} \lto \mathscr{H}_0$ and there is a new weight matrix $V: \mathscr{V} \lto \mathscr{H}_0$.
+
+Let $R: \mathscr{W} \lto \mathscr{W}$ be the linear map defined by ``rotation''
+\[
+R( \Bar{a} \otimes \lambda ) = \overline{a+1} \otimes \lambda\,,
+\]
+with dual map $R^*: \mathscr{W}^* \lto \mathscr{W}^*$. With $f$ denoting softmax, we have
+\begin{align*}
+s^{(t+1)} &= f( W_s h^{(t)} + B_s ) \in \mathscr{W}^*\,,\\
+q^{(t+1)} &= f( W_q h^{(t)} + B_q ) \in \mathscr{W}\,,\\
+u^{(t+1)} &= \sigma( W_a h^{(t)} + B_a ) \in \mathscr{V}\,
+\end{align*}
+The update equation for the address \cite[Eq. (8)]{ntm} and memory \cite[Eq. (3),(4)]{ntm} are
+\begin{align*}
+w^{(t+1)} &= \sum_{i=0}^{N-1} s^{(t+1)}(\bar{i}) (R^*)^i( w^{(t)} )\,,
+\\
+r^{(t+1)} &= \sum_{i=0}^{N-1} q^{(t+1)}(\bar{i}) R^i( r^{(t)} )\,,\\
+M^{(t+1)} &= M^{(t)} + w^{(t+1)} \otimes u^{(t+1)}\,.
+\end{align*}
+Here we write $u^{(t)}$ for the difference $\bold{a}_t - \bold{e}_t$ of \cite[\S 3.2]{ntm}. Finally, the evolution equation of the NTM is given by
+\[
+h^{(t+1)} = \sigma\Big( V\big( M^{(t+1)}(r^{(t+1)}) \big) + H_0 h_0^{(t)} + U_0 x^{(t+1)} + B \Big)\,.
+\]
+We omit the sharpening step \cite[Eq. (9)]{ntm} for simplicity.
+
+In the LLRNN framework we take the master program to be a proof of
+\[
+{!}\inta_A, {!} \inta_A, {!}(W \multimap W), {!}(W^{\vee} \multimap W^{\vee}), {!} V \vdash A \multimap A
+\]
+with $\mathscr{P}_1 = \mathscr{P}_2 = \operatorname{span}(\den{\underline{0}}, \ldots, \den{\underline{N-1}})$ and $\den{W} = \mathscr{W}, \den{W^{\vee}} = \mathscr{W}^*, \den{V} = \mathscr{V}$ such that
+\begin{align*}
+\den{\master}_{nl}&\big( \den{\underline{m}}, \den{\underline{n}}, \alpha, \beta, u )(h,r,w,M)\\
+&\quad = \big(M(r) + \beta^n(w)\big( \alpha^m(r) \big) \cdot u, \alpha^m(r), \beta^n(w), M + \beta^n(w) \otimes u\big)\,.
+\end{align*}
+\end{example}
+
+\begin{remark} The complexity of an algorithm is rooted in the kind of \emph{iteration} that it employs; for an exposition in the context of linear logic see \cite[\S 7]{murfet_ll}. The most elementary forms of iteration are simply repetitions, as in the proofs of type $\textbf{int}_\alpha, \textbf{bint}_\alpha$ above. Our proposal is that in order to enable an RNN controller to learn functions of a certain complexity, one should provide it with access to iterators of a ``similar level'' of complexity.
 \end{remark}
 
 %\begin{example} If $\Lambda = \{ \underline{1}, \underline{2} \}$ and $\Pi = \{ \underline{010} \}$ then
