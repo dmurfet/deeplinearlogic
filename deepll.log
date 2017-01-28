@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.9.17)  25 JAN 2017 23:26
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.9.17)  29 JAN 2017 09:31
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -893,78 +893,71 @@ Underfull \hbox (badness 10000) in paragraph at lines 224--226
 
 [4] [5] [6]
 
-LaTeX Warning: Reference `??' on page 7 undefined on input line 359.
+LaTeX Warning: Reference `??' on page 7 undefined on input line 357.
 
-[7] <dia1.pdf, id=170, 472.40822pt x 450.3247pt>
+[7] <dia1.pdf, id=173, 472.40822pt x 450.3247pt>
 File: dia1.pdf Graphic file (type pdf)
  <use dia1.pdf>
-Package pdftex.def Info: dia1.pdf used on input line 373.
+Package pdftex.def Info: dia1.pdf used on input line 371.
 (pdftex.def)             Requested size: 141.72356pt x 135.09845pt.
  [8 <./dia1.pdf>]
-Underfull \hbox (badness 10000) in paragraph at lines 407--410
+Underfull \hbox (badness 10000) in paragraph at lines 405--408
 
  []
 
 [9] [10] <dia2.pdf, id=235, 956.1389pt x 448.87106pt>
 File: dia2.pdf Graphic file (type pdf)
  <use dia2.pdf>
-Package pdftex.def Info: dia2.pdf used on input line 456.
+Package pdftex.def Info: dia2.pdf used on input line 453.
 (pdftex.def)             Requested size: 286.84389pt x 134.66235pt.
+ [11 <./dia2.pdf>]
 \myBox1=\box52
 \myScoreStart1=\dimen290
 \myCenter1=\dimen291
 \myScoreEnd1=\dimen292
- [11 <./dia2.pdf>] [12]
+ [12]
 File: dia2.pdf Graphic file (type pdf)
  <use dia2.pdf>
-Package pdftex.def Info: dia2.pdf used on input line 530.
+Package pdftex.def Info: dia2.pdf used on input line 527.
 (pdftex.def)             Requested size: 286.84389pt x 134.66235pt.
  <dia3.pdf, id=297, 916.41634pt x 404.76149pt>
 File: dia3.pdf Graphic file (type pdf)
 
 <use dia3.pdf>
-Package pdftex.def Info: dia3.pdf used on input line 534.
+Package pdftex.def Info: dia3.pdf used on input line 531.
 (pdftex.def)             Requested size: 274.92702pt x 121.42938pt.
  [13] [14 <./dia3.pdf>] [15]
-
-LaTeX Warning: Citation `??' on page 16 undefined on input line 704.
-
-
-LaTeX Warning: Citation `??' on page 16 undefined on input line 704.
-
-[16]
 Missing character: There is no â in font cmr12!
 Missing character: There is no € in font cmr12!
 Missing character: There is no “ in font cmr12!
- [17]
+ [16] [17]
 Missing character: There is no Ã in font cmr12!
 Missing character: There is no ­ in font cmr12!
 Missing character: There is no Ä in font cmr12!
 Missing character: There is no ± in font cmr12!
- [18]
 Missing character: There is no â in font cmr12!
 Missing character: There is no € in font cmr12!
 Missing character: There is no “ in font cmr12!
- [19]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 835.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 835.
+ [18]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 824.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 824.
  (./deepll.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 835.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 835.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 824.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 824.
 Package rerunfilecheck Info: File `deepll.out' has not changed.
-(rerunfilecheck)             Checksum: E2804448CD4CE24D1DB4619EB87F4163;342.
+(rerunfilecheck)             Checksum: 2D51AC9A5B34A0856E834604EF6FC5EB;289.
 
 
 LaTeX Warning: There were undefined references.
 
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 835.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 824.
  ) 
 Here is how much of TeX's memory you used:
- 19864 strings out of 493014
- 349959 string characters out of 6133351
- 464627 words of memory out of 5000000
+ 19861 strings out of 493014
+ 349957 string characters out of 6133351
+ 465755 words of memory out of 5000000
  22897 multiletter control sequences out of 15000+600000
- 20830 words of font info for 87 fonts, out of 8000000 for 9000
+ 20661 words of font info for 86 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
  55i,12n,54p,3239b,477s stack positions out of 5000i,500n,10000p,200000b,80000s
 </usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
@@ -987,15 +980,14 @@ xmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2016/texm
 f-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2016/texmf-
 dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2016/texmf-d
 ist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/local/texlive/2016/texmf-di
-st/fonts/type1/public/amsfonts/cm/cmtt12.pfb></usr/local/texlive/2016/texmf-dis
-t/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr/local/texlive/2016/texmf
--dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2016/t
-exmf-dist/fonts/type1/public/rsfs/rsfs10.pfb></usr/local/texlive/2016/texmf-dis
-t/fonts/type1/public/stmaryrd/stmary10.pfb>
-Output written on deepll.pdf (19 pages, 423440 bytes).
+st/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr/local/texlive/2016/texm
+f-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2016/
+texmf-dist/fonts/type1/public/rsfs/rsfs10.pfb></usr/local/texlive/2016/texmf-di
+st/fonts/type1/public/stmaryrd/stmary10.pfb>
+Output written on deepll.pdf (18 pages, 416524 bytes).
 PDF statistics:
- 499 PDF objects out of 1000 (max. 8388607)
- 433 compressed objects within 5 object streams
- 98 named destinations out of 1000 (max. 500000)
- 76 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 487 PDF objects out of 1000 (max. 8388607)
+ 423 compressed objects within 5 object streams
+ 96 named destinations out of 1000 (max. 500000)
+ 68 words of extra memory for PDF output out of 10000 (max. 10000000)
 

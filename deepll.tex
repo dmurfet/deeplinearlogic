@@ -213,7 +213,7 @@ The relevance of this ``compositionality'' to NLP is remarked on in \cite{irsoy}
 
 \subsection{The linear logic RNN}
 
-At each time step the second-order RNN generates from its input a linear operator which is applied to to the hidden state; the operator is moreover a \emph{linear} function of the input. The LLRNN model is similar to the second-order RNN in the sense that it generates at each time step a linear operator which is applied to the hidden state, but dissimilar in that this operator is a \emph{non-linear} function of its arguments, which include the current input but also vectors predicted from the hidden state.
+At each time step the second-order RNN generates from its input a linear operator which is applied to to the hidden state; this operator moreover depends \emph{linearly} on the input given to the RNN. The LLRNN model is similar to the second-order RNN in the sense that it generates at each time step a linear operator which is applied to the hidden state, but dissimilar in that this operator depends \emph{non-linearly} on the input as well as a sequence of other vectors generated from the hidden state.
 
 The non-linear function which computes the operator to be applied to the hidden state at each time step is called the \emph{master algorithm}. It is itself the denotation of a proof in linear logic. The arguments to the master algorithm are:
 \begin{itemize}
@@ -285,15 +285,18 @@ Moreover, the derivatives of $\den{\master}_{nl}$ can be computed symbolically u
 
 As defined the LLRNN is a class of models. In this section we explain how to implement various existing augmentations of RNNs, including a subset of the Neural Turing Machine, in the framework of the LLRNN. The guiding intuition from logic is that the complexity of an algorithm is rooted in the kind of \emph{iteration} that it employs; for an exposition in the context of linear logic see \cite[\S 7]{murfet_ll}. From this point of view, the purpose of augmenting an RNN with linear logic is to provide access to iterators of a complexity ``similar'' to the function that the neural network is trying to approximate.
 
-The most elementary form of iteration is repetition, which in the current context means raising a linear operator to an integer power. This non-linear transformation of an input operator $\alpha \in \End_{\mathbb{R}}(\mathscr{H})$ to the output operator $\alpha^n$ for some integer $n$ is encoded by a linear logic program (which is a synonym here for \emph{proof}) of the type
+The most elementary form of iteration is repetition. The simplest example of this form of iteration in the current context is raising a linear operator to an integer power. This non-linear transformation of an input operator $\alpha \in \End_{\mathbb{R}}(\mathscr{H})$ to the output operator $\alpha^n$ is encoded by a proof $\underline{n}$ in linear logic of the type
 \[
 \textbf{int}_A = {!}(A \multimap A) \multimap (A \multimap A)
 \]
-where $\den{A} = \mathscr{H}$. A more interesting kind of iteration takes a pair of linear operators $\alpha, \beta$ and intertwines them according to a sequence of binary numbers $S \in \{0,1\}^*$. This kind of transformation is encoded by a linear logic program of type
+where $\den{A} = \mathscr{H}$. A more interesting kind of iteration takes a pair of linear operators $\alpha, \beta$ and intertwines them according to a sequence of binary numbers $S \in \{0,1\}^*$. This transformation is encoded by a proof $\underline{S}$ in linear logic of type
 \[
-\textbf{bint}_A = {!}(A \multimap A) \multimap \big({!}(A \multimap A) \multimap (A \multimap A)\big)\,,
+\textbf{bint}_A = {!}(A \multimap A) \multimap \big({!}(A \multimap A) \multimap (A \multimap A)\big)\,.
 \]
-as will be explained below. For more details on the following examples see \cite[\S 3]{murfetclift}. 
+We begin this section with a brief exposition on the iterators $\underline{n}$ and $\underline{S}$ before going on to explain how they appear in various special cases of the LLRNN. The iterator $\underline{n}$ is the basic tool in the linear logic implementation of the NTM (Example \ref{example:ntm}) and its generalisations in Example \ref{example:ntm_extended} and Example \ref{example:ntm_super} while the iterator $\underline{S}$ is used in Example \ref{example:dihedral}. 
+\vspace{0.25cm}
+
+For more details on the following examples from linear logic see \cite[\S 3]{murfetclift}. 
 
 \begin{example}\label{example_1} The denotation of a proof $\pi$ of type $\textbf{int}_A$ is a function
 \[
@@ -311,11 +314,6 @@ For every binary sequence $S \in \{0,1\}^*$ the denotation $\den{\underline{S}}$
 \den{\underline{01101}}(X,Y) = Y X Y Y X\,.
 \]
 \end{example}
-
-%\begin{remark} The subspaces $\mathscr{P}_i$ should be viewed as chosen ``libraries'' of denotations of linear logic programs, that the RNN controller is able to call. For example, if $P_i = \binta_A$ then we might take for $\mathscr{P}_i$ the subspace spanned by $\den{\underline{01}}, \den{\underline{110}}$.
-%\end{remark}
-
-We begin with an example that makes only trivial use of the coupling to linear logic.
 
 \begin{example}[(Second-order RNN)] With $r = s = 0$ there are no command or data vectors. Take for the input type $C = A \multimap A$ and
 \[
@@ -358,9 +356,9 @@ In this case $\master$ is just the evaluation program, which applies the given C
 
 Since one doesn't need to know linear logic to understand how to raise a linear operator to an integer power, it is natural to wonder to what degree linear logic is actually necessary here. All of our models can be formulated without any mention of linear logic, and indeed we will generally present the functions $\den{\master}_{nl}$ rather than the underlying proof, which we relegate to Appendix \ref{??}. Nonetheless, the construction of $\master$ within linear logic constrains the model and makes conceptually clear the computational ideas involved; these ideas are not necessarily clear from the polynomial algebra that results from applying the denotation functor $\den{-}$. The strongest example of this point of view is the role of iteration in the LLRNN approach to the Neural Turing Machine and its generalisations.
 
-The raising of linear operators to a power predicted from the hidden state is the crucial architectural feature behind the location-based addressing scheme of the Neural Turing Machine (NTM) \cite{ntm}, Differentiable Neural Computer \cite{dnc} and stack-augmented RNN \cite{joulin}. The linear operator $R$ involved in the case of the NTM is the \emph{rotation} by one position of the memory state, viewed as a sequence of $N+1$ vectors arranged around a circle. The read and write weightings of the NTM are controlled by predicting a distribution, at each time step, over the $N$ distinct powers $L^0 = I, L, L^2, \ldots, L^{N-1}$ of this rotation matrix, and applying the linear combination of these powers to the vector representing the weighting.
+The raising of linear operators to a power predicted from the hidden state is the crucial architectural feature behind the location-based addressing scheme of the Neural Turing Machine (NTM) \cite{ntm} and stack-augmented RNN \cite{joulin}. The linear operator involved in the case of the NTM is the rotation by one position of the memory state, viewed as a sequence of vectors arranged around the circle. The read and write address weightings of the NTM are controlled by predicting a distribution, at each time step, over the distinct powers of this rotation matrix.
 
-\begin{example}[(Neural Turing Machine)] The NTM with only location-based memory addressing can be realised in the LLRNN framework as follows. The \emph{address space} is
+\begin{example}[(Neural Turing Machine)]\label{example:ntm} The NTM with only location-based memory addressing can be realised in the LLRNN framework as follows. The \emph{address space} is
 \[
 \mathscr{W} = (\mathbb{Z}/N\mathbb{Z})^{\mathbb{R}} \cong \mathbb{R} \bar{0} \oplus \cdots \oplus \mathbb{R} \overline{N-1}
 \]
@@ -368,7 +366,7 @@ and given a \emph{memory coefficient space} $\mathscr{V}$ the \emph{memory space
 \[
 \mathscr{S} = \mathscr{W}^* \otimes \mathscr{V} \cong \Hom_{\mathbb{R}}(\mathscr{W}, \mathscr{V})\,.
 \]
-A memory state $M$ is a linear map $M: \mathscr{W} \lto \mathscr{V}$ which we view as an arrangement of the vectors $u_j = M(\bar{j})$ on the vertices of the regular $N$-gon $\{ e^{\frac{2\pi \sqrt{-1} j}{N}} \}_{j \in \mathbb{Z}/N\mathbb{Z}}$, for example:
+A memory state $M$ is a linear map $M: \mathscr{W} \lto \mathscr{V}$ which we view as an arrangement of the vectors $u_j = M(\bar{j})$ on the vertices of the regular $N$-gon:
 \begin{center}
 \includegraphics[scale=0.3]{dia1}
 \end{center}
@@ -388,12 +386,12 @@ and the state of the controller at time $t$ is written
 \[
 h^{(t)} = (h_0^{(t)}, r^{(t)}, w^{(t)}, M^{(t)}) \in \mathscr{H}\,.
 \]
-The components of this vector are interpreted as the \emph{controller internal state} $h_0^{(t)}$, \emph{read address weights} $r^{(t)}$, \emph{write address weights} $w^{(t)}$ and \emph{memory contents} $M^{(t)}$. At each time step the RNN generates from its hidden state a distribution $s$ over rotations of the write address, a distribution $q$ over rotations of the read address, and a vector $u$ to be written to memory, via the formulas
-\begin{align*}
-s^{(t+1)} &= \zeta( W_s h^{(t)} + B_s ) \in \mathscr{W}^*\,,\\
-q^{(t+1)} &= \zeta( W_q h^{(t)} + B_q ) \in \mathscr{W}^*\,,\\
-u^{(t+1)} &= \sigma( W_a h^{(t)} + B_a ) \in \mathscr{V}\,.
-\end{align*}
+The components of this vector are interpreted as the \emph{controller internal state} $h_0^{(t)}$, \emph{read address weights} $r^{(t)}$, \emph{write address weights} $w^{(t)}$ and \emph{memory contents} $M^{(t)}$. For convenience we will refer to the read address weight as the \emph{read address}, even though the vector represents a distribution over the available addresses rather than a specific address. At each time step the RNN generates from its hidden state a distribution $s$ over rotations of the write address, a distribution $q$ over rotations of the read address, and a vector $u$ to be written to memory, via the formulas
+\begin{gather*}
+s^{(t+1)} = \zeta( W_s h^{(t)} + B_s ) \in \mathscr{W}^*\,,\\
+q^{(t+1)} = \zeta( W_q h^{(t)} + B_q ) \in \mathscr{W}^*\,,\\
+u^{(t+1)} = \sigma( W_a h^{(t)} + B_a ) - \sigma( W_e h^{(t)} + B_e ) \in \mathscr{V}\,.
+\end{gather*}
 The update equation for the addresses \cite[Eq. (8)]{ntm} and memory \cite[Eq. (3),(4)]{ntm} are
 \begin{align*}
 w^{(t+1)} &= \sum_{i=0}^{N-1} s^{(t+1)}(\bar{i}) \cdot (R^*)^i( w^{(t)} )\,,
@@ -414,18 +412,17 @@ We now explain how to present this form of the NTM as a special case of the LLRN
 \]
 We omit the input type. The master algorithm is the proof of ${!} \Gamma, {!} \Delta \vdash A \multimap A$ (notation of Remark \ref{remark:sequentbang}) such that for $h = (h_0,r,w,M) \in \mathscr{H}$,
 \begin{align*}
-\den{\master}_{nl}&\big( \den{\underline{m}}, \den{\underline{n}}, \alpha, \beta, u )(h)\\
-&\quad = \big(V(M(r)), \alpha^m(r), \beta^n(w), M + \beta^n(w) \otimes u\big)\,.
+\den{\master}_{nl}&\big( \den{\underline{m}}, \den{\underline{n}}, \alpha, \beta, u )(h) = \big(V(M(r)), \alpha^m(r), \beta^n(w), M + \beta^n(w) \otimes u\big)\,.
 \end{align*}
 We take $\mathscr{B}_1 = \End_{\mathbb{R}}(\mathscr{W})$, $\mathscr{B}_2 = \End_{\mathbb{R}}(\mathscr{W}^*)$ and
 \begin{align*}
 \mathscr{P}_1 &= \operatorname{span}(\den{\underline{0}}, \ldots, \den{\underline{N-1}}) \subseteq \den{\inta_W}\,,\\
 \mathscr{P}_2 &= \operatorname{span}(\den{\underline{0}}, \ldots, \den{\underline{N-1}}) \subseteq \den{\inta_{W^{\vee}}}
 \end{align*}
-so that as in the example of the higher-order RNN, the command vectors $p_1^{(t+1)}, p_2^{(t+1)}$ give distributions over the set of integers $\{0,\ldots,N-1\}$ which are to be used as exponents of the given operators $\alpha, \beta$. Fixing these operators to be $\alpha = R, \beta = R^*$ recovers the NTM.
+so that as in the example of the higher-order RNN, the command vectors $p_1^{(t+1)}, p_2^{(t+1)}$ give distributions over the set of integers $\{0,\ldots,N-1\}$ which are to be used as exponents of the given operators $\alpha, \beta$. Fixing these operators to be $\alpha = R, \beta = R^*$ recovers the NTM, where we identify $p_1^{(t+1)}$ with $q^{(t+1)}$ and $p_2^{(t+1)}$ with $s^{(t+1)}$.
 \end{example}
 
-\begin{example}[(Neural N-gon Machine)] The NTM manipulates its memory state via rotations of the regular $N$-gon. In this example we study the natural extension which allows access the full symmetry group, the dihedral group, by adding the reflection
+\begin{example}[(Dihedral NTM)]\label{example:dihedral} The NTM manipulates its memory state via rotations of the regular $N$-gon. In this example we study the natural extension which allows access the full symmetry group, the dihedral group, by adding the reflection
 \begin{gather*}
 T: \mathscr{W} \lto \mathscr{W}\,,\\
 T(\overline{a}) = \overline{-a}.
@@ -438,14 +435,14 @@ Note that $T$ and $R$ do not commute. The command and data types are now
 and $\master$ is the proof of ${!} \Gamma, {!} \Delta \vdash A \multimap A$ such that for $h \in \mathscr{H}$ and $F,G \in \{0,1\}^*$
 \begin{align*}
 \den{\master}_{nl}&\big( \den{\underline{F}}, \den{\underline{G}}, \alpha_1, \alpha_2, \beta_1, \beta_2, u )(h)\\
-&\quad = \Big(V(M(r)), \den{F}(\alpha_1,\alpha_2)(r),\den{G}(\beta_1,\beta_2)(w), M + \den{G}(\beta_1,\beta_2)(w) \otimes u\Big)\,.
+& = \Big(V(M(r)), \den{F}_{nl}(\alpha_1,\alpha_2)(r),\den{G}_{nl}(\beta_1,\beta_2)(w), M + \den{G}_{nl}(\beta_1,\beta_2)(w) \otimes u\Big)\,.
 \end{align*}
 We then fix $\alpha_1 = R, \alpha_2 = T$ and $\beta_1 = R^*, \beta_2 = T^*$.
 \end{example}
 
 The Differentiable Neural Computer (DNC) \cite{dnc} generalises the NTM by allowing for more complicated patterns of memory access based on a probabilistic incidence matrix $L[i,j]$ which records when positions in memory are written in successive time steps. An alternative approach to allowing more complicated memory access patterns is a more thoroughgoing use of iterators; this is more in keeping with the spirit of the LLRNN, and is the perspective we explore in the next example.
 
-\begin{example}[(Extended NTM)] At each time step the NTM predicts distributions $s^{(t)}, q^{(t)}$ over the possible rotations of the write and read addresses. A pattern of memory accesses is a \emph{sequence} of such rotations, and since each rotation is the denotation of a linear logic proof, this means a sequence of vectors in $\den{\inta_W}$. It is therefore natural to add a second memory ring storing such iterators.
+\begin{example}[(Extended NTM)]\label{example:ntm_extended} At each time step the NTM predicts distributions $s^{(t)}, q^{(t)}$ over the possible rotations of the write and read addresses. A pattern of memory accesses is a \emph{sequence} of such rotations, and since each rotation is the denotation of a linear logic proof, this means a sequence of vectors in $\den{\inta_W}$. It is therefore natural to add a second memory ring storing such iterators.
 
 In addition to the memory coefficient space $\mathscr{V}_1 = \mathscr{V}$ from earlier, we now take a finite-dimensional subspace $\mathscr{V}_2 \subseteq \den{\inta_W}$. For convenience we keep the same address space for both memory rings. So we have memory spaces for $i \in \{1,2\}$
 \[
@@ -455,7 +452,7 @@ An example of a combined state $\mathscr{S} = \mathscr{S}_1 \oplus \mathscr{S}_2
 \begin{center}
 \includegraphics[scale=0.3]{dia2}
 \end{center}
-where a node without a label indicates that the zero vector is stored there. An example will help to explain how the second memory ring affects the dynamics of the RNN. Suppose throughout that the read address weighting for both rings is sharply focused at a single position, that at a certain time $t = t_0$ the memory state is as shown above, and that the read weighting for the first ring is focused at the zero position at time $t_0 - 1$. We let the focal position of the read weighting of the second memory ring progress as follows:
+where a node without a label indicates that the zero vector is stored there. An example will help to explain how the second memory ring affects the dynamics of the RNN. Suppose throughout that the read address for both rings is sharply focused at a single position, that at a certain time $t = t_0$ the memory state is as shown above, and that the read address for the first ring is focused at the zero position at time $t_0 - 1$. We let the focal position of the read address of the second memory ring progress as follows:
 \begin{center}
 \begin{tabular}{|r|c|c|c|c|c|c|c|}
 \hline
@@ -469,7 +466,7 @@ This means that the sequence
 \be\label{eq:deliver_iterators}
 \den{\underline{2}}, \den{\underline{2}}, \den{\underline{3}}, \den{\underline{3}}, \den{\underline{1}}, \den{\underline{3}}, \den{\underline{2}}
 \ee
-of iterators will be delivered to the controller. These iterators will be used to control the step-size of the change in read weighting of the first memory ring. Finally, the sequence of vectors delivered to the controller will be
+of iterators will be delivered to the controller. These iterators will be used to control the step-size of the change in read address of the first memory ring. Finally, the sequence of vectors delivered to the controller will be
 \[
 u_0, u_2, u_4, u_{7} = u_2, u_{10} = u_0, u_{11} = u_1, u_{14} = u_4, u_{16} = u_1\,.
 \]
@@ -488,9 +485,9 @@ which has the property that
 \]
 Thus if $M_2(r_2) = \sum_i \lambda_i \den{\underline{n}_i}$ we will see the term
 \[
-\den{\underline{\mathrm{eval}}}( M_2(r_2), \ket{\emptyset}_\alpha ) = \sum_i \lambda_i \alpha^{n_i}
+\den{\underline{\mathrm{eval}}}( M_2(r_2), \ket{\emptyset}_R )(r_1) = \sum_i \lambda_i R^{n_i}(r_1)
 \]
-in the equation for $h^{(t+1)}$. The command and data types are
+in the equation for $Z$ in $h^{(t+1)}$. The command and data types are
 \begin{gather*}
 \Gamma = \inta_{W^{\vee}}, \inta_W, \inta_{W^{\vee}}\,\\
 \Delta = W \multimap W, W^{\vee} \multimap W^{\vee}, W \multimap W, W^{\vee} \multimap W^{\vee}, V, \inta_W\,
@@ -507,23 +504,23 @@ the value of the master function is
 &\quad = \Big(V(M_1(r_1)), \den{\underline{\mathrm{eval}}}\big( M_2(r_2), \ket{\emptyset}_{\alpha_1} \big)(r_1), \beta_1^{n_1}(w_1),\\
 &\qquad \quad \alpha_2^{m_2}(r_2), \beta_2^{n_2}(w_2), M_1 + \beta_1^{n_1}(w_1) \otimes u_1, M_2 + \beta_2^{n_2}(w_2) \otimes u_2 \Big)\,.
 \end{align*}
-as above we set $\alpha_1 = \alpha_2 = R$ and $\beta_1 = \beta_2 = R^*$. Note that in this model the only method the RNN has to manipulate the read address for the first memory ring is via commands inserted on the second memory ring; however the write address for the first memory ring is controlled directly by the RNN as in the ordinary NTM.
+as above we set $\alpha_1 = \alpha_2 = R$ and $\beta_1 = \beta_2 = R^*$. 
 \end{example}
 
 In the previous example the second memory ring stores iterators which are applied to the rotation operator in order to manipulate the read address of the first memory ring. We could add further memory rings to manipulate the read or write address of the first two memory rings, but this does not introduce anything essentially new. A more interesting demonstration of the underlying ideas of the coupling to linear logic is given in the next example, which adds two additional memory rings: the first stores constructions of \emph{new iterators from old ones} and the second stores \emph{iterators of these constructions}.
 
 For any type $A$ and $n \ge 0$ there is a Church numeral $\underline{n}_A$ which is a proof of $\inta_A$. We have been omitting the subscript and writing $\underline{n}$ for this proof in the above, but in what follows we will need to sometimes reinstate the subscripts.
 
-\begin{example} Consider memory rings with address space $\mathscr{W}$ and coefficient spaces
+\begin{example}\label{example:ntm_super} Consider memory rings with address space $\mathscr{W}$ and coefficient spaces
 \[
 \mathscr{V}_3 \subseteq \den{ \inta_{W} \multimap \inta_W }\,, \qquad \mathscr{V}_4 \subseteq \den{ \inta_{\inta_W} }
 \]
-which are spanned by denotations of linear logic proofs. Proofs of $\inta_W \multimap \inta_W$ construct new iterators from old ones, and since these iterators are naturally identified with integers, we are talking about functions $\mathbb{N} \lto \mathbb{N}$. For example, there is a proof $\pi_k = \underline{\mathrm{mult}}(k,-)$ of this type \cite[\S 6.1]{murfet_ll} with the property that
+which are spanned by denotations of linear logic proofs. Proofs of $\inta_W \multimap \inta_W$ construct new iterators from old ones, and since these iterators are naturally identified with integers, we are talking about functions $\mathbb{N} \lto \mathbb{N}$. For example, the proof $\pi_k = \underline{\mathrm{mult}}(k,-)$ of this type \cite[\S 6.1]{murfet_ll} has the property that
 \begin{gather*}
 \den{\pi_k}: \den{\inta_W} \lto \den{\inta_W}\,,\\
-\den{\pi_k}( \den{\underline{m}_W} ) = \den{\underline{mk}_W}\,.
+\den{\underline{m}_W} \longmapsto \den{\underline{mk}_W}\,.
 \end{gather*}
-Proofs of $\inta_{\inta_W}$ are iterators of proofs of the type $\inta_W \multimap \inta_W$. For instance, the proof $\underline{n}_{\inta_W}$ of $\inta_{\inta_W}$ applied to a proof $\rho$ of $\inta_W \multimap \inta_W$ returns this proof iterated $n$ times. For example, $\underline{n}_{\inta_W}$ acts on $\pi_k$ to give $\pi_{k^n}$ \cite[Example 7.4]{murfet_ll}. The read address weightings of these new rings allows the controller to specify that the chosen iterator from the second ring of the extended NTM be modified according to the selected proof in the third ring, and that this modification be iterated the number of times specified by the fourth ring.
+Proofs of $\inta_{\inta_W}$ are iterators of proofs of the type $\inta_W \multimap \inta_W$. For instance, the proof $\underline{n}_{\inta_W}$ of $\inta_{\inta_W}$ applied to a proof $\rho$ of $\inta_W \multimap \inta_W$ returns this proof iterated $n$ times. In particular, $\underline{n}_{\inta_W}$ applied to $\pi_k$ returns $\pi_{k^n}$ \cite[Example 7.4]{murfet_ll}. The read addresses of these new rings allows the controller to specify that the chosen iterator from the second ring of the extended NTM be modified according to the selected proof in the third ring, and that this modification be iterated the number of times specified by the fourth ring.
 
 Once again, let us first explain the dynamics induced by the additional memory rings with an example. Suppose at time $t = t_0$ the memory state of the first two rings is
 \begin{center}
@@ -533,7 +530,7 @@ and that the state of the third and fourth rings is
 \begin{center}
 \includegraphics[scale=0.3]{dia3}
 \end{center}
-Suppose that the read address weighting for the first ring is focused at zero at time $t_0 -1$ and that the focus of the other rings evolves over time according to the table
+Suppose that the read address for the first ring is focused at zero at time $t_0 -1$ and that the focus of the other rings evolves over time according to the table
 \begin{center}
 \begin{tabular}{|r|c|c|c|c|c|c|c|}
 \hline
@@ -547,58 +544,73 @@ focus of fourth ring & 0 & 0 & 0 & 1 & 0 & 1 & 0\\
 \hline
 \end{tabular}
 \end{center}
-When the focus of the fourth ring is at the zero position, the stored proof $\underline{1}_{\inta_W}$ acts on both $\pi_1, \pi_2$ by iterating them once, that is, it does nothing. However, when the focus of the fourth ring is at position one, the stored proof $\underline{3}_{\inta_W}$ at this position iterates any given proof three times, giving respectively $\pi_1, \pi_8$ when fed $\pi_1, \pi_2$. The first iterator fed to the controller is therefore (abusing notation slightly)
+At time $t = t_0$ reading from the second, third and fourth rings produces $\den{\underline{2}}, \den{\pi_2}, \den{\underline{1}_{\inta_W}}$ respectively. The controller applies these in reverse order to obtain the iterator
 \[
 \big\{ \den{\underline{1}_{\inta_W}}( \den{\pi_2} ) \big\}( \den{\underline{2}} ) = \den{\pi_2}( \den{\underline{2}} ) = \den{\underline{4}}\,.
 \]
-In order, the second through seventh iterators are
+This modified iterator (modified from $\underline{2}$ by the algorithm which is the modification of $\pi_2$ by $\underline{1}_{\inta_W}$) will be the one used by the controller to compute the change in the read address of the first ring from time $t_0 - 1$ to time $t_0$, via the formula
+\[
+r^{(t_0)} = \den{\underline{4}}_{nl}(R)( r^{(t_0 - 1)} ) = R^4( \overline{0} ) = \overline{4}\,.
+\]
+This change results in $u_4$ appearing in the computation of $h^{(t_0+1)}$. Using the identity
+\begin{gather*}
+\big\{\den{\underline{n}_{\inta_W}}_{nl}\big( \den{\pi_k} \big)\big\}\big( \den{\underline{m}_W} \big) = \den{\pi_k}^n( \den{\underline{m}_W} ) = \den{\underline{k^n m}_W}
+\end{gather*}
+we compute the remaining time steps involve the following iterators:
 \begin{align*}
-\big\{ \den{\underline{1}_{\inta_W}}( \den{\pi_1} ) \big\}( \den{\underline{2}} ) &= \den{\pi_1}( \den{\underline{2}} ) = \den{\underline{2}}\,,\\
-\big\{ \den{\underline{1}_{\inta_W}}( \den{\pi_1} ) \big\}( \den{\underline{3}} ) &= \den{\pi_1}( \den{\underline{3}} ) = \den{\underline{3}}\,,\\
-\big\{ \den{\underline{3}_{\inta_W}}( \den{\pi_2} ) \big\}( \den{\underline{3}} ) &= \den{\pi_8}( \den{\underline{3}} ) = \den{\underline{24}}\,,\\
-\big\{ \den{\underline{1}_{\inta_W}}( \den{\pi_2} ) \big\}( \den{\underline{1}} ) &= \den{\pi_2}( \den{\underline{1}} ) = \den{\underline{2}}\,,\\
-\big\{ \den{\underline{3}_{\inta_W}}( \den{\pi_2} ) \big\}( \den{\underline{3}} ) &= \den{\pi_8}( \den{\underline{3}} ) = \den{\underline{24}}\,,\\
-\big\{ \den{\underline{1}_{\inta_W}}( \den{\pi_2} ) \big\}( \den{\underline{2}} ) &= \den{\pi_2}( \den{\underline{2}} ) = \den{\underline{4}}\,,
+\big\{ \den{\underline{1}_{\inta_W}}_{nl}( \den{\pi_1} ) \big\}( \den{\underline{2}} ) &= \den{\pi_1}( \den{\underline{2}} ) = \den{\underline{2}}\,,\\
+\big\{ \den{\underline{1}_{\inta_W}}_{nl}( \den{\pi_1} ) \big\}( \den{\underline{3}} ) &= \den{\pi_1}( \den{\underline{3}} ) = \den{\underline{3}}\,,\\
+\big\{ \den{\underline{3}_{\inta_W}}_{nl}( \den{\pi_2} ) \big\}( \den{\underline{3}} ) &= \den{\pi_8}( \den{\underline{3}} ) = \den{\underline{24}}\,,\\
+\big\{ \den{\underline{1}_{\inta_W}}_{nl}( \den{\pi_2} ) \big\}( \den{\underline{1}} ) &= \den{\pi_2}( \den{\underline{1}} ) = \den{\underline{2}}\,,\\
+\big\{ \den{\underline{3}_{\inta_W}}_{nl}( \den{\pi_2} ) \big\}( \den{\underline{3}} ) &= \den{\pi_8}( \den{\underline{3}} ) = \den{\underline{24}}\,,\\
+\big\{ \den{\underline{1}_{\inta_W}}_{nl}( \den{\pi_2} ) \big\}( \den{\underline{2}} ) &= \den{\pi_2}( \den{\underline{2}} ) = \den{\underline{4}}\,.
 \end{align*}
 The sequence of vectors delivered to the controller will therefore be 
 \[
 u_0, u_4, u_6 = u_1, u_9 = u_4, u_{33} = u_3, u_{35} = u_0, u_{59} = u_4, u_{63} = u_3.
 \]
-More precisely, for $\alpha \in \End_{\mathbb{R}}(\den{W})$
-\begin{gather*}
-\den{\underline{n}_{\inta_W}}_{nl}: \den{\inta_W \multimap \inta_W} \lto \den{\inta_W \multimap \inta_W}\,,\\
-\Big\{ \den{\underline{n}_{\inta_W}}_{nl}\big( \den{\pi_k} \big)\big( \den{\underline{m}_W} \big) \Big\}_{nl}( \alpha ) = \big\{ \den{\pi_k}^n( \den{\underline{m}_W} ) \big\}_{nl}(\alpha) = \den{\underline{k^n m}_W}_{nl}(\alpha) = \alpha^{k^n m}\,.
-\end{gather*}
-Recall that the contents of the second memory ring in the extended NTM appear in the evolution equation via the term
-\[
-\den{\underline{\mathrm{eval}}}\big( M_2(r_2), \ket{\emptyset}_{\alpha_1} \big)(r_1)\,.
-\]
-The contents of the third memory ring come into play at the moment when the contents of the second ring $M_2(r_2)$ are fed into the evaluation function. By definition $M_2(r_2) \in \den{\inta_W}$ and if $\pi$ is a proof of $\inta_W \multimap \inta_W$ then there is a linear map
-\[
-\den{\pi}: \den{\inta_W} \lto \den{\inta_W}
-\]
-hence a vector $\den{\pi}( M_2(r_2) ) \in \den{\inta_W}$. We have two more evaluation proofs
+%When the focus of the fourth ring is at the zero position, the stored proof $\underline{1}_{\inta_W}$ acts on both $\pi_1, \pi_2$ by iterating them once, that is, it does nothing. However, when the focus of the fourth ring is at position one, the stored proof $\underline{3}_{\inta_W}$ at this position iterates any given proof three times, giving respectively $\pi_1, \pi_8$ when fed $\pi_1, \pi_2$. 
+Recall that the contents of the second memory ring in the extended NTM appear in the evolution equation via the term $\den{\underline{\mathrm{eval}}}\big( M_2(r_2), \ket{\emptyset}_{\alpha_1} \big)(r_1)$. To define the corresponding term for the current model, we will need the evaluations
 \begin{center}
 \begin{mathprooftree}
 \AxiomC{$\underline{\mathrm{eval}'}$}
 \noLine\UnaryInfC{$\vdots$}
 \def\extraVskip{5pt}
-\noLine\UnaryInfC{$\inta_W \multimap \inta_W, \inta_W \vdash \inta_W$\,.}
+\noLine\UnaryInfC{$\inta_W \multimap \inta_W, \inta_W \vdash \inta_W$}
 \end{mathprooftree}
 \qquad
 \begin{mathprooftree}
 \AxiomC{$\underline{\mathrm{eval}''}$}
 \noLine\UnaryInfC{$\vdots$}
 \def\extraVskip{5pt}
-\noLine\UnaryInfC{$\inta_{\inta_W}, {!}(\inta_W \multimap \inta_W) \vdash \inta_W \multimap \inta_W$\,.}
+\noLine\UnaryInfC{$\inta_{\inta_W}, {!}(\inta_W \multimap \inta_W) \vdash \inta_W \multimap \inta_W$}
 \end{mathprooftree}
 \end{center}
-and we deduce from these the vectors
+from which we obtain vectors
 \begin{gather*}
 \den{\underline{\mathrm{eval}}''}( M_4(r_4), \ket{\emptyset}_{M_3(r_3)} ) \in \den{\inta_W \multimap \inta_W}\,,\\
 \den{\underline{\mathrm{eval}}'}\Big( \den{\underline{\mathrm{eval}}''}( M_4(r_4), \ket{\emptyset}_{M_3(r_3)} ), M_2(r_2) \Big) \in \den{\inta_W}\,.
 \end{gather*}
-
+Since we have four memory rings, the state space of the RNN is decomposed as
+\[
+\mathscr{H} = \mathscr{H}_0 \oplus \big( \mathscr{W} \oplus \mathscr{W}^* \big)^{\oplus 4}  \oplus \bigoplus_{i=1}^4 \mathscr{S}_i
+\]
+where $\mathscr{S}_i = \mathscr{W}^* \otimes \mathscr{V}_i$. Using the abbreviations
+\[
+\Gamma_i = \inta_W, \inta_{W^{\vee}}\,, \qquad \Delta_i = W \multimap W, W^{\vee} \multimap W^{\vee}
+\]
+the command and data types are given by
+\begin{gather*}
+\Gamma = \inta_{W^{\vee}}, \Gamma_2, \Gamma_3, \Gamma_4\,\\
+\Delta = \Delta_1, \Delta_2, \Delta_3, \Delta_4, V, \inta_W, \inta_W \multimap \inta_W, \inta_{\inta_W}\,.
+\end{gather*}
+The value of the master function is, for $h = \big(h_0, \{r_i, w_i\}_{i=1}^4, \{M_i\}_{i=1}^4\big)$,
+\begin{align*}
+\den{\master}_{nl}&\big( \den{\underline{n}_1}, \{\den{\underline{m}_i}, \den{\underline{n}_i}\}_{i=2}^4, \{\alpha_i, \beta_i\}_{i=1}^4, \{u_i\}_{i=1}^4\big)(h)\\
+&\quad = \Big(V(M_1(r_1)), \den{\underline{\mathrm{eval}}'}\Big( \den{\underline{\mathrm{eval}}''}( M_4(r_4), \ket{\emptyset}_{M_3(r_3)} ), M_2(r_2) \Big)_{nl}(r_1),\\
+&\qquad \beta_1^{n_1}(w_1), \big\{\alpha_i^{m_i}(r_i), \beta_i^{n_i}(w_i)\big\}_{i=2}^4, \big\{M_i + \beta_i^{n_i}(w_i) \otimes u_i \big\}_{i=1}^4 \Big)\,.
+\end{align*}
+As above we set $\alpha_i = R$ and $\beta_i = R^*$ for $1 \le i \le 4$.
 \end{example}
 
 %\begin{remark} If we take instead the coefficient vector space of the memory to be $\End_{\mathbb{R}}(\mathscr{H})$ so that we are storing operators rather than vectors, and change the RNN update equation to have the term
@@ -690,29 +702,6 @@ and we deduce from these the vectors
 %\]
 %where $\cdot$ means concatenation.
 %\end{example}
-
-\section{Background on CPUs}\label{section:appendix_cpu}
-
-Recall that an assembly program for an ordinary CPU looks like
-\begin{verbatim}
-LOAD R1, A
-ADD R3, R1, R2
-STORE C, R3
-\end{verbatim}
-Where \verb+R1,R2,R3+ stand for the first three registers of the CPU and \verb+A,B,C+ are numbers representing addresses in memory. Thus series of instructions will result in the CPU fetching a number from memory location \verb+A+ and storing it in \verb+R1+, adding this number to a previously stored number in \verb+R2+ with the result being stored in \verb+R3+, and finally writing that register out to the memory address \verb+C+. In the analogy between a CPU and a vanilla RNN we think of the number read from \verb+A+ as the current input $x^{(t)}$ and the previously stored value in \verb+R2+ as (part of) the internal state $h^{(t-1)}$.
-
-Recent work \cite{??,??} on coupling memory to neural networks takes as its starting point the first of the above instructions \verb+LOAD R1, A+ and makes it ``differentiable'' by having the RNN controller predict at time $t$ both the memory address \verb+A+ and the register \verb+R3+ to write to (in this case for example, as a mask on the vector giving the internal state $h^{(t+1)}$). The same differentiable interpretation can be given of the \verb+STORE+ command. This is done by adding suitable terms to the update equation \eqref{eq:update_eqn}.
-
-In contrast our focus is on the third command, the \verb+ADD+. We increase the expressive power of the update equation by allowing it to predict at time $t$ an operation $p^{(t)}$ (a vector specifying a point in a space of ``programs'') which is to be performed on the input and internal state. In order to preserve our analogy with CPU instructions even without \verb+LOAD+ and \verb+STORE+, we could imagine a CPU with a command
-\begin{verbatim}
-ADD R3, A, R2
-\end{verbatim}
-which at once reads the number from address \verb+A+, adds it to the stored value in \verb+R2+ and writes the result to \verb+R3+. Note that without a \verb+LOAD+ instruction, the only way a value could have gotten into \verb+R2+ in a previous time step is as the result of another \verb+ADD+.
-
-%\begin{remark} Although the architecture takes some inspiration from normal CPUs, there is an important distinction: on a normal CPU the program is given as a series of instructions prior to the beginning of execution. In contrast, in the model we have described each command is \emph{predicted} at runtime from the current internal state. Perhaps we can understand the process intuitively as follows: we are co-learning a part of $H$, call it $H_0$, which generates some part of the internal state $h^{(1)}_{0}, h^{(2)}_{0}, \ldots$ giving a path through the state space on which the weight matrix $P$ picks out the right program to run at each time step. The overall algorithm is distributed amongst the weights of $H_0$ and $P$.
-
-%This also suggests an alternative algorithm: we do not predict $p^{(t)}$ at each time step, rather we have some fixed number of time steps $T$ and matrices of weights $p^{(1)}, \ldots, p^{(T)}$ which are learned by gradient descent.
-%\end{remark}
 
 \bibliographystyle{amsalpha}
 \providecommand{\bysame}{\leavevmode\hbox to3em{\hrulefill}\thinspace}
@@ -956,3 +945,26 @@ W_1(h^{(t)}) + \mu s_1^{(t)}, &
 \end{align*}
 which agrees with the hidden state of the stack-augmented RNN \cite{joulin} with hidden-to-hidden weight matrix $H_0$, after it has predicted with probability $\lambda$ to push $W_1(h^{(t)})$ onto the stack, and with probability $\mu$ to pop the stack. To store vectors in a vector space $V$ rather than a scalar at each stack position, we simply replace $\mathscr{S}$ by $\mathscr{S} \otimes V$.
 \end{example}
+
+\section{Background on CPUs}\label{section:appendix_cpu}
+
+Recall that an assembly program for an ordinary CPU looks like
+\begin{verbatim}
+LOAD R1, A
+ADD R3, R1, R2
+STORE C, R3
+\end{verbatim}
+Where \verb+R1,R2,R3+ stand for the first three registers of the CPU and \verb+A,B,C+ are numbers representing addresses in memory. Thus series of instructions will result in the CPU fetching a number from memory location \verb+A+ and storing it in \verb+R1+, adding this number to a previously stored number in \verb+R2+ with the result being stored in \verb+R3+, and finally writing that register out to the memory address \verb+C+. In the analogy between a CPU and a vanilla RNN we think of the number read from \verb+A+ as the current input $x^{(t)}$ and the previously stored value in \verb+R2+ as (part of) the internal state $h^{(t-1)}$.
+
+Recent work \cite{??,??} on coupling memory to neural networks takes as its starting point the first of the above instructions \verb+LOAD R1, A+ and makes it ``differentiable'' by having the RNN controller predict at time $t$ both the memory address \verb+A+ and the register \verb+R3+ to write to (in this case for example, as a mask on the vector giving the internal state $h^{(t+1)}$). The same differentiable interpretation can be given of the \verb+STORE+ command. This is done by adding suitable terms to the update equation \eqref{eq:update_eqn}.
+
+In contrast our focus is on the third command, the \verb+ADD+. We increase the expressive power of the update equation by allowing it to predict at time $t$ an operation $p^{(t)}$ (a vector specifying a point in a space of ``programs'') which is to be performed on the input and internal state. In order to preserve our analogy with CPU instructions even without \verb+LOAD+ and \verb+STORE+, we could imagine a CPU with a command
+\begin{verbatim}
+ADD R3, A, R2
+\end{verbatim}
+which at once reads the number from address \verb+A+, adds it to the stored value in \verb+R2+ and writes the result to \verb+R3+. Note that without a \verb+LOAD+ instruction, the only way a value could have gotten into \verb+R2+ in a previous time step is as the result of another \verb+ADD+.
+
+%\begin{remark} Although the architecture takes some inspiration from normal CPUs, there is an important distinction: on a normal CPU the program is given as a series of instructions prior to the beginning of execution. In contrast, in the model we have described each command is \emph{predicted} at runtime from the current internal state. Perhaps we can understand the process intuitively as follows: we are co-learning a part of $H$, call it $H_0$, which generates some part of the internal state $h^{(1)}_{0}, h^{(2)}_{0}, \ldots$ giving a path through the state space on which the weight matrix $P$ picks out the right program to run at each time step. The overall algorithm is distributed amongst the weights of $H_0$ and $P$.
+
+%This also suggests an alternative algorithm: we do not predict $p^{(t)}$ at each time step, rather we have some fixed number of time steps $T$ and matrices of weights $p^{(1)}, \ldots, p^{(T)}$ which are learned by gradient descent.
+%\end{remark}
