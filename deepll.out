@@ -2,4 +2,8 @@
 \BOOKMARK [1][-]{section.2}{Architecture}{}% 2
 \BOOKMARK [2][-]{subsection.2.1}{The second-order RNN}{section.2}% 3
 \BOOKMARK [2][-]{subsection.2.2}{The linear logic RNN}{section.2}% 4
-\BOOKMARK [2][-]{subsection.2.3}{Examples}{section.2}% 5
+\BOOKMARK [1][-]{section.3}{Examples of the LLRNN}{}% 5
+\BOOKMARK [2][-]{subsection.3.1}{Neural Turing Machine}{section.3}% 6
+\BOOKMARK [2][-]{subsection.3.2}{Pattern NTM}{section.3}% 7
+\BOOKMARK [2][-]{subsection.3.3}{Multiple pattern NTM}{section.3}% 8
+\BOOKMARK [1][-]{appendix.A}{Lambda terms}{}% 9
