@@ -4,6 +4,9 @@
 \BOOKMARK [2][-]{subsection.2.2}{The linear logic RNN}{section.2}% 4
 \BOOKMARK [1][-]{section.3}{Examples of the LLRNN}{}% 5
 \BOOKMARK [2][-]{subsection.3.1}{Neural Turing Machine}{section.3}% 6
-\BOOKMARK [2][-]{subsection.3.2}{Pattern NTM}{section.3}% 7
-\BOOKMARK [2][-]{subsection.3.3}{Multiple pattern NTM}{section.3}% 8
-\BOOKMARK [1][-]{appendix.A}{Lambda terms}{}% 9
+\BOOKMARK [3][-]{subsubsection.3.1.1}{NTM as an LLRNN}{subsection.3.1}% 7
+\BOOKMARK [2][-]{subsection.3.2}{Pattern NTM}{section.3}% 8
+\BOOKMARK [3][-]{subsubsection.3.2.1}{An alternative presentation}{subsection.3.2}% 9
+\BOOKMARK [2][-]{subsection.3.3}{Multiple pattern NTM}{section.3}% 10
+\BOOKMARK [1][-]{section.4}{Modal sequence NTM}{}% 11
+\BOOKMARK [1][-]{section.5}{Unpolished remarks}{}% 12
