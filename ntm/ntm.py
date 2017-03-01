@@ -15,28 +15,32 @@ import math
 import time
 
 from random import shuffle
-from tensorflow.python.ops import variable_scope as vs
-from tensorflow.python.ops.rnn_cell import RNNCell
+from tensorflow.python.ops.rnn_cell_impl import _RNNCell as RNNCell
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import init_ops
 from tensorflow.python.ops.math_ops import sigmoid
 from tensorflow.python.ops.math_ops import tanh
 
-# GLOBAL FLAGS
-batch_size = 1000
-controller_state_size = 10 # dimension of the internal state space of the controller
-memory_address_size = 5 # number of memory locations
-memory_content_size = 5 # size of vector stored at a memory location
-state_size = controller_state_size + 2*memory_address_size \
-			+ memory_address_size * memory_content_size
+##################
+# Memory
 
+def memory_operation(h0, r, w, M):
+	return r, w, M
+
+##################
+# NTM Controller
+#
+	
 class NTMRNNCell(RNNCell):
     
-    def __init__(self, num_units, input_size=None, activation=tanh):
-        if input_size is not None:
-            logging.warn("%s: The input_size parameter is deprecated." % self)
+    def __init__(self, num_units, input_size, controller_state_size,
+    			memory_address_size,memory_content_size, activation=tanh):
         self._num_units = num_units
         self._activation = activation
+        self._input_size = input_size
+        self._controller_state_size = controller_state_size
+        self._memory_address_size = memory_address_size
+        self._memory_content_size = memory_content_size
     
     @property
     def state_size(self):
@@ -45,10 +49,14 @@ class NTMRNNCell(RNNCell):
     @property
     def output_size(self):
         return self._num_units
+        
+    @property
+    def input_size(self):
+    	return self._input_size
 
-    def __call__(self, inputs, state, scope=None):
+    def __call__(self, input, state, scope, reuse=True):
         # the scope business gives a namespace to our weight variable matrix names
-        with vs.variable_scope(scope or "NTM"): 
+        with tf.variable_scope(scope,reuse=reuse): 
             # inputs has shape [batch_size, input_size]
             # state has shape [batch_size, state_size]
             
@@ -72,14 +80,19 @@ class NTMRNNCell(RNNCell):
 			# [batch_size, controller_state_size], for example.
             
             # The first step is to decompose the state vector
-            h0, r, w, M = tf.split(state, [controller_state_size,
-            								memory_address_size,
-            								memory_address_size,
-            								memory_address_size * memory_content_size], 1)
-            								
-            H = vs.get_variable("H", [controller_state_size,controller_state_size])
-            h0_n = tf.matmul(h0, H)
+            h0, r, w, M = tf.split(state, [self._controller_state_size,
+            								self._memory_address_size,
+            								self._memory_address_size,
+            								self._memory_address_size * self._memory_content_size], 1)
             
-            output = tf.concat([h0_n,r,w,M], 1)   
+            r_n, w_n, M_n = memory_operation(h0, r, w, M)
+            			
+            H = tf.get_variable("H", [self._controller_state_size,self._controller_state_size])
+            U = tf.get_variable("U", [self._input_size,self._controller_state_size])
+            B = tf.get_variable("B", [self._controller_state_size], initializer=init_ops.constant_initializer(0.0))
+            
+            h0_n = self._activation(tf.matmul(h0, H) + tf.matmul(input,U) + B)
+            
+            output = tf.concat([h0_n,r_n,w_n,M_n], 1)   
         return output, output
         # note that as currently written the RNN emits its internal state at each time step
