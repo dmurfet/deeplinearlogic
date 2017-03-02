@@ -28,13 +28,14 @@ from tensorflow.python.ops.math_ops import sigmoid
 from tensorflow.python.ops.math_ops import tanh
 
 ##################
-# NTM Controller
+# Helper functions
 
 def rotation_tensor(size):
     """
     Returns rotation matrices as a [3,3,3] tensor, which is [R^0, R^1, ..., R^{size-1}] 
     where R is the rotation matrix sending the first basis element to the second and 
-    the final basis element to the first.
+    the final basis element to the first. Note the convention about matrices at the
+    top of this file.
     """
     one_hots = []
     for i in range(size):
@@ -54,7 +55,10 @@ def rotation_tensor(size):
 
     return R_tensor
     
-class NTMRNNCell(RNNCell):
+##################
+# NTM Controller
+    
+class NTM(RNNCell):
     """
     The main NTM code.
     """
@@ -96,9 +100,7 @@ class NTMRNNCell(RNNCell):
             #   - w is the write address weights (size memory_address_size)
             #   - M is the memory state (size memory_address_size*memory_content_size)
             #
-            # the memory state vector M is the concatenation of the vectors at each
-            # memory location, in order. Viewed as a matrix of shape [mas,mcs] the
-            # rows index memory locations.
+            # Viewed as a matrix of shape [mas,mcs] the rows of M index memory locations.
             #
             # NOTE: these vectors are all batched, so in the following h0 has shape
             # [batch_size, controller_state_size], for example.
@@ -107,7 +109,6 @@ class NTMRNNCell(RNNCell):
             mas = self._memory_address_size
             mcs = self._memory_content_size
             
-            # The first step is to decompose the state vector
             h0, r, w, M = tf.split(state, [css, mas, mas, mas * mcs], 1)
             
             # Now generate the s, q, e, a vectors
@@ -163,6 +164,7 @@ class NTMRNNCell(RNNCell):
             
             h0_new = self._activation(tf.matmul(h0, H) + tf.matmul(Mr,V) + tf.matmul(input,U) + B)
         
+            # update equation without memory read
             #h0_new = self._activation(tf.matmul(h0, H) + tf.matmul(input,U) + B)
             
             state_new = tf.concat([h0_new, r_new, w_new, M_new], 1)   
