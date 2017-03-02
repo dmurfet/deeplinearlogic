@@ -1,5 +1,11 @@
 """
-This module implements the (location addressing only) Neural Turing Machine in TensorFlow
+This module implements the (location addressing only) Neural Turing Machine in TensorFlow.
+
+NOTE ABOUT MATRICES: To follow the TF convention, we think of the matrix of a linear
+map F: W -> V with dim(W) = m, dim(V) = n as a [m,n] tensor that is, a matrix with m rows
+and n columns. The (i,j) entry of this matrix represents F(e_i)_j where e_i is the basis of W.
+This explains, for example, the discrepancy between the rotation matrix R we write down here,
+and the R in our paper. They are the same, once you learn to write matrices the "wrong" way.
 """
 
 # The next three lines are recommend by TF
@@ -40,7 +46,7 @@ def rotation_tensor(size):
     for i in range(size):
         R = []
         for j in range(size):
-            index = (j - i) % size
+            index = (j + i) % size
             R.append(one_hots[index])
         R_list.append(tf.stack(R))
 
@@ -91,9 +97,8 @@ class NTMRNNCell(RNNCell):
             #   - M is the memory state (size memory_address_size*memory_content_size)
             #
             # the memory state vector M is the concatenation of the vectors at each
-            # memory location, in order. For example, if N = memory_address_size then
-            #
-            # M = M[0], M[1], ..., M[N-1]
+            # memory location, in order. Viewed as a matrix of shape [mas,mcs] the
+            # rows index memory locations.
             #
             # NOTE: these vectors are all batched, so in the following h0 has shape
             # [batch_size, controller_state_size], for example.
@@ -125,7 +130,7 @@ class NTMRNNCell(RNNCell):
             # Add and forget on the memory
             # TODO: not sure if matrix_diag is slow
             M = tf.reshape(M, [-1, mas, mcs])
-            erase_term = tf.multiply( M, tf.matrix_diag(e) ) # shape [batch_size, mas, mcs]
+            erase_term = tf.matmul( M, tf.matrix_diag(e) ) # shape [batch_size, mas, mcs]
             add_term = tf.matmul( tf.reshape(w,[-1,mas,1]), tf.reshape(a,[-1,1,mcs]) ) # shape [batch_size, mas, mcs]
             M_new = M - erase_term + add_term
             M_new = tf.reshape(M_new, [-1, mas * mcs])
@@ -156,10 +161,9 @@ class NTMRNNCell(RNNCell):
             Mr = tf.matmul( M, tf.reshape(r,[-1,mas,1]), transpose_a=True )
             Mr = tf.reshape( Mr, [-1,mcs] )
             
-            h0_new = self._activation(tf.matmul(h0, H) 
-                                    + tf.matmul(Mr,V)
-                                    + tf.matmul(input,U) 
-                                    + B)
+            h0_new = self._activation(tf.matmul(h0, H) + tf.matmul(Mr,V) + tf.matmul(input,U) + B)
+        
+            #h0_new = self._activation(tf.matmul(h0, H) + tf.matmul(input,U) + B)
             
             state_new = tf.concat([h0_new, r_new, w_new, M_new], 1)   
         return h0_new, state_new

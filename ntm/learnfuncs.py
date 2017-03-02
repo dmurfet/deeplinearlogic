@@ -1,5 +1,8 @@
-# The function from sequences to sequences that we will try to learn
-def f_ident(seq):
+"""
+This module defines the function that we want to try to learn with NNs.
+"""
+
+def f_identity(seq):
     return seq
 
 def f_reverse(seq):
