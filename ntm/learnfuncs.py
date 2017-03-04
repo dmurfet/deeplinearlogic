@@ -49,3 +49,14 @@ def f_zeromeansrepeat(seq):
         else:
             t.append(seq[j])
     return t
+
+# an example of a pattern is [1,0,0,2,0,3,0,1,1,1]
+def f_repetitionpattern(seq, pattern):
+    t = []
+    i = 0
+    j = 0
+    while(len(t) < len(seq)):
+        t.append(seq[j % len(seq)])
+        j = j + pattern[i % len(pattern)]
+        i = i + 1
+    return t        
