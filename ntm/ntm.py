@@ -21,7 +21,12 @@ import math
 import time
 
 from random import shuffle
-from tensorflow.python.ops.rnn_cell_impl import _RNNCell as RNNCell
+
+if( tf.__version__ == '1.0.0' ):
+    from tensorflow.python.ops.rnn_cell_impl import _RNNCell as RNNCell
+else:
+    from tensorflow.python.ops.rnn_cell import RNNCell
+
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import init_ops
 from tensorflow.python.ops.math_ops import sigmoid
