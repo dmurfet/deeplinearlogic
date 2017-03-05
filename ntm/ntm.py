@@ -153,7 +153,10 @@ class NTM(RNNCell):
             mas = self._memory_address_size
             mcs = self._memory_content_size
             
-            h0, r, w, M = tf.split(state, [css, mas, mas, mas * mcs], 1)
+            if( tf.__version__ == '1.0.0' ):
+                h0, r, w, M = tf.split(state, [css, mas, mas, mas * mcs], 1)
+            elif( tf.__version__ == '0.12.1'): # https://github.com/tensorflow/tensorflow/issues/6405
+                h0, r, w, M = tf.split_v(state, [css, mas, mas, mas * mcs], 1)
             
             # Now generate the s, q, e, a vectors
             W_s = tf.get_variable("W_s", [css,mas])
@@ -269,8 +272,10 @@ class PatternNTM(RNNCell):
             mas = self._memory_address_size
             mcs = self._memory_content_size
             
-            h0, r1, w1, r2, w2, M1, M2 = tf.split(state, [css, mas, mas, mas, mas,
-                                                             mas * mcs, mas * mas], 1)
+            if( tf.__version__ == '1.0.0' ):
+                h0, r1, w1, r2, w2, M1, M2 = tf.split(state, [css, mas, mas, mas, mas, mas * mcs, mas * mas], 1)
+            elif( tf.__version__ == '0.12.1'): # https://github.com/tensorflow/tensorflow/issues/6405
+                h0, r1, w1, r2, w2, M1, M2 = tf.split_v(state, [css, mas, mas, mas, mas, mas * mcs, mas * mas], 1)
             
             # Note that M2 is [mas, mas]
             
