@@ -1,10 +1,10 @@
 # Linear Logic and Recurrent Neural Networks
 
-This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. At the moment the repo is private, and this Readme will be used to flag some current TODOs in the code.
+This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. At the moment the repo is private.
 
 ## Results
 
-See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing) of the experiments I have run so far, on the ordinary NTM and Pattern NTM. On the Copy task (which asks the controller to simply repeat a given input sequence) the NTM converges to zero, and depending on the size of the controller state space both the NTM and Pattern NTM converge; generally the latter converges faster than the former, but there is also a difference in the number of weights in the networks (with the Pattern NTM having several times more) so the comparison is unclear.
+See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing) of the experiments I have run so far, on the ordinary NTM and Pattern NTM, on two tasks. On the Copy task (which asks the controller to simply repeat a given input sequence) the NTM converges to zero easily. On the Pattern task (described in the section of the paper which discusses the Pattern NTM) both the NTM and Pattern NTM converge when the size of the controller state space is made sufficiently large. Generally it looks like the Pattern NTM outperforms the NTM on this task, but there is also a difference in the number of weights in the networks (with the Pattern NTM having several times more) so the difference between the models is not clear yet.
 
 ## TODOs
 
@@ -43,7 +43,7 @@ See [these instructions](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-
 
 ### Upgrading TensorFlow 0.12 to 1.0
 
-First install CUDA 0.8 by running ([from here](http://expressionflow.com/2016/10/09/installing-tensorflow-on-an-aws-ec2-p2-gpu-instance/))
+The problem with the Deep Learning AMI is that it has TensorFlow v0.12 installed, and we want v1.0 (particularly for `tf.tensordot`). That means we have to upgrade. First install CUDA 0.8 by running ([from here](http://expressionflow.com/2016/10/09/installing-tensorflow-on-an-aws-ec2-p2-gpu-instance/))
 
 ```
 wget https://developer.nvidia.com/compute/cuda/8.0/prod/local_installers/cuda-repo-ubuntu1604-8-0-local_8.0.44-1_amd64-deb
