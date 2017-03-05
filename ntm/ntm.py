@@ -22,11 +22,7 @@ import time
 
 from random import shuffle
 
-if( tf.__version__ == '1.0.0' ):
-    from tensorflow.python.ops.rnn_cell_impl import _RNNCell as RNNCell
-else:
-    from tensorflow.python.ops.rnn_cell import RNNCell
-
+from tensorflow.python.ops.rnn_cell_impl import _RNNCell as RNNCell
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import init_ops
 from tensorflow.python.ops.math_ops import sigmoid
@@ -35,11 +31,12 @@ from tensorflow.python.ops.math_ops import tanh
 ##################
 # Helper functions
 
-def rotation_tensor(size):
+def rotation_tensor(size,powers):
     """
-    Returns rotation matrices as a [3,3,3] tensor, which is [R^0, R^1, ..., R^{size-1}] 
+    Returns rotation matrices as a [3,3,3] tensor, which is [R^{p_1}, R^{p_2}, ...]
     where R is the rotation matrix sending the first basis element to the second and 
-    the final basis element to the first. Note the convention about matrices at the
+    the final basis element to the first, and powers = [p_1,p_2,...]. The size of the
+    matrices is given by "siez". Note the convention about matrices at the
     top of this file.
     """
     one_hots = []
@@ -49,7 +46,7 @@ def rotation_tensor(size):
         one_hots.append(tf.constant(a))
 
     R_list = []
-    for i in range(size):
+    for i in powers:
         R = []
         for j in range(size):
             index = (j + i) % size
@@ -60,8 +57,32 @@ def rotation_tensor(size):
 
     return R_tensor
 
+# The following are stolen from
+# http://stackoverflow.com/questions/38160940/how-to-count-total-number-of-trainable-parameters-in-a-tensorflow-model/38161314
+def count_number_trainable_params():
+    '''
+    Counts the number of trainable variables.
+    '''
+    tot_nb_params = 0
+    for trainable_variable in tf.trainable_variables():
+        shape = trainable_variable.get_shape() # e.g [D,F] or [W,H,C]
+        current_nb_params = get_nb_params_shape(shape)
+        tot_nb_params = tot_nb_params + current_nb_params
+    return tot_nb_params
+
+def get_nb_params_shape(shape):
+    '''
+    Computes the total number of params for a given shap.
+    Works for any number of shapes etc [D,F] or [W,H,C] computes D*F and W*H*C.
+    '''
+    nb_params = 1
+    for dim in shape:
+        nb_params = nb_params*int(dim)
+    return nb_params 
+    
 ##################
 # Standard RNN controller
+# TODO(5-3-2017): not tested
 
 class StandardRNN(RNNCell):
     """
@@ -107,13 +128,14 @@ class NTM(RNNCell):
     The main NTM code.
     """
     def __init__(self, num_units, input_size, controller_state_size,
-                memory_address_size,memory_content_size, activation=tanh):
+                memory_address_size,memory_content_size, powers, activation=tanh):
         self._num_units = num_units
         self._activation = activation
         self._input_size = input_size
         self._controller_state_size = controller_state_size
         self._memory_address_size = memory_address_size
         self._memory_content_size = memory_content_size
+        self._powers = powers
         
     @property
     def state_size(self):
@@ -152,20 +174,18 @@ class NTM(RNNCell):
             css = self._controller_state_size
             mas = self._memory_address_size
             mcs = self._memory_content_size
+            powers = self._powers # the powers of the rotation matrix we allow
             
-            if( tf.__version__ == '1.0.0' ):
-                h0, r, w, M = tf.split(state, [css, mas, mas, mas * mcs], 1)
-            elif( tf.__version__ == '0.12.1'): # https://github.com/tensorflow/tensorflow/issues/6405
-                h0, r, w, M = tf.split_v(state, [css, mas, mas, mas * mcs], 1)
+            h0, r, w, M = tf.split(state, [css, mas, mas, mas * mcs], 1)
             
             # Now generate the s, q, e, a vectors
-            W_s = tf.get_variable("W_s", [css,mas])
-            B_s = tf.get_variable("B_s", [mas])
-            s = tf.nn.softmax(tf.matmul(h0,W_s) + B_s) # shape [batch_size,mas]
+            W_s = tf.get_variable("W_s", [css,len(powers)])
+            B_s = tf.get_variable("B_s", [len(powers)])
+            s = tf.nn.softmax(tf.matmul(h0,W_s) + B_s) # shape [batch_size,len(powers)]
 
-            W_q = tf.get_variable("W_q", [css,mas])
-            B_q = tf.get_variable("B_q", [mas])
-            q = tf.nn.softmax(tf.matmul(h0,W_q) + B_q) # shape [batch_size,mas]
+            W_q = tf.get_variable("W_q", [css,len(powers)])
+            B_q = tf.get_variable("B_q", [len(powers)])
+            q = tf.nn.softmax(tf.matmul(h0,W_q) + B_q) # shape [batch_size,len(powers)]
 
             W_e = tf.get_variable("W_e", [css,mcs])
             B_e = tf.get_variable("B_e", [mcs])
@@ -185,7 +205,7 @@ class NTM(RNNCell):
             
             # Do the rotations of the read and write addresses
             # r has shape [batch_size,mas]
-            Rtensor = rotation_tensor(mas)
+            Rtensor = rotation_tensor(mas,powers)
 
             # yields a tensor of shape [batch_size, mas, mas]
             # each row of which is \sum_i q_i R^i, and this batch
@@ -211,9 +231,6 @@ class NTM(RNNCell):
             
             h0_new = self._activation(tf.matmul(h0, H) + tf.matmul(Mr,V) + tf.matmul(input,U) + B)
         
-            # update equation without memory read
-            #h0_new = self._activation(tf.matmul(h0, H) + tf.matmul(input,U) + B)
-            
             state_new = tf.concat([h0_new, r_new, w_new, M_new], 1)   
         return h0_new, state_new
         # the return is output, state
@@ -223,16 +240,18 @@ class NTM(RNNCell):
     
 class PatternNTM(RNNCell):
     """
-    The main NTM code.
+    The main Pattern NTM code.
     """
     def __init__(self, num_units, input_size, controller_state_size,
-                memory_address_size,memory_content_size, activation=tanh):
+                memory_address_size,memory_content_size, powers1, powers2, activation=tanh):
         self._num_units = num_units
         self._activation = activation
         self._input_size = input_size
         self._controller_state_size = controller_state_size
         self._memory_address_size = memory_address_size
         self._memory_content_size = memory_content_size
+        self._powers1 = powers1
+        self._powers2 = powers2
         
     @property
     def state_size(self):
@@ -271,42 +290,41 @@ class PatternNTM(RNNCell):
             css = self._controller_state_size
             mas = self._memory_address_size
             mcs = self._memory_content_size
+            powers1 = self._powers1 # the powers of the rotation matrix we allow acting on ring 1
+            powers2 = self._powers2 # the powers of the rotation matrix we allow acting on ring 2
             
-            if( tf.__version__ == '1.0.0' ):
-                h0, r1, w1, r2, w2, M1, M2 = tf.split(state, [css, mas, mas, mas, mas, mas * mcs, mas * mas], 1)
-            elif( tf.__version__ == '0.12.1'): # https://github.com/tensorflow/tensorflow/issues/6405
-                h0, r1, w1, r2, w2, M1, M2 = tf.split_v(state, [css, mas, mas, mas, mas, mas * mcs, mas * mas], 1)
+            h0, r1, w1, r2, w2, M1, M2 = tf.split(state, [css, mas, mas, mas, mas, mas * mcs, mas * len(powers1)], 1)
             
             # Note that M2 is [mas, mas]
             
             # Now generate the s, q, e, a vectors
-            W_s1 = tf.get_variable("W_s1", [css,mas])
-            B_s1 = tf.get_variable("B_s1", [mas])
-            s1 = tf.nn.softmax(tf.matmul(h0,W_s1) + B_s1) # shape [batch_size,mas]
+            W_s1 = tf.get_variable("W_s1", [css,len(powers1)])
+            B_s1 = tf.get_variable("B_s1", [len(powers1)])
+            s1 = tf.nn.softmax(tf.matmul(h0,W_s1) + B_s1) # shape [batch_size,len(powers1)]
 
-            W_s2 = tf.get_variable("W_s2", [css,mas])
-            B_s2 = tf.get_variable("B_s2", [mas])
-            s2 = tf.nn.softmax(tf.matmul(h0,W_s2) + B_s2) # shape [batch_size,mas]
+            W_s2 = tf.get_variable("W_s2", [css,len(powers2)])
+            B_s2 = tf.get_variable("B_s2", [len(powers2)])
+            s2 = tf.nn.softmax(tf.matmul(h0,W_s2) + B_s2) # shape [batch_size,len(powers2)]
 
-            W_q2 = tf.get_variable("W_q2", [css,mas])
-            B_q2 = tf.get_variable("B_q2", [mas])
-            q2 = tf.nn.softmax(tf.matmul(h0,W_q2) + B_q2) # shape [batch_size,mas]
+            W_q2 = tf.get_variable("W_q2", [css,len(powers2)])
+            B_q2 = tf.get_variable("B_q2", [len(powers2)])
+            q2 = tf.nn.softmax(tf.matmul(h0,W_q2) + B_q2) # shape [batch_size,len(powers2)]
 
             W_e1 = tf.get_variable("W_e1", [css,mcs])
             B_e1 = tf.get_variable("B_e1", [mcs])
             e1 = tf.nn.softmax(tf.matmul(h0,W_e1) + B_e1) # shape [batch_size,mcs]
 
-            W_e2 = tf.get_variable("W_e2", [css,mas])
-            B_e2 = tf.get_variable("B_e2", [mas])
-            e2 = tf.nn.softmax(tf.matmul(h0,W_e2) + B_e2) # shape [batch_size,mas]
+            W_e2 = tf.get_variable("W_e2", [css,len(powers1)])
+            B_e2 = tf.get_variable("B_e2", [len(powers1)])
+            e2 = tf.nn.softmax(tf.matmul(h0,W_e2) + B_e2) # shape [batch_size,len(powers1)]
 
             W_a1 = tf.get_variable("W_a1", [css,mcs])
             B_a1 = tf.get_variable("B_a1", [mcs])
             a1 = tf.nn.softmax(tf.matmul(h0,W_a1) + B_a1) # shape [batch_size,mcs]
 
-            W_a2 = tf.get_variable("W_a2", [css,mas])
-            B_a2 = tf.get_variable("B_a2", [mas])
-            a2 = tf.nn.softmax(tf.matmul(h0,W_a2) + B_a2) # shape [batch_size,mas]
+            W_a2 = tf.get_variable("W_a2", [css,len(powers1)])
+            B_a2 = tf.get_variable("B_a2", [len(powers1)])
+            a2 = tf.nn.softmax(tf.matmul(h0,W_a2) + B_a2) # shape [batch_size,len(powers1)]
 
             # Add and forget on the memory
             # TODO: not sure if matrix_diag is slow
@@ -316,16 +334,17 @@ class PatternNTM(RNNCell):
             M1_new = M1 - erase_term1 + add_term1
             M1_new = tf.reshape(M1_new, [-1, mas * mcs])
 
-            M2 = tf.reshape(M2, [-1, mas, mas])
-            erase_term2 = tf.matmul( M2, tf.matrix_diag(e2) ) # shape [batch_size, mas, mas]
-            add_term2 = tf.matmul( tf.reshape(w2,[-1,mas,1]), tf.reshape(a2,[-1,1,mas]) ) # shape [batch_size, mas, mcs]
+            M2 = tf.reshape(M2, [-1, mas, len(powers1)])
+            erase_term2 = tf.matmul( M2, tf.matrix_diag(e2) ) # shape [batch_size, mas, len(powers1)]
+            add_term2 = tf.matmul( tf.reshape(w2,[-1,mas,1]), tf.reshape(a2,[-1,1,len(powers1)]) ) # shape [batch_size, mas, len(powers1)]
             M2_new = M2 - erase_term2 + add_term2
-            M2_new = tf.reshape(M2_new, [-1, mas * mas])
+            M2_new = tf.reshape(M2_new, [-1, mas * len(powers1)])
             
             # Do the rotations of the read and write addresses
             # r has shape [batch_size,mas]
-            Rtensor = rotation_tensor(mas)
-
+            Rtensor1 = rotation_tensor(mas,powers1)
+            Rtensor2 = rotation_tensor(mas,powers2)
+            
             # yields a tensor of shape [batch_size, mas, mas]
             # each row of which is \sum_i q_i R^i, and this batch
             # of matrices is then applied to r to generate r_new
@@ -333,19 +352,18 @@ class PatternNTM(RNNCell):
             # went away with v1.0, matmul now does it automatically on the
             # first index)
             w1_new = tf.matmul( tf.reshape(w1, [-1,1,mas]),
-                                tf.tensordot( s1, Rtensor, [[1], [0]] ) )
+                                tf.tensordot( s1, Rtensor1, [[1], [0]] ) )
                                 
             r2_new = tf.matmul( tf.reshape(r2, [-1,1,mas]),
-                                tf.tensordot( q2, Rtensor, [[1], [0]] ) )
+                                tf.tensordot( q2, Rtensor2, [[1], [0]] ) )
             w2_new = tf.matmul( tf.reshape(w2, [-1,1,mas]),
-                                tf.tensordot( s2, Rtensor, [[1], [0]] ) )
+                                tf.tensordot( s2, Rtensor2, [[1], [0]] ) )
 
             # The new thing in the pattern NTM is 
-            # TODO: this may depend on mcs = mas
             Mr2 = tf.matmul( M2, tf.reshape(r2,[-1,mas,1]), transpose_a=True )
-            Mr2 = tf.reshape( Mr2, [-1,mas] )            
+            Mr2 = tf.reshape( Mr2, [-1,len(powers1)] )            
             r1_new = tf.matmul( tf.reshape(r1, [-1,1,mas]),
-                                tf.tensordot( Mr2, Rtensor, [[1], [0]] ) )
+                                tf.tensordot( Mr2, Rtensor1, [[1], [0]] ) )
                                 
             r1_new = tf.reshape( r1_new, [-1,mas] )
             w1_new = tf.reshape( w1_new, [-1,mas] )
@@ -361,10 +379,7 @@ class PatternNTM(RNNCell):
             Mr1 = tf.reshape( Mr1, [-1,mcs] )
             
             h0_new = self._activation(tf.matmul(h0, H) + tf.matmul(Mr1,V) + tf.matmul(input,U) + B)
-        
-            # update equation without memory read
-            #h0_new = self._activation(tf.matmul(h0, H) + tf.matmul(input,U) + B)
-            
+                    
             state_new = tf.concat([h0_new, r1_new, w1_new, r2_new, w2_new, M1_new, M2_new], 1)   
         return h0_new, state_new
         # the return is output, state
