@@ -21,7 +21,6 @@ import math
 import time
 
 from random import shuffle
-from tensordot_compat import tensordot # done so we can run both TF 0.12 and 1.0
 
 if( tf.__version__ == '1.0.0' ):
     from tensorflow.python.ops.rnn_cell_impl import _RNNCell as RNNCell
@@ -195,9 +194,9 @@ class NTM(RNNCell):
             # went away with v1.0, matmul now does it automatically on the
             # first index)
             r_new = tf.matmul( tf.reshape(r, [-1,1,mas]),
-                                tensordot( q, Rtensor, [[1], [0]] ) )
+                                tf.tensordot( q, Rtensor, [[1], [0]] ) )
             w_new = tf.matmul( tf.reshape(w, [-1,1,mas]),
-                                tensordot( s, Rtensor, [[1], [0]] ) )
+                                tf.tensordot( s, Rtensor, [[1], [0]] ) )
                                 
             r_new = tf.reshape( r_new, [-1,mas] )
             w_new = tf.reshape( w_new, [-1,mas] )
@@ -334,19 +333,19 @@ class PatternNTM(RNNCell):
             # went away with v1.0, matmul now does it automatically on the
             # first index)
             w1_new = tf.matmul( tf.reshape(w1, [-1,1,mas]),
-                                tensordot( s1, Rtensor, [[1], [0]] ) )
+                                tf.tensordot( s1, Rtensor, [[1], [0]] ) )
                                 
             r2_new = tf.matmul( tf.reshape(r2, [-1,1,mas]),
-                                tensordot( q2, Rtensor, [[1], [0]] ) )
+                                tf.tensordot( q2, Rtensor, [[1], [0]] ) )
             w2_new = tf.matmul( tf.reshape(w2, [-1,1,mas]),
-                                tensordot( s2, Rtensor, [[1], [0]] ) )
+                                tf.tensordot( s2, Rtensor, [[1], [0]] ) )
 
             # The new thing in the pattern NTM is 
             # TODO: this may depend on mcs = mas
             Mr2 = tf.matmul( M2, tf.reshape(r2,[-1,mas,1]), transpose_a=True )
             Mr2 = tf.reshape( Mr2, [-1,mas] )            
             r1_new = tf.matmul( tf.reshape(r1, [-1,1,mas]),
-                                tensordot( Mr2, Rtensor, [[1], [0]] ) )
+                                tf.tensordot( Mr2, Rtensor, [[1], [0]] ) )
                                 
             r1_new = tf.reshape( r1_new, [-1,mas] )
             w1_new = tf.reshape( w1_new, [-1,mas] )
