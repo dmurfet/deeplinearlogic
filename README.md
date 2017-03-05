@@ -2,14 +2,11 @@
 
 This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. At the moment the repo is private, and this Readme will be used to flag some current TODOs in the code.
 
-As of Friday 3rd of March, the NTM runs and on the Copy task (which asks the controller to simply repeat a given input sequence) with the following result.
+## Results
 
-```
-N = 20, controller_state_size = 20, memory_address_size = 10, memory_content_size = 5, epoch = 100
-Test error = 0.06
-```
+See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing) of the experiments I have run so far, on the ordinary NTM and Pattern NTM. On the Copy task (which asks the controller to simply repeat a given input sequence) the NTM converges to zero, and depending on the size of the controller state space both the NTM and Pattern NTM converge; generally the latter converges faster than the former, but there is also a difference in the number of weights in the networks (with the Pattern NTM having several times more) so the comparison is unclear.
 
-Some TODOs that come to mind:
+## TODOs
 
 * TensorBoard, including visualising memory state
 * How blurred is the memory state?
