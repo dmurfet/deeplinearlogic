@@ -30,7 +30,7 @@ p2.xlarge	4	12	61	EBS Only	$0.9 per Hour
 which is a machine with `4` vCPUs, `61`Gb of memory. We modified the `ssh` command given in the aforelinked instructions to
 
 ```
-ssh -L localhost:8880:localhost:8888 –i Virginia.pem ubuntu@limitordinal.org
+ssh -L localhost:8880:localhost:8888 -i Virginia.pem ubuntu@limitordinal.org
 ```
 
 since we are running Jupyter locally on port `8888` and we want to be able to access both sessions (remote on AWS and local) at the same time. To verify this is working, that is, that the GPUs of the P2 instance are actually being used by TensorFlow within your Jupyter session, run the code [here](https://www.tensorflow.org/tutorials/using_gpu). Note that the output they describe there will appear in the *Jupyter log* not in your notebook. What we see is
@@ -42,4 +42,4 @@ pciBusID 0000:00:1e.0
 Total memory: 11.17GiB
 ```
 
-See [these instructions](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-attaching-volume.html) for adding more persistent disk.
+See [these instructions](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-attaching-volume.html) for adding more persistent disk. We do *not* try to upgrade to TensorFlow 1.0
