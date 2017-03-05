@@ -64,14 +64,11 @@ export CUDA_ROOT=/usr/local/cuda
 export PATH=$PATH:$CUDA_ROOT/bin
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$CUDA_ROOT/lib64
 ```
-Then follow the Anaconda installation [instructions](https://www.tensorflow.org/install/install_linux) on the TensorFlow webpage (one could reasonably ask at this point if we needed to start with the Amazon AMI at all. Oh well, who knows). This has the advantage that it matches precisely the Anaconda distribution on our desktop. But this means that before running any commands you have to activate the container with
+Then follow the `pip` upgrade [instructions](https://www.tensorflow.org/install/install_linux) on the TensorFlow webpage by running
 
 ```
-source activate tensorflow
+sudo pip uninstall tensorflow
+sudo pip install tensorflow-gpu
 ```
 
-Then follow the instructions on the TensorFlow webpage to check the GPU is working.
-
-### Running a Jupyter notebook
-
-After SSH-ing into the remote machine, activate the tensorflow virtual environment with `source activate tensorflow`, and then run `jupyter notebook`.
+Then follow the instructions on the TensorFlow webpage to check the GPU is working. Then run `jupyter notebook` as usual.
