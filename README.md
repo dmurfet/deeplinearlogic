@@ -32,7 +32,7 @@ See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txp
     - From binary sequences to sequences from a general alphabet
     - At the moment the output sequence has to be the same length as the input sequence
 - **Engineering**
-    - Set up more copies of the Tesla EC2 instance
+    - Often on the hard tasks (e.g. pattern) the models get to low error, e.g. `0.000225` and then jump back to `0.5` and stay there. Why? Is there a way to fix this?
     
 ## Setting up TensorFlow on AWS
 
