@@ -8,14 +8,27 @@ See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txp
 
 ## TODOs
 
-* TensorBoard, including visualising memory state
-* How blurred is the memory state?
-* Initialisation of the weights
-* Regularisation
-* Coding the relevant test functions
-* Different optimiser?
-* What batch sizes, training size, controller state size, memory size to use?
-
+1. **Implement more models**
+    a. Multiple Pattern NTM
+    b. Polynomial step NTM
+2. **Implement more tasks**
+    a. Repeat copy
+    b. Sort
+    c. The problems described in the multiple pattern NTM and polynomial step NTM sections
+3. **Inspection and visualisation**
+    a. Setting up Tensorboard
+    b. How to visualise the memory state?
+    c. Check in the copy and pattern copy examples that the "algorithm" being learned is comprehensible
+    d. How blurred is the memory state?
+4. **Details of training**
+    a. Initialisation of the weights
+    b. Regularisation
+    c. Different optimiser?
+    d. What batch sizes, training size, controller state size, memory size to use?
+5. **Various**
+    a. Implement initial and terminal symbols in the input sequence
+    b. Train on `N = 20` and test on `N > 20` length sequences
+    
 ## Setting up TensorFlow on AWS
 
 Following the instructions [here](https://aws.amazon.com/blogs/ai/the-aws-deep-learning-ami-now-with-ubuntu/) for the AWS Deep Learning AMI with Ubuntu. Note the P2 GPU compute instances are not available in all regions (we use US West (Oregon)) and that if your AWS account is new you may not be able to use the P2 instances. We use 
