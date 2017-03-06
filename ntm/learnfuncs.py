@@ -55,7 +55,7 @@ def f_repetitionpattern(seq, pattern):
     t = []
     i = 0
     j = 0
-    while(len(t) < len(seq)):
+    while(len(t) < 2*len(seq)):
         t.append(seq[j % len(seq)])
         j = j + pattern[i % len(pattern)]
         i = i + 1
