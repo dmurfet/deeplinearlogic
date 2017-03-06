@@ -30,4 +30,3 @@ def shuffled_binary_seqs(N):
             temp_list.append(j)
         ti.append(temp_list)
     return seq_input
-    

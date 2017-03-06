@@ -13,8 +13,9 @@ See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txp
     - Polynomial step NTM
 - **Implement more tasks**
     - Repeat copy
-    - Sort
-    - The problems described in the multiple pattern NTM and polynomial step NTM sections
+    - Other tasks from NTM, DNC and other papers
+    - Multiple pattern task (as in Section 4.2 of the paper)
+    - Polynomial pattern task (as in Section 4.3 of the paper)
 - **Inspection and visualisation**
     - Setting up Tensorboard
     - How to visualise the memory state?
@@ -28,6 +29,10 @@ See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txp
 - **Various**
     - Implement initial and terminal symbols in the input sequence
     - Train on `N = 20` and test on `N > 20` length sequences
+    - From binary sequences to sequences from a general alphabet
+    - At the moment the output sequence has to be the same length as the input sequence
+- **Engineering**
+    - Set up more copies of the Tesla EC2 instance
     
 ## Setting up TensorFlow on AWS
 
@@ -50,6 +55,16 @@ name: Tesla K80
 major: 3 minor: 7 memoryClockRate (GHz) 0.8235
 pciBusID 0000:00:1e.0
 Total memory: 11.17GiB
+```
+
+The other `g2.2xlarge` machine `Frege` has
+
+```
+name: GRID K520
+major: 3 minor: 0 memoryClockRate (GHz) 0.797
+pciBusID 0000:00:03.0
+Total memory: 3.94GiB
+Free memory: 3.91GiB
 ```
 
 See [these instructions](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-attaching-volume.html) for adding more persistent disk.
