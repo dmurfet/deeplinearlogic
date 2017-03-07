@@ -12,7 +12,6 @@ See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txp
     - Multiple Pattern NTM
     - Polynomial step NTM
 - **Implement more tasks**
-    - Repeat copy
     - Other tasks from NTM, DNC and other papers
     - Multiple pattern task (as in Section 4.2 of the paper)
     - Polynomial pattern task (as in Section 4.3 of the paper)
@@ -22,18 +21,21 @@ See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txp
     - Check in the copy and pattern copy examples that the "algorithm" being learned is comprehensible
     - How blurred is the memory state?
 - **Details of training**
-    - Initialisation of the weights
-    - Regularisation
-    - Different optimiser?
-    - What batch sizes, training size, controller state size, memory size to use?
+    - Initialisation of the weights?
+    - Regularisation (to e.g. force the memory to be used "properly")
+    - Different optimiser? Many papers use RMSProp rather than Adam.
+	- Gradient clipping?
+	- Noise?
+	- Curriculum learning?
 - **Various**
     - Implement initial and terminal symbols in the input sequence
     - Train on `N = 20` and test on `N > 20` length sequences
     - From binary sequences to sequences from a general alphabet
-    - At the moment the output sequence has to be the same length as the input sequence
-- **Engineering**
-    - Often on the hard tasks (e.g. pattern) the models get to low error, e.g. `0.000225` and then jump back to `0.5` and stay there. Why? Is there a way to fix this?
-    
+
+## Some lessons learned
+
+- We default to `controller_state_size = 100` in all our experiments now. In the beginning we tried `50` or even `30` but the models often failed to converge, and this is not allowing us to really distinguish the NTM and Pattern NTM. This is also the same dimension as the controller in the original NTM paper.
+
 ## Setting up TensorFlow on AWS
 
 Following the instructions [here](https://aws.amazon.com/blogs/ai/the-aws-deep-learning-ami-now-with-ubuntu/) for the AWS Deep Learning AMI with Ubuntu. Our current machines are
