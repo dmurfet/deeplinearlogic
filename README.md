@@ -81,7 +81,7 @@ Total memory: 3.94GiB
 Free memory: 3.91GiB
 ```
 
-See [these instructions](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-attaching-volume.html) for adding more persistent disk.
+See [these instructions](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-attaching-volume.html) for adding more persistent disk, and [these](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UsingIAM.html) for granting other AWS accounts access to your instances.
 
 ### Upgrading TensorFlow 0.12 to 1.0
 
