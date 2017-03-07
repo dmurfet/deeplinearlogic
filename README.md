@@ -36,6 +36,10 @@ See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txp
 
 - We default to `controller_state_size = 100` in all our experiments now. In the beginning we tried `50` or even `30` but the models often failed to converge, and this is not allowing us to really distinguish the NTM and Pattern NTM. This is also the same dimension as the controller in the original NTM paper.
 
+- Even the "difficult" Pattern task is learned by both the NTM and Pattern NTM on some runs (other runs terminate with awful levels of error). It seems necessary to use generalisation as a discriminator between the two models; that is, as in the NTM paper, we should train on `N = 20` and test on longer sequences, to see if the algorithm that is being learned is correct.
+
+- The current tests indicate that the Pattern NTM doesn't live up to the expectation that its special architecture makes it much better than the NTM at the pattern task. We have to both try harder patterns (i.e. the Multiple Pattern NTM) and develop the introspection and visualisation tools to try and diagnose what the Pattern NTM is doing. Maybe a small modification will help (for example, at the moment the controller can only modify the read address of the first memory ring via the second memory ring. Perhaps it should be able to *both* manipulate it directly *and* via the second memory ring).
+
 ## Setting up TensorFlow on AWS
 
 Following the instructions [here](https://aws.amazon.com/blogs/ai/the-aws-deep-learning-ami-now-with-ubuntu/) for the AWS Deep Learning AMI with Ubuntu. Our current machines are
