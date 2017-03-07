@@ -36,19 +36,35 @@ See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txp
     
 ## Setting up TensorFlow on AWS
 
-Following the instructions [here](https://aws.amazon.com/blogs/ai/the-aws-deep-learning-ami-now-with-ubuntu/) for the AWS Deep Learning AMI with Ubuntu. Note the P2 GPU compute instances are not available in all regions (we use US West (Oregon)) and that if your AWS account is new you may not be able to use the P2 instances. We use 
+Following the instructions [here](https://aws.amazon.com/blogs/ai/the-aws-deep-learning-ami-now-with-ubuntu/) for the AWS Deep Learning AMI with Ubuntu. Our current machines are
 
 ```
-p2.xlarge   4   12  61  EBS Only    $0.9 per Hour
+Name        Type        Port    vCPU    Mem     Price   
+=========================================================
+[Tesla]     p2.xlarge	8880    4       61      $0.9 per Hour
+[Frege]     g2.2xlarge	8881    8	    60 SSD	$0.65 per Hour
+[Leibniz]   g2.2xlarge	8882    8	    60 SSD	$0.65 per Hour
+[Turing]    p2.xlarge	8883    4       61      $0.9 per Hour
+[Wiener]    p2.xlarge	8884    4       61      $0.9 per Hour
 ```
 
-which is a machine with `4` vCPUs, `61`Gb of memory. We modified the `ssh` command given in the aforelinked instructions to
+Here the "Port" denotes the port that we should use when creating an `ssh` tunnel to the remote server, in order to run Jupyter. That is, you should connect to the server with Port `<Port>` and IP `<IP>` using
 
 ```
-ssh -L localhost:8880:localhost:8888 -i Virginia.pem ubuntu@limitordinal.org
+ssh -L localhost:<Port>:localhost:8888 -i Virginia.pem ubuntu@<IP>
 ```
 
-since we are running Jupyter locally on port `8888` and we want to be able to access both sessions (remote on AWS and local) at the same time. To verify this is working, that is, that the GPUs of the P2 instance are actually being used by TensorFlow within your Jupyter session, run the code [here](https://www.tensorflow.org/tutorials/using_gpu). Note that the output they describe there will appear in the *Jupyter log* not in your notebook. What we see is
+For convenience of cut and paste here are the commands expanded in each case:
+
+```
+[Tesla] ssh -L localhost:8880:localhost:8888 -i Virginia.pem ubuntu@limitordinal.org
+[Frege] ssh -L localhost:8881:localhost:8888 -i Virginia.pem ubuntu@34.206.99.116
+[Leibniz] ssh -L localhost:8882:localhost:8888 -i Virginia.pem ubuntu@52.21.99.86
+[Turing] ssh -L localhost:8883:localhost:8888 -i Virginia.pem ubuntu@34.206.82.20
+[Wiener] ssh -L localhost:8884:localhost:8888 -i Virginia.pem ubuntu@34.199.65.56
+```
+
+To verify that the GPUs are actually being used by TensorFlow within your Jupyter session, run the code [here](https://www.tensorflow.org/tutorials/using_gpu). Note that the output they describe there will appear in the *Jupyter log* not in your notebook. What we see for the `p2.xlarge` machines is
 
 ```
 name: Tesla K80
@@ -57,7 +73,7 @@ pciBusID 0000:00:1e.0
 Total memory: 11.17GiB
 ```
 
-The other `g2.2xlarge` machine `Frege` has
+The other `g2.2xlarge` machines have
 
 ```
 name: GRID K520
@@ -67,7 +83,7 @@ Total memory: 3.94GiB
 Free memory: 3.91GiB
 ```
 
-See [these instructions](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-attaching-volume.html) for adding more persistent disk.
+See [these instructions](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-attaching-volume.html) for adding more persistent disk, and [these](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/UsingIAM.html) for granting other AWS accounts access to your instances.
 
 ### Upgrading TensorFlow 0.12 to 1.0
 
