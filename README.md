@@ -4,7 +4,13 @@ This is the repository of the paper "Linear Logic and Recurrent Neural Networks"
 
 ## Results
 
-See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing) of the experiments I have run so far, on the ordinary NTM and Pattern NTM, on two tasks. On the Copy task (which asks the controller to simply repeat a given input sequence) the NTM converges to zero easily. On the Pattern task (described in the section of the paper which discusses the Pattern NTM) both the NTM and Pattern NTM converge when the size of the controller state space is made sufficiently large. Generally it looks like the Pattern NTM outperforms the NTM on this task, but there is also a difference in the number of weights in the networks (with the Pattern NTM having several times more) so the difference between the models is not clear yet.
+See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing) of the experiments I have run so far, on the ordinary NTM and Pattern NTM, on the following tasks on sequences of length `N = 20`:
+
+- Copy task (as in the NTM paper),
+- Repeat copy task (as in the NTM paper),
+- Pattern task (defined in Section 4.1 of our paper).
+
+The numbers recorded in the spreadsheet are the percentages of correct predictions for the digits of the output binary sequence (`0.50` meaning as good as chance, `0` meaning perfect predictions) for the test set (which is three times the size of the training set, which is in turn 1% of the sequences, around 10k).
 
 ## TODOs
 
