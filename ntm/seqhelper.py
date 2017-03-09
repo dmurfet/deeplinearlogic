@@ -30,3 +30,28 @@ def shuffled_binary_seqs(N):
             temp_list.append(j)
         ti.append(temp_list)
     return seq_input
+    
+def shuffled_seqs(N,num_classes):
+    """
+    Creates a shuffled list of all sequences of length N from the set 0,..,num_classes-1
+    """
+    seq_unshuffled = []
+    a = [0]*N
+    inc_index = N - 1
+    
+    while(1):
+        seq_unshuffled.append(a)
+        a = list(a) # make a copy
+        j = N - 1
+        
+        while( j >= 0 and a[j] == num_classes - 1 ):
+            a[j] = 0
+            j = j - 1
+            
+        if( j == -1 ):
+            break
+            
+        a[j] = a[j] + 1
+    
+    seq_shuffled = shuffle(seq_unshuffled)
+    return seq_unshuffled
