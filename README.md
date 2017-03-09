@@ -27,16 +27,13 @@ The numbers recorded in the spreadsheet are the percentages of correct predictio
     - Check in the copy and pattern copy examples that the "algorithm" being learned is comprehensible
     - How blurred is the memory state?
 - **Details of training**
-    - Initialisation of the weights?
+    - Initialisation of the weights (see [here](https://plus.google.com/+SoumithChintala/posts/RZfdrRQWL6u) and [here](http://stackoverflow.com/questions/40318812/tensorflow-rnn-weight-matrices-initialization))
     - Regularisation (to e.g. force the memory to be used "properly")
-    - Different optimiser? Many papers use RMSProp rather than Adam.
-	- Gradient clipping?
+	- Gradient clipping? This seems standard in the augmented RNN literature
 	- Noise?
 	- Curriculum learning?
 - **Various**
-    - Implement initial and terminal symbols in the input sequence
-    - Train on `N = 20` and test on `N > 20` length sequences
-    - From binary sequences to sequences from a general alphabet
+    - Train on `N = 20` and test on `N > 20` length sequences (at the moment we are enumerating all sequences and then taking 1% for training and 3% for testing, but it would be better for larger `N` to just sample what we need?)
 
 ## Some lessons learned
 
