@@ -8,7 +8,7 @@ This is the repository of the paper "Linear Logic and Recurrent Neural Networks"
 
 ## Results
 
-See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing) of the experiments I have run so far, on the ordinary NTM and Pattern NTM, on the following tasks on sequences of length `N = 20`:
+See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing) of the experiments I have run so far on the following tasks on sequences of length `N = 20`:
 
 - Copy task (as in the NTM paper),
 - Repeat copy task (as in the NTM paper),
