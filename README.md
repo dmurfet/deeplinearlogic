@@ -1,6 +1,10 @@
 # Linear Logic and Recurrent Neural Networks
 
-This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. At the moment the repo is private.
+This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. At the moment the repo is private. The models that have been implemented so far are
+
+- The ordinary NTM (see class `NTM` in `ntm.py`).
+- The pattern NTM (see class `PatternNTM` in `ntm.py`) which is the model described in Section 4.1 of the paper.
+- The alternative pattern NTM (see class `PatternNTM_alt` in `ntm.py`) which is the pattern NTM but with the controller allowed to manipulate the read address of the first memory ring directly.
 
 ## Results
 
