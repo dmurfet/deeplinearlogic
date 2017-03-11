@@ -18,6 +18,8 @@ The numbers recorded in the spreadsheet are the percentages of correct predictio
 
 ## TODOs
 
+The TODO list items by category:
+
 - **Implement more models**
     - Multiple Pattern NTM
     - Polynomial step NTM
@@ -36,7 +38,22 @@ The numbers recorded in the spreadsheet are the percentages of correct predictio
 	- Noise?
 	- Curriculum learning?
 - **Various**
-    - Train on `N = 20` and test on `N > 20` length sequences (at the moment we are enumerating all sequences and then taking 1% for training and 3% for testing, but it would be better for larger `N` to just sample what we need?)
+    - Train on `N = 20` and test on `N > 20` length sequences. For sequences of length over `20` it is not feasible to construct the list of all sequences, shuffle it, and take some part, as we are currently doing. We need to rewrite the code to sample from the set of all sequences. This is also necessary if we want to increase `num_classes` (i.e. the number of symbols in our alphabet) and run on sequences of length `N = 20`
+    - Run experiments on non-binary sequences
+
+The next few things on my immediate TODO list:
+
+- **TODO track 1**
+    - Rewrite the code to sample from the set of sequences
+    - Run all models on Copy, Repeat copy and Pattern tasks on `num_classes = 2` and `N =   25`
+    - Run all models on Copy, Repeat copy and Pattern tasks on `num_classes = 3` and `N = 20`
+    - Rewrite code to allow for training on `N = 20` and test on `N > 20`
+    - Run all models on Copy, Repeat copy and Pattern tasks, training on `N = 20` and testing on `N = 30`, at `num_classes = 2` and `num_classes = 3`
+
+- **TODO track 2**
+    - Get TensorBoard visualisation working, analyse experiments
+    - Gradient clipping?
+    - Implement more models and harder tasks
 
 ## Some lessons learned
 
