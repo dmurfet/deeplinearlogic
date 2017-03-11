@@ -31,7 +31,6 @@ The numbers recorded in the spreadsheet are the percentages of correct predictio
     - Check in the copy and pattern copy examples that the "algorithm" being learned is comprehensible
     - How blurred is the memory state?
 - **Details of training**
-    - Initialisation of the weights (see [here](https://plus.google.com/+SoumithChintala/posts/RZfdrRQWL6u) and [here](http://stackoverflow.com/questions/40318812/tensorflow-rnn-weight-matrices-initialization))
     - Regularisation (to e.g. force the memory to be used "properly")
 	- Gradient clipping? This seems standard in the augmented RNN literature
 	- Noise?
@@ -43,9 +42,9 @@ The numbers recorded in the spreadsheet are the percentages of correct predictio
 
 - We default to `controller_state_size = 100` in all our experiments now. In the beginning we tried `50` or even `30` but the models often failed to converge, and this is not allowing us to really distinguish the NTM and Pattern NTM. This is also the same dimension as the controller in the original NTM paper.
 
-- Even the "difficult" Pattern task is learned by both the NTM and Pattern NTM on some runs (other runs terminate with awful levels of error). It seems necessary to use generalisation as a discriminator between the two models; that is, as in the NTM paper, we should train on `N = 20` and test on longer sequences, to see if the algorithm that is being learned is correct.
+- On the Repeat Copy and Pattern tasks the convergence was unreliable for both the NTM and Pattern NTM using the Adam optimiser. However, things are much better with RMSProp. So the current situation is that on all tasks we have currently implemented, both the NTM, Pattern NTM and alternative Pattern NTM converge to zero error on some large percentage of runs (arguably the percentage is somewhat higher for the pattern NTM on the Pattern task, but this is unlikely to be statistically significant). To distinguish the models, therefore, we need to implement *harder tasks* and run them on *longer sequences*.
 
-- The current tests indicate that the Pattern NTM doesn't live up to the expectation that its special architecture makes it much better than the NTM at the pattern task. We have to both try harder patterns (i.e. the Multiple Pattern NTM) and develop the introspection and visualisation tools to try and diagnose what the Pattern NTM is doing. Maybe a small modification will help (for example, at the moment the controller can only modify the read address of the first memory ring via the second memory ring. Perhaps it should be able to *both* manipulate it directly *and* via the second memory ring).
+- All weights are initialised with the default `glorot_uniform_initializer` (see [the TensorFlow docs](https://www.tensorflow.org/api_docs/python/tf/get_variable)) and biases are initialised to zero. For more on initialisation see [here](https://plus.google.com/+SoumithChintala/posts/RZfdrRQWL6u) and [here](http://stackoverflow.com/questions/40318812/tensorflow-rnn-weight-matrices-initialization).
 
 ## Setting up TensorFlow on AWS
 
