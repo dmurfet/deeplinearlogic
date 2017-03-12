@@ -16,6 +16,14 @@ See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txp
 
 The numbers recorded in the spreadsheet are the percentages of correct predictions for the digits of the output binary sequence (`0.50` meaning as good as chance, `0` meaning perfect predictions) for the test set (which is three times the size of the training set, which is in turn 1% of the sequences, around 10k).
 
+## References
+
+There are various other implementations of the NTM that we have borrowed from when we got stuck. These include
+
+- The [Snips AI](https://medium.com/snips-ai/ntm-lasagne-a-library-for-neural-turing-machines-in-lasagne-2cdce6837315#.1n2zh98jx) implementation
+- The [carpedm20](https://github.com/carpedm20/NTM-tensorflow) implementation. See `initial_state` in `ntm_cell.py` for their initialisation choices. They also have a visualisation Jupyter notebook.`
+
+
 ## TODOs
 
 The TODO list items by category:

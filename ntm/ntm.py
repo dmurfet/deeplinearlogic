@@ -114,7 +114,7 @@ class StandardRNN(RNNCell):
             H = tf.get_variable("H", [_num_units,_num_units])
             U = tf.get_variable("U", [_input_size,_num_units])
             B = tf.get_variable("B", [_num_units], initializer=init_ops.constant_initializer(0.0))
-        
+            
             state_new = self._activation(tf.matmul(state, H) + tf.matmul(input,U) + B)
             
         return state_new, state_new
@@ -178,25 +178,33 @@ class NTM(RNNCell):
             
             h0, r, w, M = tf.split(state, [css, mas, mas, mas * mcs], 1)
             
+            # DEBUG We strongly bias the rotations s,q to do nothing
+            #init_bias = [-2.0]*len(powers)
+            #init_bias[0] = 1.0
+            #init = tf.constant_initializer(init_bias)
+            init = init_ops.constant_initializer(0.0)
+            
+            # Sharpening factor gamma
+            gamma = tf.get_variable("gamma", [])
+            
             # Now generate the s, q, e, a vectors
             W_s = tf.get_variable("W_s", [css,len(powers)])
-            B_s = tf.get_variable("B_s", [len(powers)])
+            B_s = tf.get_variable("B_s", [len(powers)], initializer=init)
             s = tf.nn.softmax(tf.matmul(h0,W_s) + B_s) # shape [batch_size,len(powers)]
 
             W_q = tf.get_variable("W_q", [css,len(powers)])
-            B_q = tf.get_variable("B_q", [len(powers)])
+            B_q = tf.get_variable("B_q", [len(powers)], initializer=init)
             q = tf.nn.softmax(tf.matmul(h0,W_q) + B_q) # shape [batch_size,len(powers)]
 
             W_e = tf.get_variable("W_e", [css,mcs])
-            B_e = tf.get_variable("B_e", [mcs])
-            e = tf.nn.softmax(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
+            B_e = tf.get_variable("B_e", [mcs], initializer=init_ops.constant_initializer(0.0))
+            e = tf.nn.relu(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
 
             W_a = tf.get_variable("W_a", [css,mcs])
-            B_a = tf.get_variable("B_a", [mcs])
-            a = tf.nn.softmax(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
+            B_a = tf.get_variable("B_a", [mcs], initializer=init_ops.constant_initializer(0.0))
+            a = tf.nn.relu(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
 
             # Add and forget on the memory
-            # TODO: not sure if matrix_diag is slow
             M = tf.reshape(M, [-1, mas, mcs])
             erase_term = tf.matmul( M, tf.matrix_diag(e) ) # shape [batch_size, mas, mcs]
             add_term = tf.matmul( tf.reshape(w,[-1,mas,1]), tf.reshape(a,[-1,1,mcs]) ) # shape [batch_size, mas, mcs]
@@ -220,7 +228,19 @@ class NTM(RNNCell):
                                 
             r_new = tf.reshape( r_new, [-1,mas] )
             w_new = tf.reshape( w_new, [-1,mas] )
+            
+            # Perform sharpening
+            sharpening_tensor_r = tf.zeros_like(r_new) + gamma
+            sharp_r = tf.pow(r_new, sharpening_tensor_r)
+            denom_r = tf.reduce_sum(sharp_r, axis=1, keep_dims=True)
+            r_new = sharp_r / denom_r
+            
+            sharpening_tensor_w = tf.zeros_like(w_new) + gamma
+            sharp_w = tf.pow(w_new, sharpening_tensor_w)
+            denom_w = tf.reduce_sum(sharp_w, axis=1, keep_dims=True)
+            w_new = sharp_w / denom_w
 
+            # Construct new state
             H = tf.get_variable("H", [css,css])
             U = tf.get_variable("U", [self._input_size,css])
             B = tf.get_variable("B", [css], initializer=init_ops.constant_initializer(0.0))
@@ -299,35 +319,34 @@ class PatternNTM(RNNCell):
             
             # Now generate the s, q, e, a vectors
             W_s1 = tf.get_variable("W_s1", [css,len(powers1)])
-            B_s1 = tf.get_variable("B_s1", [len(powers1)])
+            B_s1 = tf.get_variable("B_s1", [len(powers1)], initializer=init_ops.constant_initializer(0.0))
             s1 = tf.nn.softmax(tf.matmul(h0,W_s1) + B_s1) # shape [batch_size,len(powers1)]
 
             W_s2 = tf.get_variable("W_s2", [css,len(powers2)])
-            B_s2 = tf.get_variable("B_s2", [len(powers2)])
+            B_s2 = tf.get_variable("B_s2", [len(powers2)], initializer=init_ops.constant_initializer(0.0))
             s2 = tf.nn.softmax(tf.matmul(h0,W_s2) + B_s2) # shape [batch_size,len(powers2)]
 
             W_q2 = tf.get_variable("W_q2", [css,len(powers2)])
-            B_q2 = tf.get_variable("B_q2", [len(powers2)])
+            B_q2 = tf.get_variable("B_q2", [len(powers2)], initializer=init_ops.constant_initializer(0.0))
             q2 = tf.nn.softmax(tf.matmul(h0,W_q2) + B_q2) # shape [batch_size,len(powers2)]
 
             W_e1 = tf.get_variable("W_e1", [css,mcs])
-            B_e1 = tf.get_variable("B_e1", [mcs])
-            e1 = tf.nn.softmax(tf.matmul(h0,W_e1) + B_e1) # shape [batch_size,mcs]
+            B_e1 = tf.get_variable("B_e1", [mcs], initializer=init_ops.constant_initializer(0.0))
+            e1 = tf.nn.relu(tf.matmul(h0,W_e1) + B_e1) # shape [batch_size,mcs]
 
             W_e2 = tf.get_variable("W_e2", [css,len(powers1)])
-            B_e2 = tf.get_variable("B_e2", [len(powers1)])
-            e2 = tf.nn.softmax(tf.matmul(h0,W_e2) + B_e2) # shape [batch_size,len(powers1)]
+            B_e2 = tf.get_variable("B_e2", [len(powers1)], initializer=init_ops.constant_initializer(0.0))
+            e2 = tf.nn.relu(tf.matmul(h0,W_e2) + B_e2) # shape [batch_size,len(powers1)]
 
             W_a1 = tf.get_variable("W_a1", [css,mcs])
-            B_a1 = tf.get_variable("B_a1", [mcs])
-            a1 = tf.nn.softmax(tf.matmul(h0,W_a1) + B_a1) # shape [batch_size,mcs]
+            B_a1 = tf.get_variable("B_a1", [mcs], initializer=init_ops.constant_initializer(0.0))
+            a1 = tf.nn.relu(tf.matmul(h0,W_a1) + B_a1) # shape [batch_size,mcs]
 
             W_a2 = tf.get_variable("W_a2", [css,len(powers1)])
             B_a2 = tf.get_variable("B_a2", [len(powers1)])
-            a2 = tf.nn.softmax(tf.matmul(h0,W_a2) + B_a2) # shape [batch_size,len(powers1)]
+            a2 = tf.nn.relu(tf.matmul(h0,W_a2) + B_a2) # shape [batch_size,len(powers1)]
 
             # Add and forget on the memory
-            # TODO: not sure if matrix_diag is slow
             M1 = tf.reshape(M1, [-1, mas, mcs])
             erase_term1 = tf.matmul( M1, tf.matrix_diag(e1) ) # shape [batch_size, mas, mcs]
             add_term1 = tf.matmul( tf.reshape(w1,[-1,mas,1]), tf.reshape(a1,[-1,1,mcs]) ) # shape [batch_size, mas, mcs]
@@ -449,39 +468,38 @@ class PatternNTM_alt(RNNCell):
             
             # Now generate the s, q, e, a vectors
             W_s1 = tf.get_variable("W_s1", [css,len(powers1)])
-            B_s1 = tf.get_variable("B_s1", [len(powers1)])
+            B_s1 = tf.get_variable("B_s1", [len(powers1)], initializer=init_ops.constant_initializer(0.0))
             s1 = tf.nn.softmax(tf.matmul(h0,W_s1) + B_s1) # shape [batch_size,len(powers1)]
 
             W_s2 = tf.get_variable("W_s2", [css,len(powers2)])
-            B_s2 = tf.get_variable("B_s2", [len(powers2)])
+            B_s2 = tf.get_variable("B_s2", [len(powers2)], initializer=init_ops.constant_initializer(0.0))
             s2 = tf.nn.softmax(tf.matmul(h0,W_s2) + B_s2) # shape [batch_size,len(powers2)]
 
             W_q1 = tf.get_variable("W_q1", [css,len(powers1)])
-            B_q1 = tf.get_variable("B_q1", [len(powers1)])
+            B_q1 = tf.get_variable("B_q1", [len(powers1)], initializer=init_ops.constant_initializer(0.0))
             q1 = tf.nn.softmax(tf.matmul(h0,W_q1) + B_q1) # shape [batch_size,len(powers1)]
 
             W_q2 = tf.get_variable("W_q2", [css,len(powers2)])
-            B_q2 = tf.get_variable("B_q2", [len(powers2)])
+            B_q2 = tf.get_variable("B_q2", [len(powers2)], initializer=init_ops.constant_initializer(0.0))
             q2 = tf.nn.softmax(tf.matmul(h0,W_q2) + B_q2) # shape [batch_size,len(powers2)]
 
             W_e1 = tf.get_variable("W_e1", [css,mcs])
-            B_e1 = tf.get_variable("B_e1", [mcs])
-            e1 = tf.nn.softmax(tf.matmul(h0,W_e1) + B_e1) # shape [batch_size,mcs]
+            B_e1 = tf.get_variable("B_e1", [mcs], initializer=init_ops.constant_initializer(0.0))
+            e1 = tf.nn.relu(tf.matmul(h0,W_e1) + B_e1) # shape [batch_size,mcs]
 
             W_e2 = tf.get_variable("W_e2", [css,len(powers1)])
-            B_e2 = tf.get_variable("B_e2", [len(powers1)])
-            e2 = tf.nn.softmax(tf.matmul(h0,W_e2) + B_e2) # shape [batch_size,len(powers1)]
+            B_e2 = tf.get_variable("B_e2", [len(powers1)], initializer=init_ops.constant_initializer(0.0))
+            e2 = tf.nn.relu(tf.matmul(h0,W_e2) + B_e2) # shape [batch_size,len(powers1)]
 
             W_a1 = tf.get_variable("W_a1", [css,mcs])
-            B_a1 = tf.get_variable("B_a1", [mcs])
-            a1 = tf.nn.softmax(tf.matmul(h0,W_a1) + B_a1) # shape [batch_size,mcs]
+            B_a1 = tf.get_variable("B_a1", [mcs], initializer=init_ops.constant_initializer(0.0))
+            a1 = tf.nn.relu(tf.matmul(h0,W_a1) + B_a1) # shape [batch_size,mcs]
 
             W_a2 = tf.get_variable("W_a2", [css,len(powers1)])
-            B_a2 = tf.get_variable("B_a2", [len(powers1)])
-            a2 = tf.nn.softmax(tf.matmul(h0,W_a2) + B_a2) # shape [batch_size,len(powers1)]
+            B_a2 = tf.get_variable("B_a2", [len(powers1)], initializer=init_ops.constant_initializer(0.0))
+            a2 = tf.nn.relu(tf.matmul(h0,W_a2) + B_a2) # shape [batch_size,len(powers1)]
 
             # Add and forget on the memory
-            # TODO: not sure if matrix_diag is slow
             M1 = tf.reshape(M1, [-1, mas, mcs])
             erase_term1 = tf.matmul( M1, tf.matrix_diag(e1) ) # shape [batch_size, mas, mcs]
             add_term1 = tf.matmul( tf.reshape(w1,[-1,mas,1]), tf.reshape(a1,[-1,1,mcs]) ) # shape [batch_size, mas, mcs]
