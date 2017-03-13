@@ -6,6 +6,8 @@ This is the repository of the paper "Linear Logic and Recurrent Neural Networks"
 - The pattern NTM (see class `PatternNTM` in `ntm.py`) which is the model described in Section 4.1 of the paper.
 - The alternative pattern NTM (see class `PatternNTM_alt` in `ntm.py`) which is the pattern NTM but with the controller allowed to manipulate the read address of the first memory ring directly.
 
+**WARNING**: as of 13-March the current version of the code is pretty rotten. It is in the middle of being switched to a different series of choices of how to implement the NTM.
+
 ## Results
 
 See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing) of the experiments I have run so far on the following tasks on sequences of length `N = 20`:
@@ -149,7 +151,7 @@ Then follow the instructions on the TensorFlow webpage to check the GPU is worki
 
 ## Notes on other implementations
 
-The most robust implementation we are aware of is `NTM-Lasagne` for which see [this](https://medium.com/snips-ai/ntm-lasagne-a-library-for-neural-turing-machines-in-lasagne-2cdce6837315#.arp7npxt3) blog post and the [GitHub repository](https://github.com/snipsco/ntm-lasagne). It is written for Theano. There is also [carpedm20](https://github.com/carpedm20/NTM-tensorflow) which we have looked at less. Essentially we confirmed that the `NTM-Lasagne` implementation makes the same obvious initialisation choices that we made on our own. The following remarks pertain entirely to `NTM-Lasagne`.
+The most robust implementation we are aware of is `NTM-Lasagne` for which see [this](https://medium.com/snips-ai/ntm-lasagne-a-library-for-neural-turing-machines-in-lasagne-2cdce6837315#.arp7npxt3) blog post and the [GitHub repository](https://github.com/snipsco/ntm-lasagne). It is written for Theano. There is also [carpedm20](https://github.com/carpedm20/NTM-tensorflow) which we have looked at less. Essentially we confirmed that the `NTM-Lasagne` implementation makes the same initialisation choices that we made on our own, which the exception of the controller internal state. The following remarks pertain entirely to `NTM-Lasagne`.
 
 Some general notes: they train the Copy task on `num_classes = 8` that is, an alphabet of `8` symbols, and on sequences of length `N = 5`. They include an end marker symbol. 
 
