@@ -180,10 +180,12 @@ From `heads.py > class Head > self.weights_init` we see that the weight of a gen
 
 Memory shapes default to `(128,20)` and are intialised according to `memory.py` the initialisation is a weight vector with 
 
+```
 memory_init=lasagne.init.Constant(1e-6)
 trainable=True
+```
 
-I don't know exactly what trainable means here as I can't find the class `InputLayer`. Well, in the README.md of the GitHub repo they specify that in fact they do not make the initial memory state learnable.
+I don't know exactly what trainable means here as I can't find the class `InputLayer`. Well, no matter, because in the `README.md` of the GitHub repo they specify that in fact they do not make the initial memory state learnable.
 
 #### Controller internal state
 
