@@ -16,14 +16,6 @@ See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txp
 
 The numbers recorded in the spreadsheet are the percentages of correct predictions for the digits of the output binary sequence (`0.50` meaning as good as chance, `0` meaning perfect predictions) for the test set (which is three times the size of the training set, which is in turn 1% of the sequences, around 10k).
 
-## References
-
-There are various other implementations of the NTM that we have borrowed from when we got stuck. These include
-
-- The [Snips AI](https://medium.com/snips-ai/ntm-lasagne-a-library-for-neural-turing-machines-in-lasagne-2cdce6837315#.1n2zh98jx) implementation
-- The [carpedm20](https://github.com/carpedm20/NTM-tensorflow) implementation. See `initial_state` in `ntm_cell.py` for their initialisation choices. They also have a visualisation Jupyter notebook.`
-
-
 ## TODOs
 
 The TODO list items by category:
@@ -154,3 +146,61 @@ sudo pip install tensorflow-gpu
 ```
 
 Then follow the instructions on the TensorFlow webpage to check the GPU is working. Then run `jupyter notebook` as usual.
+
+## Notes on other implementations
+
+The most robust implementation we are aware of is `NTM-Lasagne` for which see [this](https://medium.com/snips-ai/ntm-lasagne-a-library-for-neural-turing-machines-in-lasagne-2cdce6837315#.arp7npxt3) blog post and the [GitHub repository](https://github.com/snipsco/ntm-lasagne). It is written for Theano. There is also [carpedm20](https://github.com/carpedm20/NTM-tensorflow) which we have looked at less. Essentially we confirmed that the `NTM-Lasagne` implementation makes the same obvious initialisation choices that we made on our own. The following remarks pertain entirely to `NTM-Lasagne`.
+
+Some general notes: they train the Copy task on `num_classes = 8` that is, an alphabet of `8` symbols, and on sequences of length `N = 5`. They include an end marker symbol. 
+
+### Questions
+
+- How are the read and write addresses initialised?
+- How is the memory state initialised?
+- How is the controller internal state initialised?
+- How are the recurrent matrices H, U, B initialised?
+- How are the weights and biases generating the s, q, e, a and gamma initialised?
+- Which rotations do they allow? e.g. `[-1,0,1]`.
+
+#### Read and write addresses
+
+From `init.py` we see that `init.OneHot` contains
+
+```
+def sample(self, shape):
+M = np.min(shape)
+arr = np.zeros(shape)
+arr[:M,:M] += 1 * np.eye(M)
+return arr
+```
+
+From `heads.py > class Head > self.weights_init` we see that the weight of a generic head is initialised using `init.OneHot( self, (1, self.memory_shape[0]) )` so `M = 1` and therefore the return value of `init.OneHot` will be a tensor of shape `[1, self.memory_shape[0] ]` with value `(1,0,0,...)`. That is, all read and write heads are by default initialised to be sharply focused at the zero position of the memory. This is not subject to learning (i.e. the initialisation vector is not a weight vector).
+
+#### Memory state
+
+Memory shapes default to `(128,20)` and are intialised according to `memory.py` the initialisation is a weight vector with 
+
+```
+memory_init=lasagne.init.Constant(1e-6)
+trainable=True
+```
+
+I don't know exactly what trainable means here as I can't find the class `InputLayer`. Well, no matter, because in the `README.md` of the GitHub repo they specify that in fact they do not make the initial memory state learnable.
+
+#### Controller internal state
+
+The recurrent controller is the class `RecurrentController` in `controller.py` and is initialised using `lasagne.init.GlorotUniform` with no parameter. For the details of this initialiser in Theano see [here](http://lasagne.readthedocs.io/en/latest/modules/init.html).
+
+#### Recurrent matrices H, U, B
+
+In the notation of their library these weight matrices are respectively `W_hid_to_hid`, `W_in_to_hid` and `b_hid_to_hid`. See the definition of the class `RecurrentController`. The initialisers are respectively `GlorotUniform()`, `GlorotUniform()` and `Constant(0.0)`.
+
+#### Weights and biases for s, q, e, a and gamma
+
+Both of `s,q` are described in class `Head` of `heads.py` and the relevant weights are `W_hid_to_shift` and `b_hid_to_shift`. The former is initialised with `GlorotUniform()` and the latter with `Constant(0.0)`. 
+
+The weight and bias for `e, a` are given in class `WriteHead` of the same file. In both cases, the weights are `GlorotUniform()` and the biases are `Contant(0.0)`. Similarly for `gamma`.
+
+#### Allowed rotations
+
+Defaults to `3`, i.e. `[-1,0,1]`.
