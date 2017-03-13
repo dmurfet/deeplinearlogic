@@ -128,9 +128,8 @@ class NTM(RNNCell):
     The main NTM code.
     """
     def __init__(self, num_units, input_size, controller_state_size,
-                memory_address_size,memory_content_size, powers, activation=tanh):
+                memory_address_size,memory_content_size, powers):
         self._num_units = num_units
-        self._activation = activation
         self._input_size = input_size
         self._controller_state_size = controller_state_size
         self._memory_address_size = memory_address_size
@@ -178,14 +177,16 @@ class NTM(RNNCell):
             
             h0, r, w, M = tf.split(state, [css, mas, mas, mas * mcs], 1)
             
-            # DEBUG We strongly bias the rotations s,q to do nothing
-            #init_bias = [-2.0]*len(powers)
-            #init_bias[0] = 1.0
-            #init = tf.constant_initializer(init_bias)
             init = init_ops.constant_initializer(0.0)
             
-            # Sharpening factor gamma
-            gamma = tf.get_variable("gamma", [])
+            # Sharpening factor gamma, one for read and one for write
+            W_gamma_read = tf.get_variable("W_gamma_read", [css,1])
+            B_gamma_read = tf.get_variable("B_gamma_read", [], initializer=init)
+            gamma_read = 1.0 + tf.nn.relu(tf.matmul(h0,W_gamma_read) + B_gamma_read) # shape [batch_size,1]
+            
+            W_gamma_write = tf.get_variable("W_gamma_write", [css,1])
+            B_gamma_write = tf.get_variable("B_gamma_write", [], initializer=init)
+            gamma_write = 1.0 + tf.nn.relu(tf.matmul(h0,W_gamma_write) + B_gamma_write) # shape [batch_size,1]
             
             # Now generate the s, q, e, a vectors
             W_s = tf.get_variable("W_s", [css,len(powers)])
@@ -197,11 +198,11 @@ class NTM(RNNCell):
             q = tf.nn.softmax(tf.matmul(h0,W_q) + B_q) # shape [batch_size,len(powers)]
 
             W_e = tf.get_variable("W_e", [css,mcs])
-            B_e = tf.get_variable("B_e", [mcs], initializer=init_ops.constant_initializer(0.0))
+            B_e = tf.get_variable("B_e", [mcs], initializer=init)
             e = tf.nn.relu(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
 
             W_a = tf.get_variable("W_a", [css,mcs])
-            B_a = tf.get_variable("B_a", [mcs], initializer=init_ops.constant_initializer(0.0))
+            B_a = tf.get_variable("B_a", [mcs], initializer=init)
             a = tf.nn.relu(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
 
             # Add and forget on the memory
@@ -230,12 +231,12 @@ class NTM(RNNCell):
             w_new = tf.reshape( w_new, [-1,mas] )
             
             # Perform sharpening
-            sharpening_tensor_r = tf.zeros_like(r_new) + gamma
+            sharpening_tensor_r = tf.zeros_like(r_new) + gamma_read
             sharp_r = tf.pow(r_new, sharpening_tensor_r)
             denom_r = tf.reduce_sum(sharp_r, axis=1, keep_dims=True)
             r_new = sharp_r / denom_r
             
-            sharpening_tensor_w = tf.zeros_like(w_new) + gamma
+            sharpening_tensor_w = tf.zeros_like(w_new) + gamma_write
             sharp_w = tf.pow(w_new, sharpening_tensor_w)
             denom_w = tf.reduce_sum(sharp_w, axis=1, keep_dims=True)
             w_new = sharp_w / denom_w
@@ -243,13 +244,13 @@ class NTM(RNNCell):
             # Construct new state
             H = tf.get_variable("H", [css,css])
             U = tf.get_variable("U", [self._input_size,css])
-            B = tf.get_variable("B", [css], initializer=init_ops.constant_initializer(0.0))
+            B = tf.get_variable("B", [css], initializer=init)
         
             V = tf.get_variable("V", [mcs,css]) # converts from memory to controller state
             Mr = tf.matmul( M, tf.reshape(r,[-1,mas,1]), transpose_a=True )
             Mr = tf.reshape( Mr, [-1,mcs] )
             
-            h0_new = self._activation(tf.matmul(h0, H) + tf.matmul(Mr,V) + tf.matmul(input,U) + B)
+            h0_new = tf.nn.relu(tf.matmul(h0, H) + tf.matmul(Mr,V) + tf.matmul(input,U) + B)
         
             state_new = tf.concat([h0_new, r_new, w_new, M_new], 1)   
         return h0_new, state_new
