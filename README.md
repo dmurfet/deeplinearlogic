@@ -6,9 +6,7 @@ This is the repository of the paper "Linear Logic and Recurrent Neural Networks"
 - The pattern NTM (see class `PatternNTM` in `ntm.py`) which is the model described in Section 4.1 of the paper.
 - The alternative pattern NTM (see class `PatternNTM_alt` in `ntm.py`) which is the pattern NTM but with the controller allowed to manipulate the read address of the first memory ring directly.
 
-**WARNING**: as of 13-March the current version of the code is pretty rotten. It is in the middle of being switched to a different series of choices of how to implement the NTM.
-
-## Results
+## News
 
 See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing) of the experiments I have run so far on the following tasks on sequences of length `N = 20`:
 
@@ -17,6 +15,12 @@ See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txp
 - Pattern task (defined in Section 4.1 of our paper).
 
 The numbers recorded in the spreadsheet are the percentages of correct predictions for the digits of the output binary sequence (`0.50` meaning as good as chance, `0` meaning perfect predictions) for the test set (which is three times the size of the training set, which is in turn 1% of the sequences, around 10k).
+
+These experiments were done with a version of the code now denoted `v1`. However this version of the code did not implement sharpening (see Eq. (9) of the NTM paper) and had some initialisation choices that made it basically impossible for any of the models to really use the memory in the manner intended. It is somewhat remarkable that they managed to converge to zero error in so many cases, given these handicaps (in hindsight, binary sequences, even of length `20`, may not be very challenging given this many weights). However, the truly useless nature of the `v1` code is made clear by the fact that the models trained using it completely fail to generalise (here we test generalisation by training on length `20` sequences and testing on length `> 20` sequences). So improvements are necessary.
+
+In `v2` of the code, the implementation of which is ongoing as of the 13th of March, sharpening is implemented and the initialisations are fixed. So far this has been done for the NTM, but not the other models. But the tests of the `v2` NTM as currently implemented show it often failing to converge, and still not really using memory properly. So, **HELP**!
+
+Also, when we implemented the ability to test on sequences of greater length than during training, we used a save and load of the weight matrices. This doesn't appear to work very well (even if training seems to be low error, testing is often very high error). So there are probably bugs there too.
 
 ## TODOs
 
