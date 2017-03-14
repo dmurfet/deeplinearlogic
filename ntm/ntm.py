@@ -180,7 +180,6 @@ class NTM(RNNCell):
             # We had bad convergence with relu, so we keep it on tanh
             # NOTE: we have just been confused about nonlinearities, requires rethink
             init = init_ops.constant_initializer(0.0)
-            activation = tf.nn.tanh
             perform_sharpening = True
             
             # Sharpening factor gamma, one for read and one for write
@@ -203,13 +202,12 @@ class NTM(RNNCell):
 
             W_e = tf.get_variable("W_e", [css,mcs])
             B_e = tf.get_variable("B_e", [mcs], initializer=init)
-            e = tf.nn.relu(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
-            # DEBUG weird to use softmax
+            e = tf.nn.softmax(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
+            # DEBUG weird to use softmax? Relu also gives convergence
 
             W_a = tf.get_variable("W_a", [css,mcs])
             B_a = tf.get_variable("B_a", [mcs], initializer=init)
-            a = tf.nn.softmax(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
-            # DEBUG weird to use softmax
+            a = tf.nn.relu(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
             
             # Add and forget on the memory
             M = tf.reshape(M, [-1, mas, mcs])
@@ -261,7 +259,7 @@ class NTM(RNNCell):
             Mr = tf.matmul( M, tf.reshape(r,[-1,mas,1]), transpose_a=True )
             Mr = tf.reshape( Mr, [-1,mcs] )
             
-            h0_new = activation(tf.matmul(h0, H) + tf.matmul(Mr,V) + tf.matmul(input,U) + B)
+            h0_new = tf.nn.tanh(tf.matmul(h0, H) + tf.matmul(Mr,V) + tf.matmul(input,U) + B)
         
             state_new = tf.concat([h0_new, r_new, w_new, M_new], 1)   
         return h0_new, state_new
