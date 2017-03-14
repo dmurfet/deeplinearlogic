@@ -177,7 +177,11 @@ class NTM(RNNCell):
             
             h0, r, w, M = tf.split(state, [css, mas, mas, mas * mcs], 1)
             
+            # We had bad convergence with relu, so we keep it on tanh
+            # NOTE: we have just been confused about nonlinearities, requires rethink
             init = init_ops.constant_initializer(0.0)
+            activation = tf.nn.tanh
+            perform_sharpening = True
             
             # Sharpening factor gamma, one for read and one for write
             W_gamma_read = tf.get_variable("W_gamma_read", [css,1])
@@ -199,12 +203,14 @@ class NTM(RNNCell):
 
             W_e = tf.get_variable("W_e", [css,mcs])
             B_e = tf.get_variable("B_e", [mcs], initializer=init)
-            e = tf.nn.relu(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
+            e = tf.nn.softmax(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
+            # DEBUG weird to use softmax
 
             W_a = tf.get_variable("W_a", [css,mcs])
             B_a = tf.get_variable("B_a", [mcs], initializer=init)
-            a = tf.nn.relu(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
-
+            a = tf.nn.softmax(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
+            # DEBUG weird to use softmax
+            
             # Add and forget on the memory
             M = tf.reshape(M, [-1, mas, mcs])
             erase_term = tf.matmul( M, tf.matrix_diag(e) ) # shape [batch_size, mas, mcs]
@@ -231,15 +237,20 @@ class NTM(RNNCell):
             w_new = tf.reshape( w_new, [-1,mas] )
             
             # Perform sharpening
-            sharpening_tensor_r = tf.zeros_like(r_new) + gamma_read
-            sharp_r = tf.pow(r_new, sharpening_tensor_r)
-            denom_r = tf.reduce_sum(sharp_r, axis=1, keep_dims=True)
-            r_new = sharp_r / denom_r
+            if( perform_sharpening == True ):
+                # DEBUG
+                sharpening_tensor_r = tf.zeros_like(r_new) + gamma_read
+                #sharpening_tensor_r = tf.zeros_like(r_new) + 1.0
+                sharp_r = tf.pow(r_new, sharpening_tensor_r)
+                denom_r = tf.reduce_sum(sharp_r, axis=1, keep_dims=True)
+                r_new = sharp_r / denom_r
             
-            sharpening_tensor_w = tf.zeros_like(w_new) + gamma_write
-            sharp_w = tf.pow(w_new, sharpening_tensor_w)
-            denom_w = tf.reduce_sum(sharp_w, axis=1, keep_dims=True)
-            w_new = sharp_w / denom_w
+                # DEBUG
+                sharpening_tensor_w = tf.zeros_like(w_new) + gamma_write
+                #sharpening_tensor_w = tf.zeros_like(w_new) + 1.0
+                sharp_w = tf.pow(w_new, sharpening_tensor_w)
+                denom_w = tf.reduce_sum(sharp_w, axis=1, keep_dims=True)
+                w_new = sharp_w / denom_w
 
             # Construct new state
             H = tf.get_variable("H", [css,css])
@@ -250,7 +261,7 @@ class NTM(RNNCell):
             Mr = tf.matmul( M, tf.reshape(r,[-1,mas,1]), transpose_a=True )
             Mr = tf.reshape( Mr, [-1,mcs] )
             
-            h0_new = tf.nn.relu(tf.matmul(h0, H) + tf.matmul(Mr,V) + tf.matmul(input,U) + B)
+            h0_new = activation(tf.matmul(h0, H) + tf.matmul(Mr,V) + tf.matmul(input,U) + B)
         
             state_new = tf.concat([h0_new, r_new, w_new, M_new], 1)   
         return h0_new, state_new
