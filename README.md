@@ -22,6 +22,8 @@ In `v2` of the code, the implementation of which is ongoing as of the 13th of Ma
 
 Also, when we implemented the ability to test on sequences of greater length than during training, we used a save and load of the weight matrices. This doesn't appear to work very well (even if training seems to be low error, testing is often very high error). So there are probably bugs there too.
 
+** CURRENT STATUS ** We get convergence on the Copy task now with sharpening turned on, although generalisation is still bad. The convergence is very sensitive to the choice of initialisation (see the section marked Initialise State in the Jupyter notebook) and choice of activation function in the class `NTM` in `ntm.py`. In particular we cannot get good behaviour with initialisation to one-hot vectors, at the moment we are using a small amount of *positive* noise for the read and write addresses. One set of choices which works is recorded in the `15-3-2017` snapshot. However this setup is pretty stupid as it basically just learns to set the sharpening factor `gamma` to `1.0` and never learns to use the memory "properly". Presumably that is because at the moment the read and write addresses are very distributed initially, and can only be manipulated by rotations. We should try initialising them to a one-hot vector plus a small amount of noise.
+
 ## TODOs
 
 The TODO list items by category:
@@ -68,8 +70,6 @@ The next few things on my immediate TODO list:
 - On the Repeat Copy and Pattern tasks the convergence was unreliable for both the NTM and Pattern NTM using the Adam optimiser. However, things are much better with RMSProp. So the current situation is that on all tasks we have currently implemented, both the NTM, Pattern NTM and alternative Pattern NTM converge to zero error on some large percentage of runs (arguably the percentage is somewhat higher for the pattern NTM on the Pattern task, but this is unlikely to be statistically significant). To distinguish the models, therefore, we need to implement *harder tasks* and run them on *longer sequences*.
 
 - All weights are initialised with the default `glorot_uniform_initializer` (see [the TensorFlow docs](https://www.tensorflow.org/api_docs/python/tf/get_variable)) and biases are initialised to zero. For more on initialisation see [here](https://plus.google.com/+SoumithChintala/posts/RZfdrRQWL6u) and [here](http://stackoverflow.com/questions/40318812/tensorflow-rnn-weight-matrices-initialization).
-
-- We get very bad error with `relu` so we stick with `tanh`. Boo.
 
 ## Setting up TensorFlow on AWS
 

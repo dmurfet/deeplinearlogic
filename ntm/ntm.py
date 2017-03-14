@@ -203,7 +203,7 @@ class NTM(RNNCell):
 
             W_e = tf.get_variable("W_e", [css,mcs])
             B_e = tf.get_variable("B_e", [mcs], initializer=init)
-            e = tf.nn.softmax(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
+            e = tf.nn.relu(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
             # DEBUG weird to use softmax
 
             W_a = tf.get_variable("W_a", [css,mcs])
