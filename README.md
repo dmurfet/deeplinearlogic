@@ -159,15 +159,6 @@ The most robust implementation we are aware of is `NTM-Lasagne` for which see [t
 
 Some general notes: they train the Copy task on `num_classes = 8` that is, an alphabet of `8` symbols, and on sequences of length `N = 5`. They include an end marker symbol. 
 
-### Questions
-
-- How are the read and write addresses initialised?
-- How is the memory state initialised?
-- How is the controller internal state initialised?
-- How are the recurrent matrices H, U, B initialised?
-- How are the weights and biases generating the s, q, e, a and gamma initialised?
-- Which rotations do they allow? e.g. `[-1,0,1]`.
-
 #### Read and write addresses
 
 From `init.py` we see that `init.OneHot` contains
@@ -195,7 +186,7 @@ I don't know exactly what trainable means here as I can't find the class `InputL
 
 #### Controller internal state
 
-The recurrent controller is the class `RecurrentController` in `controller.py` and is initialised using `lasagne.init.GlorotUniform` with no parameter. For the details of this initialiser in Theano see [here](http://lasagne.readthedocs.io/en/latest/modules/init.html).
+The recurrent controller is the class `RecurrentController` in `controller.py` and is initialised using `lasagne.init.GlorotUniform` with no parameter. For the details of this initialiser in Theano see [here](http://lasagne.readthedocs.io/en/latest/modules/init.html). The evolution equation uses `lasagne.nonlinearities.rectify`.
 
 #### Recurrent matrices H, U, B
 
@@ -203,9 +194,17 @@ In the notation of their library these weight matrices are respectively `W_hid_t
 
 #### Weights and biases for s, q, e, a and gamma
 
-Both of `s,q` are described in class `Head` of `heads.py` and the relevant weights are `W_hid_to_shift` and `b_hid_to_shift`. The former is initialised with `GlorotUniform()` and the latter with `Constant(0.0)`. 
+Both of `s,q` are described in class `Head` of `heads.py` and the relevant weights are `W_hid_to_shift` and `b_hid_to_shift`. The former is initialised with `GlorotUniform()` and the latter with `Constant(0.0)`. The nonlinearity is `lasagne.nonlinearities.softmax`.
 
-The weight and bias for `e, a` are given in class `WriteHead` of the same file. In both cases, the weights are `GlorotUniform()` and the biases are `Contant(0.0)`. Similarly for `gamma`.
+The weight and bias for `e, a` are given in class `WriteHead` of the same file. In both cases, the weights are `GlorotUniform()` and the biases are `Contant(0.0)`. Similarly for `gamma`. The nonlinearities are respectively
+
+````
+Erase:  nonlinearities.hard_sigmoid
+Add:    nonlinearities.ClippedLinear(low=0., high=1.)
+Gamma:  lambda x: 1. + lasagne.nonlinearities.rectify(x)
+```
+
+Note that `hard_sigmoid` and `ClippedLinear` are defined in `nonlinearities.py`. The former is `theano.tensor.nnet.hard_sigmoid` and `ClippedLinear` is `theano.tensor.clip(x, low, high)`. See [this Theano page](http://deeplearning.net/software/theano/library/tensor/nnet/nnet.html) for details: hard sigmoid is just a piecewise linear `ReLu` like approximation to the sigmoid, whereas `clip` just does what it says: it is like the `ReLu` but where values of `x >= 1` are sent to `1`.
 
 #### Allowed rotations
 
