@@ -235,17 +235,17 @@ class NTM(RNNCell):
             
             # Perform sharpening
             if( perform_sharpening == True ):
-                # DEBUG
+                # TODO solve NaN issue
+                # https://github.com/snipsco/ntm-lasagne/issues/34
+                # see also get_weights in
+                # https://github.com/snipsco/ntm-lasagne/blob/master/ntm/heads.py
                 sharpening_tensor_r = tf.zeros_like(r_new) + gamma_read
-                #sharpening_tensor_r = tf.zeros_like(r_new) + 1.0
-                sharp_r = tf.pow(r_new, sharpening_tensor_r)
+                sharp_r = tf.pow(r_new + 1e-6, sharpening_tensor_r)
                 denom_r = tf.reduce_sum(sharp_r, axis=1, keep_dims=True)
                 r_new = sharp_r / denom_r
             
-                # DEBUG
                 sharpening_tensor_w = tf.zeros_like(w_new) + gamma_write
-                #sharpening_tensor_w = tf.zeros_like(w_new) + 1.0
-                sharp_w = tf.pow(w_new, sharpening_tensor_w)
+                sharp_w = tf.pow(w_new + 1e-6, sharpening_tensor_w)
                 denom_w = tf.reduce_sum(sharp_w, axis=1, keep_dims=True)
                 w_new = sharp_w / denom_w
 
