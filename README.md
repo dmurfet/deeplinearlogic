@@ -196,7 +196,7 @@ Then follow the instructions on the TensorFlow webpage to check the GPU is worki
 
 The most robust implementation we are aware of is `NTM-Lasagne` for which see [this](https://medium.com/snips-ai/ntm-lasagne-a-library-for-neural-turing-machines-in-lasagne-2cdce6837315#.arp7npxt3) blog post and the [GitHub repository](https://github.com/snipsco/ntm-lasagne). It is written for Theano. There is also [carpedm20](https://github.com/carpedm20/NTM-tensorflow) which we have looked at less. Essentially we confirmed that the `NTM-Lasagne` implementation makes the same initialisation choices that we made on our own, which the exception of the controller internal state. The following remarks pertain entirely to `NTM-Lasagne`.
 
-Some general notes: they train the Copy task on `num_classes = 8` that is, an alphabet of `8` symbols, and on sequences of length `N = 5`. They include an end marker symbol. 
+Some general notes: they train the Copy task on `num_classes = 256 + 1` that is, an alphabet of `256` symbols plus a terminal symbol, and on sequences of length `N = 5`.
 
 #### Read and write addresses
 
@@ -248,3 +248,7 @@ Note that `hard_sigmoid` and `ClippedLinear` are defined in `nonlinearities.py`.
 #### Allowed rotations
 
 Defaults to `3`, i.e. `[-1,0,1]`.
+
+### Tasks
+
+See `utils/generators.py` and `examples/copy-task.py`. The Copy task uses `size = 8` and length `5` which in `utils/generators.py` means that we uniformly sample from the set of sequences of length `5` in the set `{0,1}^8`. This set has `2^8 = 256` elements.
