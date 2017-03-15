@@ -202,12 +202,11 @@ class NTM(RNNCell):
 
             W_e = tf.get_variable("W_e", [css,mcs])
             B_e = tf.get_variable("B_e", [mcs], initializer=init)
-            e = tf.nn.softmax(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
-            # DEBUG weird to use softmax? Relu also gives convergence
+            e = tf.sigmoid(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
 
             W_a = tf.get_variable("W_a", [css,mcs])
             B_a = tf.get_variable("B_a", [mcs], initializer=init)
-            a = tf.nn.relu(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
+            a = tf.clip_by_value(tf.matmul(h0,W_a) + B_a, 0.0, 1.0) # shape [batch_size,mcs]
             
             # Add and forget on the memory
             M = tf.reshape(M, [-1, mas, mcs])
@@ -259,6 +258,7 @@ class NTM(RNNCell):
             Mr = tf.matmul( M, tf.reshape(r,[-1,mas,1]), transpose_a=True )
             Mr = tf.reshape( Mr, [-1,mcs] )
             
+            # DEBUG NTM-Lasagne has relu
             h0_new = tf.nn.tanh(tf.matmul(h0, H) + tf.matmul(Mr,V) + tf.matmul(input,U) + B)
         
             state_new = tf.concat([h0_new, r_new, w_new, M_new], 1)   

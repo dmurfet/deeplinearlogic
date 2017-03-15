@@ -18,7 +18,46 @@ The numbers recorded in the spreadsheet are the percentages of correct predictio
 
 These experiments were done with a version of the code now denoted `v1`. However this version of the code did not implement sharpening (see Eq. (9) of the NTM paper) and had some initialisation choices that made it basically impossible for any of the models to really use the memory in the manner intended. It is somewhat remarkable that they managed to converge to zero error in so many cases, given these handicaps (in hindsight, binary sequences, even of length `20`, may not be very challenging given this many weights). However, the truly useless nature of the `v1` code is made clear by the fact that the models trained using it completely fail to generalise (here we test generalisation by training on length `20` sequences and testing on length `> 20` sequences).
 
-** CURRENT STATUS ** In `v2` of the code, the implementation of which is ongoing as of the 13th of March, sharpening is implemented and the initialisations are fixed. So far this has been done for the NTM, but not the other models. We get convergence on the Copy task now with sharpening turned on, although generalisation is still bad. The convergence is very sensitive to the choice of initialisation (see the section marked Initialise State in the Jupyter notebook) and choice of activation function in the class `NTM` in `ntm.py`. One indication of the stupidity of the current situation is that it basically just learns to set the sharpening factor `gamma` to `1.0` and never learns to use the memory "properly". No idea how to fix this at the moment. Maybe we need to study more closely the implementation `NTM-Lasagne` (see "Notes on other implementations" section below) since they got it to work.
+** CURRENT STATUS ** In `v2` of the code, the implementation of which is ongoing as of the 13th of March, sharpening is implemented and the initialisations are fixed. So far this has been done for the NTM, but not the other models. We get convergence on the Copy task now (sometimes) with sharpening turned on, although generalisation is still bad. The best use of the memory we have seen so far is
+
+```
+Step 7 of the RNN run on the first input of first batch of this epoch
+Read gamma - [ 1.]
+Write gamma - [ 1.]
+Write address -
+[  1.38072655e-01   1.83058560e-01   1.40974551e-01   1.32708490e-01
+   6.75634891e-02   4.50365767e-02   1.17327636e-02   5.49054937e-03
+   2.56688448e-08   2.63412048e-08   2.62766502e-08   2.71339982e-08
+   2.59571529e-08   6.51866547e-04   1.47098606e-03   9.15776752e-03
+   1.61451790e-02   4.92556281e-02   6.78959638e-02   1.30784824e-01]
+Argmax - 1
+
+
+Step 8 of the RNN run on the first input of first batch of this epoch
+Read gamma - [ 1.]
+Write gamma - [ 1.]
+Write address -
+[  1.46947637e-01   1.43683389e-01   1.63783297e-01   1.18484326e-01
+   1.00005426e-01   4.87421304e-02   2.98709143e-02   7.61802401e-03
+   3.29333707e-03   2.59189044e-08   2.65678217e-08   2.62732165e-08
+   1.91964544e-04   5.02075360e-04   3.24307731e-03   6.60458300e-03
+   2.17035543e-02   3.48841548e-02   7.52331242e-02   9.52089354e-02]
+Argmax - 2
+
+
+Step 9 of the RNN run on the first input of first batch of this epoch
+Read gamma - [ 1.7574985]
+Write gamma - [ 1.65013874]
+Write address -
+[  1.04503557e-01   1.48825794e-01   1.41839489e-01   1.53002232e-01
+   1.08669505e-01   8.80576819e-02   4.24477085e-02   2.51635946e-02
+   6.39932044e-03   2.67596846e-03   2.60040558e-08   2.38047851e-05
+   7.44253775e-05   5.89667354e-04   1.43234758e-03   5.74376620e-03
+   1.10679362e-02   2.91730426e-02   4.49227355e-02   8.53874683e-02]
+Argmax - 3
+```
+
+which advanced the write address through three consecutive locations. Unfortunately, it then immediately started producing `nan`s and huge error...
  
 Also, when we implemented the ability to test on sequences of greater length than during training, we used a save and load of the weight matrices. This doesn't appear to work very well (even if training seems to be low error, testing is often very high error). So there are probably bugs there too.
 
@@ -198,7 +237,7 @@ Both of `s,q` are described in class `Head` of `heads.py` and the relevant weigh
 
 The weight and bias for `e, a` are given in class `WriteHead` of the same file. In both cases, the weights are `GlorotUniform()` and the biases are `Contant(0.0)`. Similarly for `gamma`. The nonlinearities are respectively
 
-````
+```
 Erase:  nonlinearities.hard_sigmoid
 Add:    nonlinearities.ClippedLinear(low=0., high=1.)
 Gamma:  lambda x: 1. + lasagne.nonlinearities.rectify(x)
