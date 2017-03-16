@@ -5,7 +5,7 @@ NOTE ABOUT MATRICES: To follow the TF convention, we think of the matrix of a li
 map F: W -> V with dim(W) = m, dim(V) = n as a [m,n] tensor that is, a matrix with m rows
 and n columns. The (i,j) entry of this matrix represents F(e_i)_j where e_i is the basis of W.
 This explains, for example, the discrepancy between the rotation matrix R we write down here,
-and the R in our paper. They are the same, once you learn to write matrices the "wrong" way.
+and the R in our paper. They are the same, once you learn to write matrices the "wrong" way. (Testing)
 """
 
 # The next three lines are recommend by TF
