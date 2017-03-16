@@ -8,6 +8,12 @@ This is the repository of the paper "Linear Logic and Recurrent Neural Networks"
 
 ## News
 
+In the **current code** sharpening is implemented for the NTM and we have changed many of the nonlinearities from the `v1` code. The good news is that the memory is now being used in a sensible way; for example, with `num_classes = 10`, `N = 30` and `memory_address_size = 128, memory_content_size = 20` (so there are eight symbols in the alphabet plus the initial and terminal symbol) we have seen one training where the write address was advanced from `0` to `8`, pausing at each location for several timesteps. However convergence is now subject to a weird bug. The models steadily decrease their error to around `0.08` and then jump up to around `0.9` after roughly `85` epochs. This jump is accompanied by the write address being full of `NaN`s. I don't understand why. I added clipping to the computation of `r_new, w_new` in `ntm.py` but it didn't seem to help.
+
+Despite this it seems like we are close to having a working implementation of the NTM, at least for the Copy task.
+
+## Old news (can ignore)
+
 See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing) of the experiments I have run so far on the following tasks on sequences of length `N = 20`:
 
 - Copy task (as in the NTM paper),
@@ -17,49 +23,6 @@ See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txp
 The numbers recorded in the spreadsheet are the percentages of correct predictions for the digits of the output binary sequence (`0.50` meaning as good as chance, `0` meaning perfect predictions) for the test set (which is three times the size of the training set, which is in turn 1% of the sequences, around 10k).
 
 These experiments were done with a version of the code now denoted `v1`. However this version of the code did not implement sharpening (see Eq. (9) of the NTM paper) and had some initialisation choices that made it basically impossible for any of the models to really use the memory in the manner intended. It is somewhat remarkable that they managed to converge to zero error in so many cases, given these handicaps (in hindsight, binary sequences, even of length `20`, may not be very challenging given this many weights). However, the truly useless nature of the `v1` code is made clear by the fact that the models trained using it completely fail to generalise (here we test generalisation by training on length `20` sequences and testing on length `> 20` sequences).
-
-** CURRENT STATUS ** In `v2` of the code, the implementation of which is ongoing as of the 13th of March, sharpening is implemented and the initialisations are fixed. So far this has been done for the NTM, but not the other models. We get convergence on the Copy task now (sometimes) with sharpening turned on, although generalisation is still bad. The best use of the memory we have seen so far is
-
-```
-Step 7 of the RNN run on the first input of first batch of this epoch
-Read gamma - [ 1.]
-Write gamma - [ 1.]
-Write address -
-[  1.38072655e-01   1.83058560e-01   1.40974551e-01   1.32708490e-01
-   6.75634891e-02   4.50365767e-02   1.17327636e-02   5.49054937e-03
-   2.56688448e-08   2.63412048e-08   2.62766502e-08   2.71339982e-08
-   2.59571529e-08   6.51866547e-04   1.47098606e-03   9.15776752e-03
-   1.61451790e-02   4.92556281e-02   6.78959638e-02   1.30784824e-01]
-Argmax - 1
-
-
-Step 8 of the RNN run on the first input of first batch of this epoch
-Read gamma - [ 1.]
-Write gamma - [ 1.]
-Write address -
-[  1.46947637e-01   1.43683389e-01   1.63783297e-01   1.18484326e-01
-   1.00005426e-01   4.87421304e-02   2.98709143e-02   7.61802401e-03
-   3.29333707e-03   2.59189044e-08   2.65678217e-08   2.62732165e-08
-   1.91964544e-04   5.02075360e-04   3.24307731e-03   6.60458300e-03
-   2.17035543e-02   3.48841548e-02   7.52331242e-02   9.52089354e-02]
-Argmax - 2
-
-
-Step 9 of the RNN run on the first input of first batch of this epoch
-Read gamma - [ 1.7574985]
-Write gamma - [ 1.65013874]
-Write address -
-[  1.04503557e-01   1.48825794e-01   1.41839489e-01   1.53002232e-01
-   1.08669505e-01   8.80576819e-02   4.24477085e-02   2.51635946e-02
-   6.39932044e-03   2.67596846e-03   2.60040558e-08   2.38047851e-05
-   7.44253775e-05   5.89667354e-04   1.43234758e-03   5.74376620e-03
-   1.10679362e-02   2.91730426e-02   4.49227355e-02   8.53874683e-02]
-Argmax - 3
-```
-
-which advanced the write address through three consecutive locations. Unfortunately, it then immediately started producing `nan`s and huge error...
- 
-Also, when we implemented the ability to test on sequences of greater length than during training, we used a save and load of the weight matrices. This doesn't appear to work very well (even if training seems to be low error, testing is often very high error). So there are probably bugs there too.
 
 ## TODOs
 
@@ -82,29 +45,12 @@ The TODO list items by category:
 	- Gradient clipping? This seems standard in the augmented RNN literature
 	- Noise?
 	- Curriculum learning?
-- **Various**
-    - Train on `N = 20` and test on `N > 20` length sequences. For sequences of length over `20` it is not feasible to construct the list of all sequences, shuffle it, and take some part, as we are currently doing. We need to rewrite the code to sample from the set of all sequences. This is also necessary if we want to increase `num_classes` (i.e. the number of symbols in our alphabet) and run on sequences of length `N = 20`
-    - Run experiments on non-binary sequences
-
-The next few things on my immediate TODO list:
-
-- **TODO track 1**
-    - Rewrite the code to sample from the set of sequences
-    - Run all models on Copy, Repeat copy and Pattern tasks on `num_classes = 2` and `N =   25`
-    - Run all models on Copy, Repeat copy and Pattern tasks on `num_classes = 3` and `N = 20`
-    - Rewrite code to allow for training on `N = 20` and test on `N > 20`
-    - Run all models on Copy, Repeat copy and Pattern tasks, training on `N = 20` and testing on `N = 30`, at `num_classes = 2` and `num_classes = 3`
-
-- **TODO track 2**
-    - Get TensorBoard visualisation working, analyse experiments
-    - Gradient clipping?
-    - Implement more models and harder tasks
 
 ## Some lessons learned
 
 - We default to `controller_state_size = 100` in all our experiments now. In the beginning we tried `50` or even `30` but the models often failed to converge, and this is not allowing us to really distinguish the NTM and Pattern NTM. This is also the same dimension as the controller in the original NTM paper.
 
-- On the Repeat Copy and Pattern tasks the convergence was unreliable for both the NTM and Pattern NTM using the Adam optimiser. However, things are much better with RMSProp. So the current situation is that on all tasks we have currently implemented, both the NTM, Pattern NTM and alternative Pattern NTM converge to zero error on some large percentage of runs (arguably the percentage is somewhat higher for the pattern NTM on the Pattern task, but this is unlikely to be statistically significant). To distinguish the models, therefore, we need to implement *harder tasks* and run them on *longer sequences*.
+- RMSProp is much better than Adam
 
 - All weights are initialised with the default `glorot_uniform_initializer` (see [the TensorFlow docs](https://www.tensorflow.org/api_docs/python/tf/get_variable)) and biases are initialised to zero. For more on initialisation see [here](https://plus.google.com/+SoumithChintala/posts/RZfdrRQWL6u) and [here](http://stackoverflow.com/questions/40318812/tensorflow-rnn-weight-matrices-initialization).
 
