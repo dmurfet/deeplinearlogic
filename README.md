@@ -67,8 +67,8 @@ Following the instructions [here](https://aws.amazon.com/blogs/ai/the-aws-deep-l
 Name        Type        Port    vCPU    Mem     Price   
 =========================================================
 [Tesla]     p2.xlarge	8880    4       61      $0.9 per Hour
-[Frege]     g2.2xlarge	8881    8	    60 SSD	$0.65 per Hour
-[Leibniz]   g2.2xlarge	8882    8	    60 SSD	$0.65 per Hour
+[Frege]     g2.2xlarge	8881    8       60 SSD	$0.65 per Hour
+[Leibniz]   g2.2xlarge	8882    8       60 SSD	$0.65 per Hour
 [Turing]    p2.xlarge	8883    4       61      $0.9 per Hour
 [Wiener]    p2.xlarge	8884    4       61      $0.9 per Hour
 ```
