@@ -206,7 +206,8 @@ class NTM(RNNCell):
 
             W_a = tf.get_variable("W_a", [css,mcs])
             B_a = tf.get_variable("B_a", [mcs], initializer=init)
-            a = tf.clip_by_value(tf.matmul(h0,W_a) + B_a, 0.0, 1.0) # shape [batch_size,mcs]
+            a = tf.nn.relu(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
+            #a = tf.clip_by_value(tf.matmul(h0,W_a) + B_a, 0.0, 1.0) # shape [batch_size,mcs]
             
             # Add and forget on the memory
             M = tf.reshape(M, [-1, mas, mcs])
