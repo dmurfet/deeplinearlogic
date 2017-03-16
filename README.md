@@ -8,7 +8,12 @@ This is the repository of the paper "Linear Logic and Recurrent Neural Networks"
 
 ## News
 
-In the **current code** sharpening is implemented for the NTM and we have changed many of the nonlinearities from the `v1` code. The good news is that the memory is now being used in a sensible way; for example, with `num_classes = 10`, `N = 30` and `memory_address_size = 128, memory_content_size = 20` (so there are eight symbols in the alphabet plus the initial and terminal symbol) we have seen one training where the write address was advanced from `0` to `8`, pausing at each location for several timesteps. However convergence is now subject to a weird bug. The models steadily decrease their error to around `0.08` and then jump up to around `0.9` after roughly `85` epochs. This jump is accompanied by the write address being full of `NaN`s. I don't understand why. I added clipping to the computation of `r_new, w_new` in `ntm.py` but it didn't seem to help.
+In the **current code** sharpening is implemented for the NTM and we have changed many of the nonlinearities from the `v1` code. The good news is that the memory is now being used in a sensible way; for example, with `num_classes = 10`, `N = 30` and `memory_address_size = 128, memory_content_size = 20` (so there are eight symbols in the alphabet plus the initial and terminal symbol) we have seen one training where the write address was advanced from `0` to `8`, pausing at each location for several timesteps. There were bugs with `NaN`s but these seem to have now been fixed. The problem was computing cross-entropy with `tf.log(tf.softmax(...))` rather than `tf.log_softmax`. 
+
+The current problems
+
+- I haven't been able to get the error under `0.05` during training (I've only tried for `100` epochs though).
+- Generalisation to longer sequences is still terrible.
 
 Despite this it seems like we are close to having a working implementation of the NTM, at least for the Copy task.
 

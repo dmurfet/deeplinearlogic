@@ -239,8 +239,9 @@ class NTM(RNNCell):
             # This is done to avoid NaNs during training
             # Q: is tf.clip_by_value faster?
             # DEBUG: This seems to slow training down a lot...
-            r_new = tf.maximum(r_new, 1e-20)
-            w_new = tf.maximum(w_new, 1e-20)
+            #r_new = tf.maximum(r_new, 1e-20)
+            #w_new = tf.maximum(w_new, 1e-20)
+            # DEBUG: probably we don't need this
             
             # Perform sharpening
             if( perform_sharpening == True ):
