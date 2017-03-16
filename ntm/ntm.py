@@ -237,8 +237,10 @@ class NTM(RNNCell):
             # Clip the addresses so that values below 1e-10 are set to 1e-10
             # note that the sharpening will take care of renormalisation
             # This is done to avoid NaNs during training
-            r_new = tf.maximum(r_new, 1e-10)
-            w_new = tf.maximum(w_new, 1e-10)
+            # Q: is tf.clip_by_value faster?
+            # DEBUG: This seems to slow training down a lot...
+            r_new = tf.maximum(r_new, 1e-20)
+            w_new = tf.maximum(w_new, 1e-20)
             
             # Perform sharpening
             if( perform_sharpening == True ):
