@@ -24,7 +24,7 @@ It seems worth recording some of the decisions that led to the current version o
 
 - **Version 2** (snapshot `18-3-2017`). This version implemented sharpening, added initial and terminal symbols, fixed the nonlinearities on the add and erase vectors (which were softmax before!), fixed a bug in the calculation of the cross-entropy which led to `NaN`s. These changes were only implemented for the NTM. These changes led to the model both converging to low error and actually using multiple memory locations (one typical run is captured in `doc/work-v2.html`). However, the failure to generalise persists.
 
-- **Version 3** (*ongoing, current version*) I have implemented training on sequences of varying length, and this seems to be helping generalisation...
+- **Version 3** (*ongoing, current version*) I have implemented training on sequences of varying length, and this seems to be helping generalisation... see `doc/work-multiple-lengths.html`.
 
 ## TODOs
 
