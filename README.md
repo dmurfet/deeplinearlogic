@@ -1,33 +1,30 @@
 # Linear Logic and Recurrent Neural Networks
 
-This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. At the moment the repo is private. The models that have been implemented so far are
+This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. At the moment the repo is private. The aim is to find a sequence-to-sequence task on which the Pattern NTM substantially outperforms the NTM.
+
+The **models** that have been implemented so far are
 
 - The ordinary NTM (see class `NTM` in `ntm.py`).
 - The pattern NTM (see class `PatternNTM` in `ntm.py`) which is the model described in Section 4.1 of the paper.
 - The alternative pattern NTM (see class `PatternNTM_alt` in `ntm.py`) which is the pattern NTM but with the controller allowed to manipulate the read address of the first memory ring directly.
 
-## News
-
-In the **current code** sharpening is implemented for the NTM and we have changed many of the nonlinearities from the `v1` code. The good news is that the memory is now being used in a sensible way; for example, with `num_classes = 10`, `N = 30` and `memory_address_size = 128, memory_content_size = 20` (so there are eight symbols in the alphabet plus the initial and terminal symbol) we have seen one training where the write address was advanced from `0` to `8`, pausing at each location for several timesteps. There were bugs with `NaN`s but these seem to have now been fixed. The problem was computing cross-entropy with `tf.log(tf.softmax(...))` rather than `tf.log_softmax`. 
-
-The current problems
-
-- I haven't been able to get the error under `0.05` during training (I've only tried for `100` epochs though).
-- Generalisation to longer sequences is still terrible.
-
-Despite this it seems like we are close to having a working implementation of the NTM, at least for the Copy task.
-
-## Old news (can ignore)
-
-See the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing) of the experiments I have run so far on the following tasks on sequences of length `N = 20`:
+The **tasks** that have been implemented are
 
 - Copy task (as in the NTM paper),
 - Repeat copy task (as in the NTM paper),
 - Pattern task (defined in Section 4.1 of our paper).
 
-The numbers recorded in the spreadsheet are the percentages of correct predictions for the digits of the output binary sequence (`0.50` meaning as good as chance, `0` meaning perfect predictions) for the test set (which is three times the size of the training set, which is in turn 1% of the sequences, around 10k).
+The actual training and testing is done through the Python notebook `ntm/work.ipynb`. The results of experiments are posted on the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing).
 
-These experiments were done with a version of the code now denoted `v1`. However this version of the code did not implement sharpening (see Eq. (9) of the NTM paper) and had some initialisation choices that made it basically impossible for any of the models to really use the memory in the manner intended. It is somewhat remarkable that they managed to converge to zero error in so many cases, given these handicaps (in hindsight, binary sequences, even of length `20`, may not be very challenging given this many weights). However, the truly useless nature of the `v1` code is made clear by the fact that the models trained using it completely fail to generalise (here we test generalisation by training on length `20` sequences and testing on length `> 20` sequences).
+## History
+
+It seems worth recording some of the decisions that led to the current version of the code, since these decisions reflect the structure of the underlying problem in a way that may not be very well captured by the final result, and this structure is worth remembering. The development has been (somewhat artificially) divided into major versions, as follows. Each major version is memorialised in a Jupyter notebook, e.g. `work-v2.ipynb` which is no longer changed.
+
+- **Version 1** (snapshot `12-3-2017`). The aim at this point was to get the models running and converging to a reasonably low error on the Copy, Repeat Copy and Pattern tasks. No attention was paid to generalisation (which here means training on shorter sequences and testing on longer ones). This was successful, and the results are recorded on the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing). However there were bad choices for the weight initialisations, some mistaken activation functions, and other oversights, all of which meant that `v1` completely failed to generalise. 
+
+- **Version 2** (snapshot `18-3-2017`). This version implemented sharpening, added initial and terminal symbols, fixed the nonlinearities on the add and erase vectors (which were softmax before!), fixed a bug in the calculation of the cross-entropy which led to `NaN`s. These changes were only implemented for the NTM. These changes led to the model both converging to low error and actually using multiple memory locations (one typical run is captured in `doc/work-v2.html`). However, the failure to generalise persists.
+
+- **Version 3** (*ongoing, current version*)
 
 ## TODOs
 
@@ -58,6 +55,16 @@ The TODO list items by category:
 - RMSProp is much better than Adam
 
 - All weights are initialised with the default `glorot_uniform_initializer` (see [the TensorFlow docs](https://www.tensorflow.org/api_docs/python/tf/get_variable)) and biases are initialised to zero. For more on initialisation see [here](https://plus.google.com/+SoumithChintala/posts/RZfdrRQWL6u) and [here](http://stackoverflow.com/questions/40318812/tensorflow-rnn-weight-matrices-initialization).
+
+- Allowing the NTM to access more powers of the rotation matrix blurs the read and write addresses but doesn't help with convergence or generalisation
+
+- Without sharpening we got convergence but no generalisation (why?)
+
+- Training on sequences of varying length really helps to teach the controller to use the memory (why?)
+
+- Making the memory size much bigger than the sequence, and increasing the size of the sequences, helps to force the controller to use the memory (over its internal memory)
+
+- A naive application of `tf.log` to the output of `tf.softmax` can lead to NaNs.
 
 ## Setting up TensorFlow on AWS
 
