@@ -28,7 +28,7 @@ It seems worth recording some of the decisions that led to the current version o
 
 ![NTM memory usage](./NTMmem.png)
 
-This was generated with the hyperparameters `N = 30` (so sequences of length `30`), `num_classes = 10` (so there are `8` content symbols plus the initial and terminal symbols), `epoch = 100`, with a controller state size `100`, memory address space of dimension `128` and content space of dimension `20`.
+This was generated with the hyperparameters `N = 30` (so sequences of length `30`), `num_classes = 10` (so there are `8` content symbols plus the initial and terminal symbols), `epoch = 100`, with a controller state size `100`, memory address space of dimension `128` and content space of dimension `20`. The generalisation to sequences of length `N = 35` was *perfect* (i.e. all `0.0`). Moreover these properties are all "statistically" robust, in the sense that almost every time we train the network with these hyperparameters, the results are this good.
 
 ## TODOs
 
