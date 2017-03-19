@@ -24,7 +24,11 @@ It seems worth recording some of the decisions that led to the current version o
 
 - **Version 2** (snapshot `18-3-2017`). This version implemented sharpening, added initial and terminal symbols, fixed the nonlinearities on the add and erase vectors (which were softmax before!), fixed a bug in the calculation of the cross-entropy which led to `NaN`s. These changes were only implemented for the NTM. These changes led to the model both converging to low error and actually using multiple memory locations (one typical run is captured in `doc/work-v2.html`). However, the failure to generalise persists.
 
-- **Version 3** (*ongoing, current version*) I have implemented training on sequences of varying length, and this seems to be helping generalisation... see `doc/work-multiple-lengths.html`.
+- **Version 3** (snapshot `19-3-2017`). Implemented training on sequences of varying length (the length is constant within a batch) by masking the cross-entropy. Preliminary experiments suggest that this leads to both convergence *and* very good generalisation of the NTM on the Copy task. The memory focus is sharp and we see read and write address patterns similar to those in the NTM paper. Some example runs are `doc/work-v3-1.html, doc/work-v3-2.html`. Here is the write and read address over one run:
+
+![NTM memory usage](./NTMmem.png)
+
+This was generated with the hyperparameters `N = 30` (so sequences of length `30`), `num_classes = 10` (so there are `8` content symbols plus the initial and terminal symbols), `epoch = 100`, with a controller state size `100`, memory address space of dimension `128` and content space of dimension `20`.
 
 ## TODOs
 
@@ -39,13 +43,9 @@ The TODO list items by category:
     - Polynomial pattern task (as in Section 4.3 of the paper)
 - **Inspection and visualisation**
     - Setting up Tensorboard
-    - How to visualise the memory state?
-    - Check in the copy and pattern copy examples that the "algorithm" being learned is comprehensible
-    - How blurred is the memory state?
 - **Details of training**
     - Regularisation (to e.g. force the memory to be used "properly")
 	- Gradient clipping? This seems standard in the augmented RNN literature
-	- Noise?
 	- Curriculum learning?
 
 ## Some lessons learned
