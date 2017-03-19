@@ -66,6 +66,8 @@ The TODO list items by category:
 
 - A naive application of `tf.log` to the output of `tf.softmax` can lead to NaNs.
 
+- When training on sequences of varying length, it works better when you have a whole batch of a fixed length, rather than mixed batches.
+
 ## Setting up TensorFlow on AWS
 
 Following the instructions [here](https://aws.amazon.com/blogs/ai/the-aws-deep-learning-ami-now-with-ubuntu/) for the AWS Deep Learning AMI with Ubuntu. Our current machines are
