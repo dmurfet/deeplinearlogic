@@ -35,6 +35,7 @@ The horizontal axis is the position in memory, the vertical axis is the time. Th
 The TODO list items by category:
 
 - **Implement more models**
+    - Updating Pattern NTM with sharpening etc.
     - Multiple Pattern NTM
     - Polynomial step NTM
 - **Implement more tasks**
@@ -43,10 +44,14 @@ The TODO list items by category:
     - Polynomial pattern task (as in Section 4.3 of the paper)
 - **Inspection and visualisation**
     - Setting up Tensorboard
-- **Details of training**
-    - Regularisation (to e.g. force the memory to be used "properly")
-	- Gradient clipping? This seems standard in the augmented RNN literature
-	- Curriculum learning?
+    - Find a way of visualising memory contents
+- **Housekeeping**
+    - Get graph of mean error
+    - Organise nodes for TensorBoard graph
+- **Experiments**
+    - Tests of v3 NTM on Copy algorithm
+    - Tests of v3 NTM on Repeat Copy, Pattern tasks
+    - Tests of Pattern NTM on Copy, Repeat Copy, Pattern tasks
 
 ## Some lessons learned
 
