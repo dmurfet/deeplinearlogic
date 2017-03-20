@@ -52,6 +52,11 @@ The TODO list items by category:
     - Tests of v3 NTM on Copy algorithm
     - Tests of v3 NTM on Repeat Copy, Pattern tasks
     - Tests of Pattern NTM on Copy, Repeat Copy, Pattern tasks
+- **Sparsity and scaling**
+    - Add sparsity to v3 NTM
+    - Add sparsity to Pattern NTM and other models
+    - Tests of sparse NTM
+    - Tests of sparse Pattern NTM
 
 ## Some lessons learned
 
