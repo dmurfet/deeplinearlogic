@@ -135,6 +135,8 @@ The instructions are [here](https://www.tensorflow.org/get_started/summaries_and
 
 ### Upgrading TensorFlow 0.12 to 1.0
 
+**UPDATE:** the new [Deep Learning AMI v1.2](https://aws.amazon.com/about-aws/whats-new/2017/03/deep-learning-ami-release-v1-2-for-ubuntu-and-updated-aws-cloudformation-template-now-available/?utm_content=buffer7ce80&utm_medium=social&utm_source=twitter.com&utm_campaign=buffer) has Tensorflow v1.0, so the following instructions are no longer necessary.
+
 The problem with the Deep Learning AMI is that it has TensorFlow v0.12 installed, and we want v1.0 (particularly for `tf.tensordot`). That means we have to upgrade. First install CUDA 0.8 by running ([from here](http://expressionflow.com/2016/10/09/installing-tensorflow-on-an-aws-ec2-p2-gpu-instance/))
 
 ```
