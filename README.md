@@ -14,7 +14,7 @@ The **tasks** that have been implemented are
 - Repeat copy task (as in the NTM paper),
 - Pattern task (defined in Section 4.1 of our paper).
 
-The actual training and testing is done through the Python notebook `ntm/work.ipynb`. The results of experiments are posted on the [spreadsheet](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing). **Note:** it is probably a good idea for each contributor to maintain their own Jupyter workbook, but share the same `ntm/ntm.py`.
+The actual training and testing is done through the Python notebook `ntm/work.ipynb`. The results of experiments are posted on the [spreadsheet](https://docs.google.com/spreadsheets/d/1s7kOUL3OI9Ps4MTPLclvXZ_wRJnrwxyxIiqFqZZDspY/edit?usp=sharing) (the old version of the spreadsheet is [here](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing)). **Note:** it is probably a good idea for each contributor to maintain their own Jupyter workbook, but share the same `ntm/ntm.py`.
 
 ## History
 
@@ -46,7 +46,6 @@ The TODO list items by category:
     - Setting up Tensorboard
     - Find a way of visualising memory contents
 - **Housekeeping**
-    - Get graph of mean error
     - Organise nodes for TensorBoard graph
 - **Experiments**
     - Tests of v3 NTM on Copy algorithm

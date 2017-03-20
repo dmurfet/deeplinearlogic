@@ -106,7 +106,6 @@ class StandardRNN(RNNCell):
         return self._input_size
 
     def __call__(self, input, state, scope, reuse=True):
-        # the scope business gives a namespace to our weight variable matrix names
         with tf.variable_scope(scope,reuse=reuse): 
             # input has shape [batch_size, input_size]
             # state has shape [batch_size, state_size]
@@ -149,7 +148,6 @@ class NTM(RNNCell):
         return self._input_size
 
     def __call__(self, input, state, scope, reuse=True):
-        # the scope business gives a namespace to our weight variable matrix names
         with tf.variable_scope(scope,reuse=reuse): 
             # input has shape [batch_size, input_size]
             # state has shape [batch_size, state_size]
@@ -177,8 +175,6 @@ class NTM(RNNCell):
             
             h0, r, w, M = tf.split(state, [css, mas, mas, mas * mcs], 1)
             
-            # We had bad convergence with relu, so we keep it on tanh
-            # NOTE: we have just been confused about nonlinearities, requires rethink
             init = init_ops.constant_initializer(0.0)
             perform_sharpening = True
             
@@ -207,7 +203,6 @@ class NTM(RNNCell):
             W_a = tf.get_variable("W_a", [css,mcs])
             B_a = tf.get_variable("B_a", [mcs], initializer=init)
             a = tf.nn.relu(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
-            #a = tf.clip_by_value(tf.matmul(h0,W_a) + B_a, 0.0, 1.0) # shape [batch_size,mcs]
             
             # Add and forget on the memory
             M = tf.reshape(M, [-1, mas, mcs])
@@ -234,21 +229,8 @@ class NTM(RNNCell):
             r_new = tf.reshape( r_new, [-1,mas] )
             w_new = tf.reshape( w_new, [-1,mas] )
             
-            # Clip the addresses so that values below 1e-10 are set to 1e-10
-            # note that the sharpening will take care of renormalisation
-            # This is done to avoid NaNs during training
-            # Q: is tf.clip_by_value faster?
-            # DEBUG: This seems to slow training down a lot...
-            #r_new = tf.maximum(r_new, 1e-20)
-            #w_new = tf.maximum(w_new, 1e-20)
-            # DEBUG: probably we don't need this
-            
             # Perform sharpening
             if( perform_sharpening == True ):
-                # TODO solve NaN issue
-                # https://github.com/snipsco/ntm-lasagne/issues/34
-                # see also get_weights in
-                # https://github.com/snipsco/ntm-lasagne/blob/master/ntm/heads.py
                 sharpening_tensor_r = tf.zeros_like(r_new) + gamma_read
                 sharp_r = tf.pow(r_new + 1e-6, sharpening_tensor_r)
                 denom_r = tf.reduce_sum(sharp_r, axis=1, keep_dims=True)
@@ -268,7 +250,6 @@ class NTM(RNNCell):
             Mr = tf.matmul( M, tf.reshape(r,[-1,mas,1]), transpose_a=True )
             Mr = tf.reshape( Mr, [-1,mcs] )
             
-            # DEBUG NTM-Lasagne has relu
             h0_new = tf.nn.tanh(tf.matmul(h0, H) + tf.matmul(Mr,V) + tf.matmul(input,U) + B)
         
             state_new = tf.concat([h0_new, r_new, w_new, M_new], 1)   
@@ -283,9 +264,8 @@ class PatternNTM(RNNCell):
     The main Pattern NTM code.
     """
     def __init__(self, num_units, input_size, controller_state_size,
-                memory_address_size,memory_content_size, powers1, powers2, activation=tanh):
+                memory_address_size,memory_content_size, powers1, powers2):
         self._num_units = num_units
-        self._activation = activation
         self._input_size = input_size
         self._controller_state_size = controller_state_size
         self._memory_address_size = memory_address_size
@@ -335,35 +315,55 @@ class PatternNTM(RNNCell):
             
             h0, r1, w1, r2, w2, M1, M2 = tf.split(state, [css, mas, mas, mas, mas, mas * mcs, mas * len(powers1)], 1)
             
+            init = init_ops.constant_initializer(0.0)
+            perform_sharpening = True
+            
             # Note that M2 is [mas, mas]
             
+            # Sharpening factor gamma, one for read and one for write, for each ring
+            W_gamma_read1 = tf.get_variable("W_gamma_read1", [css,1])
+            B_gamma_read1 = tf.get_variable("B_gamma_read1", [], initializer=init)
+            gamma_read1 = 1.0 + tf.nn.relu(tf.matmul(h0,W_gamma_read1) + B_gamma_read1) # shape [batch_size,1]
+            
+            W_gamma_write1 = tf.get_variable("W_gamma_write1", [css,1])
+            B_gamma_write1 = tf.get_variable("B_gamma_write1", [], initializer=init)
+            gamma_write1 = 1.0 + tf.nn.relu(tf.matmul(h0,W_gamma_write1) + B_gamma_write1) # shape [batch_size,1]
+
+            W_gamma_read2 = tf.get_variable("W_gamma_read2", [css,1])
+            B_gamma_read2 = tf.get_variable("B_gamma_read2", [], initializer=init)
+            gamma_read2 = 1.0 + tf.nn.relu(tf.matmul(h0,W_gamma_read2) + B_gamma_read2) # shape [batch_size,1]
+            
+            W_gamma_write2 = tf.get_variable("W_gamma_write2", [css,1])
+            B_gamma_write2 = tf.get_variable("B_gamma_write2", [], initializer=init)
+            gamma_write2 = 1.0 + tf.nn.relu(tf.matmul(h0,W_gamma_write2) + B_gamma_write2) # shape [batch_size,1]
+
             # Now generate the s, q, e, a vectors
             W_s1 = tf.get_variable("W_s1", [css,len(powers1)])
-            B_s1 = tf.get_variable("B_s1", [len(powers1)], initializer=init_ops.constant_initializer(0.0))
+            B_s1 = tf.get_variable("B_s1", [len(powers1)], initializer=init)
             s1 = tf.nn.softmax(tf.matmul(h0,W_s1) + B_s1) # shape [batch_size,len(powers1)]
 
             W_s2 = tf.get_variable("W_s2", [css,len(powers2)])
-            B_s2 = tf.get_variable("B_s2", [len(powers2)], initializer=init_ops.constant_initializer(0.0))
+            B_s2 = tf.get_variable("B_s2", [len(powers2)], initializer=init)
             s2 = tf.nn.softmax(tf.matmul(h0,W_s2) + B_s2) # shape [batch_size,len(powers2)]
 
             W_q2 = tf.get_variable("W_q2", [css,len(powers2)])
-            B_q2 = tf.get_variable("B_q2", [len(powers2)], initializer=init_ops.constant_initializer(0.0))
+            B_q2 = tf.get_variable("B_q2", [len(powers2)], initializer=init)
             q2 = tf.nn.softmax(tf.matmul(h0,W_q2) + B_q2) # shape [batch_size,len(powers2)]
 
             W_e1 = tf.get_variable("W_e1", [css,mcs])
-            B_e1 = tf.get_variable("B_e1", [mcs], initializer=init_ops.constant_initializer(0.0))
-            e1 = tf.nn.relu(tf.matmul(h0,W_e1) + B_e1) # shape [batch_size,mcs]
+            B_e1 = tf.get_variable("B_e1", [mcs], initializer=init)
+            e1 = tf.sigmoid(tf.matmul(h0,W_e1) + B_e1) # shape [batch_size,mcs]
 
             W_e2 = tf.get_variable("W_e2", [css,len(powers1)])
-            B_e2 = tf.get_variable("B_e2", [len(powers1)], initializer=init_ops.constant_initializer(0.0))
-            e2 = tf.nn.relu(tf.matmul(h0,W_e2) + B_e2) # shape [batch_size,len(powers1)]
+            B_e2 = tf.get_variable("B_e2", [len(powers1)], initializer=init)
+            e2 = tf.sigmoid(tf.matmul(h0,W_e2) + B_e2) # shape [batch_size,len(powers1)]
 
             W_a1 = tf.get_variable("W_a1", [css,mcs])
-            B_a1 = tf.get_variable("B_a1", [mcs], initializer=init_ops.constant_initializer(0.0))
+            B_a1 = tf.get_variable("B_a1", [mcs], initializer=init)
             a1 = tf.nn.relu(tf.matmul(h0,W_a1) + B_a1) # shape [batch_size,mcs]
 
             W_a2 = tf.get_variable("W_a2", [css,len(powers1)])
-            B_a2 = tf.get_variable("B_a2", [len(powers1)])
+            B_a2 = tf.get_variable("B_a2", [len(powers1)], initializer=init)
             a2 = tf.nn.relu(tf.matmul(h0,W_a2) + B_a2) # shape [batch_size,len(powers1)]
 
             # Add and forget on the memory
@@ -409,15 +409,37 @@ class PatternNTM(RNNCell):
             r2_new = tf.reshape( r2_new, [-1,mas] )
             w2_new = tf.reshape( w2_new, [-1,mas] )            
 
+            # Perform sharpening
+            if( perform_sharpening == True ):
+                sharpening_tensor_r1 = tf.zeros_like(r1_new) + gamma_read1
+                sharp_r1 = tf.pow(r1_new + 1e-6, sharpening_tensor_r1)
+                denom_r1 = tf.reduce_sum(sharp_r1, axis=1, keep_dims=True)
+                r1_new = sharp_r1 / denom_r1
+            
+                sharpening_tensor_w1 = tf.zeros_like(w1_new) + gamma_write1
+                sharp_w1 = tf.pow(w1_new + 1e-6, sharpening_tensor_w1)
+                denom_w1 = tf.reduce_sum(sharp_w1, axis=1, keep_dims=True)
+                w1_new = sharp_w1 / denom_w1
+                
+                sharpening_tensor_r2 = tf.zeros_like(r2_new) + gamma_read2
+                sharp_r2 = tf.pow(r2_new + 1e-6, sharpening_tensor_r2)
+                denom_r2 = tf.reduce_sum(sharp_r2, axis=1, keep_dims=True)
+                r2_new = sharp_r2 / denom_r2
+            
+                sharpening_tensor_w2 = tf.zeros_like(w2_new) + gamma_write2
+                sharp_w2 = tf.pow(w2_new + 1e-6, sharpening_tensor_w2)
+                denom_w2 = tf.reduce_sum(sharp_w2, axis=1, keep_dims=True)
+                w2_new = sharp_w2 / denom_w2
+                
             H = tf.get_variable("H", [css,css])
             U = tf.get_variable("U", [self._input_size,css])
-            B = tf.get_variable("B", [css], initializer=init_ops.constant_initializer(0.0))
+            B = tf.get_variable("B", [css], initializer=init)
         
             V = tf.get_variable("V", [mcs,css]) # converts from memory to controller state
             Mr1 = tf.matmul( M1, tf.reshape(r1,[-1,mas,1]), transpose_a=True )
             Mr1 = tf.reshape( Mr1, [-1,mcs] )
             
-            h0_new = self._activation(tf.matmul(h0, H) + tf.matmul(Mr1,V) + tf.matmul(input,U) + B)
+            h0_new = tf.nn.tanh(tf.matmul(h0, H) + tf.matmul(Mr1,V) + tf.matmul(input,U) + B)
                     
             state_new = tf.concat([h0_new, r1_new, w1_new, r2_new, w2_new, M1_new, M2_new], 1)   
         return h0_new, state_new
