@@ -30,7 +30,15 @@ It seems worth recording some of the decisions that led to the current version o
 
 The horizontal axis is the position in memory, the vertical axis is the time. This was generated with the hyperparameters `N = 30` (so sequences of length `30`, including the initial and terminal symbol), `num_classes = 10` (so there are `8` content symbols plus the initial and terminal symbols), `epoch = 100`, with a controller state size `100`, memory address space of dimension `128` and content space of dimension `20`. The generalisation to sequences of length `N = 60` was *perfect* (i.e. all `0.0`). Moreover these properties are all "statistically" robust, in the sense that almost every time we train the network with these hyperparameters, the results are this good.
 
-- **Version 4** (*current version*). The Pattern NTM has been updated to include sharpening, and the Jupyter notebook now has sensible initialisation for it as well. The Copy and Repeat Copy tasks should be working, the Pattern task is still being modified. The visualisations were extended to include the second memory ring of the Pattern NTM, and a graph of the mean error during training. Currently running tests of the v3 NTM on the Copy and Repeat Copy tasks. A good example of the Repeat Copy task is in `doc/repeat copy task/work-leibniz.html`.
+- **Version 4** (*current version*). The Pattern NTM has been updated to include sharpening, and the Jupyter notebook now has sensible initialisation for it as well. The Copy, Repeat Copy and Pattern tasks are all implemented. The visualisations were extended to include the second memory ring of the Pattern NTM, and a graph of the mean error during training.
+
+## Remarks on tasks
+
+Here we collect some remarks on the algorithms learned by the models to solve the various tasks.
+
+- **NTM** on **Copy task**. Essentially all the converging models learned the same algorithm: writing to the memory and advancing one position in each time step, with a read address which stays fixed until the end of the input sequence and then starts to advance through the memory. Note that some models worked forward (i.e. increasing the read and write addresses) while others worked backwards.
+
+- **NTM** on **Repeat copy task**. Again all models learned a similar algorithm. The input sequence is written to memory as for the Copy task (i.e. advancing one position in each time step) and the read address is manipulated to pause at each position for one time step (see e.g. `doc/repeat copy task/work-tesla.html`).
 
 ## TODOs
 
