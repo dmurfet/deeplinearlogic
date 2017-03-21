@@ -30,12 +30,13 @@ It seems worth recording some of the decisions that led to the current version o
 
 The horizontal axis is the position in memory, the vertical axis is the time. This was generated with the hyperparameters `N = 30` (so sequences of length `30`, including the initial and terminal symbol), `num_classes = 10` (so there are `8` content symbols plus the initial and terminal symbols), `epoch = 100`, with a controller state size `100`, memory address space of dimension `128` and content space of dimension `20`. The generalisation to sequences of length `N = 60` was *perfect* (i.e. all `0.0`). Moreover these properties are all "statistically" robust, in the sense that almost every time we train the network with these hyperparameters, the results are this good.
 
+- **Version 4** (*current version*). The Pattern NTM has been updated to include sharpening, and the Jupyter notebook now has sensible initialisation for it as well. The Copy and Repeat Copy tasks should be working, the Pattern task is still being modified. The visualisations were extended to include the second memory ring of the Pattern NTM, and a graph of the mean error during training. Currently running tests of the v3 NTM on the Copy and Repeat Copy tasks.
+
 ## TODOs
 
 The TODO list items by category:
 
 - **Implement more models**
-    - Updating Pattern NTM with sharpening etc.
     - Multiple Pattern NTM
     - Polynomial step NTM
 - **Implement more tasks**
