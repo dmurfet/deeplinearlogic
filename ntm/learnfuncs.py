@@ -51,13 +51,12 @@ def f_zeromeansrepeat(seq):
     return t
 
 # an example of a pattern is [1,0,0,2,0,3,0,1,1,1]
-# TODO hack: the 2* here is to the output sequence is twice the length
 def f_repetitionpattern(seq, pattern):
     t = []
     i = 0
     j = 0
-    while(len(t) < 2*len(seq)):
-        t.append(seq[j % len(seq)])
+    while(j < len(seq)):
+        t.append(seq[j])
         j = j + pattern[i % len(pattern)]
         i = i + 1
     return t        

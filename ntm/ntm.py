@@ -324,7 +324,7 @@ class PatternNTM(RNNCell):
             perform_sharpening = True
             use_direct_access = self._use_direct_access
             
-            # Note that M2 is [mas, mas]
+            # Note that M2 is [mas, len(powers1)]
             
             # Sharpening factor gamma, one for read and one for write, for each ring
             W_gamma_read1 = tf.get_variable("W_gamma_read1", [css,1])
