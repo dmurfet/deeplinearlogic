@@ -415,7 +415,11 @@ class PatternNTM(RNNCell):
 
             # The new thing in the pattern NTM is 
             Mr2 = tf.matmul( M2, tf.reshape(r2,[-1,mas,1]), transpose_a=True )
-            Mr2 = tf.reshape( Mr2, [-1,len(powers1)] )            
+            Mr2 = tf.reshape( Mr2, [-1,len(powers1)] )    
+            # DEBUG: normalise Mr2
+            Mr2 = Mr2 + 1e-6
+            denom_Mr2 = tf.reduce_sum(Mr2, axis=1, keep_dims=True)
+            Mr2 /= denom_Mr2        
             
             r1_new = tf.matmul( tf.reshape(r1_new, [-1,1,mas]),
                                 tf.tensordot( Mr2, Rtensor1, [[1], [0]] ) )
