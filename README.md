@@ -1,6 +1,6 @@
 # Linear Logic and Recurrent Neural Networks
 
-This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. At the moment the repo is private. The aim is to find a sequence-to-sequence task on which the Pattern NTM substantially outperforms the NTM.
+This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. At the moment the repo is private. The aim is to find a sequence-to-sequence task on which the Pattern NTM substantially outperforms the NTM. A good overview of attention and augmented RNNs is [this paper](http://distill.pub/2016/augmented-rnns/) by Chris Olah and Shan Carter.
 
 The **models** that have been implemented so far are
 
