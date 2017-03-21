@@ -33,10 +33,10 @@ from tensorflow.python.ops.math_ops import tanh
 
 def rotation_tensor(size,powers):
     """
-    Returns rotation matrices as a [3,3,3] tensor, which is [R^{p_1}, R^{p_2}, ...]
+    Returns rotation matrices as a [?,size,size] tensor, which is [R^{p_1}, R^{p_2}, ...]
     where R is the rotation matrix sending the first basis element to the second and 
     the final basis element to the first, and powers = [p_1,p_2,...]. The size of the
-    matrices is given by "siez". Note the convention about matrices at the
+    matrices is given by "size". Note the convention about matrices at the
     top of this file.
     """
     one_hots = []
@@ -212,7 +212,6 @@ class NTM(RNNCell):
             M_new = tf.reshape(M_new, [-1, mas * mcs])
             
             # Do the rotations of the read and write addresses
-            # r has shape [batch_size,mas]
             Rtensor = rotation_tensor(mas,powers)
 
             # yields a tensor of shape [batch_size, mas, mas]
@@ -376,7 +375,7 @@ class PatternNTM(RNNCell):
             W_a2 = tf.get_variable("W_a2", [css,len(powers1)])
             B_a2 = tf.get_variable("B_a2", [len(powers1)], initializer=init)
             a2 = tf.nn.relu(tf.matmul(h0,W_a2) + B_a2) # shape [batch_size,len(powers1)]
-
+            
             # Add and forget on the memory
             M1 = tf.reshape(M1, [-1, mas, mcs])
             erase_term1 = tf.matmul( M1, tf.matrix_diag(e1) ) # shape [batch_size, mas, mcs]
@@ -391,7 +390,6 @@ class PatternNTM(RNNCell):
             M2_new = tf.reshape(M2_new, [-1, mas * len(powers1)])
             
             # Do the rotations of the read and write addresses
-            # r has shape [batch_size,mas]
             Rtensor1 = rotation_tensor(mas,powers1)
             Rtensor2 = rotation_tensor(mas,powers2)
             
@@ -401,10 +399,12 @@ class PatternNTM(RNNCell):
             # NOTE: These are actually batch matmuls (tf.batch_matmul
             # went away with v1.0, matmul now does it automatically on the
             # first index)
+            r1_new = r1
+                   
             if( use_direct_access == True ):
-                r1_new = tf.matmul( tf.reshape(r1, [-1,1,mas]),
-                                    tf.tensordot( q1, Rtensor1, [[1], [0]] ) )
-                                    
+                r1_new = tf.matmul( tf.reshape(r1_new, [-1,1,mas]),
+                        tf.tensordot( q1, Rtensor1, [[1], [0]] ) )
+                        
             w1_new = tf.matmul( tf.reshape(w1, [-1,1,mas]),
                                 tf.tensordot( s1, Rtensor1, [[1], [0]] ) )
                                 
@@ -416,7 +416,8 @@ class PatternNTM(RNNCell):
             # The new thing in the pattern NTM is 
             Mr2 = tf.matmul( M2, tf.reshape(r2,[-1,mas,1]), transpose_a=True )
             Mr2 = tf.reshape( Mr2, [-1,len(powers1)] )            
-            r1_new = tf.matmul( tf.reshape(r1, [-1,1,mas]),
+            
+            r1_new = tf.matmul( tf.reshape(r1_new, [-1,1,mas]),
                                 tf.tensordot( Mr2, Rtensor1, [[1], [0]] ) )
                                 
             r1_new = tf.reshape( r1_new, [-1,mas] )
