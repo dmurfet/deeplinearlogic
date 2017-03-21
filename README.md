@@ -90,6 +90,10 @@ Name        Type        Port    vCPU    Mem     Price
 [Leibniz]   g2.2xlarge	8882    8       60 SSD	$0.65 per Hour
 [Turing]    p2.xlarge	8883    4       61      $0.9 per Hour
 [Wiener]    p2.xlarge	8884    4       61      $0.9 per Hour
+[Neumann]   p2.xlarge	8884    4       61      $0.9 per Hour
+[Church]    p2.xlarge	8884    4       61      $0.9 per Hour
+[Godel]     p2.xlarge	8884    4       61      $0.9 per Hour
+[Bengio]    p2.xlarge	8884    4       61      $0.9 per Hour
 ```
 
 Here the "Port" denotes the port that we should use when creating an `ssh` tunnel to the remote server, in order to run Jupyter. That is, you should connect to the server with Port `<Port>` and IP `<IP>` using
@@ -101,11 +105,15 @@ ssh -L localhost:<Port>:localhost:8888 -i Virginia.pem ubuntu@<IP>
 For convenience of cut and paste here are the commands expanded in each case:
 
 ```
-[Tesla] ssh -L localhost:8880:localhost:8888 -i Virginia.pem ubuntu@limitordinal.org
-[Frege] ssh -L localhost:8881:localhost:8888 -i Virginia.pem ubuntu@34.206.99.116
+[Tesla]   ssh -L localhost:8880:localhost:8888 -i Virginia.pem ubuntu@limitordinal.org
+[Frege]   ssh -L localhost:8881:localhost:8888 -i Virginia.pem ubuntu@34.206.99.116
 [Leibniz] ssh -L localhost:8882:localhost:8888 -i Virginia.pem ubuntu@52.21.99.86
-[Turing] ssh -L localhost:8883:localhost:8888 -i Virginia.pem ubuntu@34.206.82.20
-[Wiener] ssh -L localhost:8884:localhost:8888 -i Virginia.pem ubuntu@34.199.65.56
+[Turing]  ssh -L localhost:8883:localhost:8888 -i Virginia.pem ubuntu@34.206.82.20
+[Wiener]  ssh -L localhost:8884:localhost:8888 -i Virginia.pem ubuntu@34.199.65.56
+[Neumann] ssh -L localhost:8885:localhost:8888 -i Virginia.pem ubuntu@
+[Church]  ssh -L localhost:8886:localhost:8888 -i Virginia.pem ubuntu@
+[Godel]   ssh -L localhost:8887:localhost:8888 -i Virginia.pem ubuntu@
+[Bengio]  ssh -L localhost:8888:localhost:8888 -i Virginia.pem ubuntu@
 ```
 
 To verify that the GPUs are actually being used by TensorFlow within your Jupyter session, run the code [here](https://www.tensorflow.org/tutorials/using_gpu). Note that the output they describe there will appear in the *Jupyter log* not in your notebook. What we see for the `p2.xlarge` machines is
