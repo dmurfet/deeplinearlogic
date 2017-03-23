@@ -267,7 +267,7 @@ class PatternNTM(RNNCell):
     """
     def __init__(self, num_units, input_size, controller_state_size,
                 memory_address_size,memory_content_size, 
-                powers1, powers2, use_direct_access=True):
+                powers1, powers2):
         self._num_units = num_units
         self._input_size = input_size
         self._controller_state_size = controller_state_size
@@ -275,7 +275,6 @@ class PatternNTM(RNNCell):
         self._memory_content_size = memory_content_size
         self._powers1 = powers1
         self._powers2 = powers2
-        self._use_direct_access = True
         
     @property
     def state_size(self):
@@ -321,7 +320,6 @@ class PatternNTM(RNNCell):
             
             init = init_ops.constant_initializer(0.0)
             perform_sharpening = True
-            use_direct_access = self._use_direct_access
             
             # Note that M2 is [mas, len(powers1)]
             
@@ -342,6 +340,10 @@ class PatternNTM(RNNCell):
             B_gamma_write2 = tf.get_variable("B_gamma_write2", [], initializer=init)
             gamma_write2 = 1.0 + tf.nn.relu(tf.matmul(h0,W_gamma_write2) + B_gamma_write2) # shape [batch_size,1]
 
+            W_gamma_Mr2 = tf.get_variable("W_gamma_Mr2", [css,1])
+            B_gamma_Mr2 = tf.get_variable("B_gamma_Mr2", [], initializer=init)
+            gamma_Mr2 = 1.0 + tf.nn.relu(tf.matmul(h0,W_gamma_Mr2) + B_gamma_Mr2) # shape [batch_size,1]
+
             # Now generate the s, q, e, a vectors
             W_s1 = tf.get_variable("W_s1", [css,len(powers1)])
             B_s1 = tf.get_variable("B_s1", [len(powers1)], initializer=init)
@@ -351,10 +353,9 @@ class PatternNTM(RNNCell):
             B_s2 = tf.get_variable("B_s2", [len(powers2)], initializer=init)
             s2 = tf.nn.softmax(tf.matmul(h0,W_s2) + B_s2) # shape [batch_size,len(powers2)]
 
-            if( use_direct_access == True ):
-                W_q1 = tf.get_variable("W_q1", [css,len(powers1)])
-                B_q1 = tf.get_variable("B_q1", [len(powers1)], initializer=init)
-                q1 = tf.nn.softmax(tf.matmul(h0,W_q1) + B_q1) # shape [batch_size,len(powers2)]
+            W_q1 = tf.get_variable("W_q1", [css,len(powers1)])
+            B_q1 = tf.get_variable("B_q1", [len(powers1)], initializer=init)
+            q1 = tf.nn.softmax(tf.matmul(h0,W_q1) + B_q1) # shape [batch_size,len(powers2)]
 
             W_q2 = tf.get_variable("W_q2", [css,len(powers2)])
             B_q2 = tf.get_variable("B_q2", [len(powers2)], initializer=init)
@@ -374,7 +375,7 @@ class PatternNTM(RNNCell):
 
             W_a2 = tf.get_variable("W_a2", [css,len(powers1)])
             B_a2 = tf.get_variable("B_a2", [len(powers1)], initializer=init)
-            a2 = tf.nn.relu(tf.matmul(h0,W_a2) + B_a2) # shape [batch_size,len(powers1)]
+            a2 = tf.nn.softmax(tf.matmul(h0,W_a2) + B_a2) # shape [batch_size,len(powers1)]
             
             # Add and forget on the memory
             M1 = tf.reshape(M1, [-1, mas, mcs])
@@ -393,17 +394,32 @@ class PatternNTM(RNNCell):
             Rtensor1 = rotation_tensor(mas,powers1)
             Rtensor2 = rotation_tensor(mas,powers2)
             
+            # The new thing in the pattern NTM is 
+            Mr2 = tf.matmul( M2, tf.reshape(r2,[-1,mas,1]), transpose_a=True )
+            Mr2 = tf.reshape( Mr2, [-1,len(powers1)] )    
+            # DEBUG: normalise Mr2
+            
+            sharpening_tensor_M2 = tf.zeros_like(M2_new) + gamma_Mr2
+            sharp_M2 = tf.pow(M2_new + 1e-6, sharpening_tensor_M2)
+            denom_M2 = tf.reduce_sum(sharp_M2, axis=1, keep_dims=True)
+            M2_new = M2_new / denom_M2                
+            #Mr2 = tf.nn.l2_normalize(Mr2, 1)
+            #Mr2 = Mr2 + 1e-6
+            #denom_Mr2 = tf.reduce_sum(Mr2, axis=1, keep_dims=True)
+            #Mr2 /= denom_Mr2        
+            
+            r1_new = tf.matmul( tf.reshape(r1, [-1,1,mas]),
+                                tf.tensordot( Mr2, Rtensor1, [[1], [0]] ) )
+                                
             # yields a tensor of shape [batch_size, mas, mas]
             # each row of which is \sum_i q_i R^i, and this batch
             # of matrices is then applied to r to generate r_new
             # NOTE: These are actually batch matmuls (tf.batch_matmul
             # went away with v1.0, matmul now does it automatically on the
             # first index)
-            r1_new = r1
                    
-            if( use_direct_access == True ):
-                r1_new = tf.matmul( tf.reshape(r1_new, [-1,1,mas]),
-                        tf.tensordot( q1, Rtensor1, [[1], [0]] ) )
+            #r1_new = tf.matmul( tf.reshape(r1_new, [-1,1,mas]),
+            #        tf.tensordot( q1, Rtensor1, [[1], [0]] ) )
                         
             w1_new = tf.matmul( tf.reshape(w1, [-1,1,mas]),
                                 tf.tensordot( s1, Rtensor1, [[1], [0]] ) )
@@ -412,18 +428,7 @@ class PatternNTM(RNNCell):
                                 tf.tensordot( q2, Rtensor2, [[1], [0]] ) )
             w2_new = tf.matmul( tf.reshape(w2, [-1,1,mas]),
                                 tf.tensordot( s2, Rtensor2, [[1], [0]] ) )
-
-            # The new thing in the pattern NTM is 
-            Mr2 = tf.matmul( M2, tf.reshape(r2,[-1,mas,1]), transpose_a=True )
-            Mr2 = tf.reshape( Mr2, [-1,len(powers1)] )    
-            # DEBUG: normalise Mr2
-            Mr2 = Mr2 + 1e-6
-            denom_Mr2 = tf.reduce_sum(Mr2, axis=1, keep_dims=True)
-            Mr2 /= denom_Mr2        
-            
-            r1_new = tf.matmul( tf.reshape(r1_new, [-1,1,mas]),
-                                tf.tensordot( Mr2, Rtensor1, [[1], [0]] ) )
-                                
+                 
             r1_new = tf.reshape( r1_new, [-1,mas] )
             w1_new = tf.reshape( w1_new, [-1,mas] )
             r2_new = tf.reshape( r2_new, [-1,mas] )
