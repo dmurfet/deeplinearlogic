@@ -118,10 +118,10 @@ For convenience of cut and paste here are the commands expanded in each case:
 [Leibniz] ssh -L localhost:8882:localhost:8888 -i Virginia.pem ubuntu@52.21.99.86
 [Turing]  ssh -L localhost:8883:localhost:8888 -i Virginia.pem ubuntu@34.206.82.20
 [Wiener]  ssh -L localhost:8884:localhost:8888 -i Virginia.pem ubuntu@34.199.65.56
-[Neumann] ssh -L localhost:8885:localhost:8888 -i Virginia.pem ubuntu@
-[Church]  ssh -L localhost:8886:localhost:8888 -i Virginia.pem ubuntu@
-[Godel]   ssh -L localhost:8887:localhost:8888 -i Virginia.pem ubuntu@
-[Bengio]  ssh -L localhost:8889:localhost:8888 -i Virginia.pem ubuntu@
+[Neumann] ssh -L localhost:8885:localhost:8888 -i Virginia.pem ubuntu@34.206.29.15
+[Church]  ssh -L localhost:8886:localhost:8888 -i Virginia.pem ubuntu@54.85.236.245
+[Godel]   ssh -L localhost:8887:localhost:8888 -i Virginia.pem ubuntu@34.206.183.83
+[Bengio]  ssh -L localhost:8889:localhost:8888 -i Virginia.pem ubuntu@34.199.73.11
 ```
 
 To verify that the GPUs are actually being used by TensorFlow within your Jupyter session, run the code [here](https://www.tensorflow.org/tutorials/using_gpu). Note that the output they describe there will appear in the *Jupyter log* not in your notebook. What we see for the `p2.xlarge` machines is
