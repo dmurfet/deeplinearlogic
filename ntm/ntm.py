@@ -355,7 +355,7 @@ class PatternNTM(RNNCell):
 
             W_q1 = tf.get_variable("W_q1", [css,len(powers1)])
             B_q1 = tf.get_variable("B_q1", [len(powers1)], initializer=init)
-            q1 = tf.nn.softmax(tf.matmul(h0,W_q1) + B_q1) # shape [batch_size,len(powers2)]
+            q1 = tf.nn.softmax(tf.matmul(h0,W_q1) + B_q1) # shape [batch_size,len(powers1)]
 
             W_q2 = tf.get_variable("W_q2", [css,len(powers2)])
             B_q2 = tf.get_variable("B_q2", [len(powers2)], initializer=init)
@@ -376,6 +376,7 @@ class PatternNTM(RNNCell):
             W_a2 = tf.get_variable("W_a2", [css,len(powers1)])
             B_a2 = tf.get_variable("B_a2", [len(powers1)], initializer=init)
             a2 = tf.nn.softmax(tf.matmul(h0,W_a2) + B_a2) # shape [batch_size,len(powers1)]
+            # DEBUG note this is a softmax
             
             # Add and forget on the memory
             M1 = tf.reshape(M1, [-1, mas, mcs])
@@ -390,6 +391,11 @@ class PatternNTM(RNNCell):
             M2_new = M2 - erase_term2 + add_term2
             M2_new = tf.reshape(M2_new, [-1, mas * len(powers1)])
             
+            # Interpolation
+            W_interp = tf.get_variable("W_interp", [css, 2])
+            B_interp = tf.get_variable("B_interp", [2])
+            interp = tf.nn.softmax(tf.matmul(h0,W_interp) + B_interp) # shape [batch_size,2]
+            
             # Do the rotations of the read and write addresses
             Rtensor1 = rotation_tensor(mas,powers1)
             Rtensor2 = rotation_tensor(mas,powers2)
@@ -399,28 +405,30 @@ class PatternNTM(RNNCell):
             Mr2 = tf.reshape( Mr2, [-1,len(powers1)] )    
             # DEBUG: normalise Mr2
             
-            sharpening_tensor_M2 = tf.zeros_like(M2_new) + gamma_Mr2
-            sharp_M2 = tf.pow(M2_new + 1e-6, sharpening_tensor_M2)
-            denom_M2 = tf.reduce_sum(sharp_M2, axis=1, keep_dims=True)
-            M2_new = M2_new / denom_M2                
+            #sharpening_tensor_M2 = tf.zeros_like(M2_new) + gamma_Mr2
+            #sharp_M2 = tf.pow(M2_new + 1e-6, sharpening_tensor_M2)
+            #denom_M2 = tf.reduce_sum(sharp_M2, axis=1, keep_dims=True)
+            #M2_new = M2_new / denom_M2                
             #Mr2 = tf.nn.l2_normalize(Mr2, 1)
             #Mr2 = Mr2 + 1e-6
             #denom_Mr2 = tf.reduce_sum(Mr2, axis=1, keep_dims=True)
             #Mr2 /= denom_Mr2        
             
+            # Interpolate between Mr2 and q1
+            interp = tf.reshape( interp, [-1, 2, 1] )
+            q_interp = tf.matmul( tf.stack([q1, Mr2], axis=2), interp )
+            q_interp = tf.reshape( q_interp, [-1, len(powers1)] )
+            
             r1_new = tf.matmul( tf.reshape(r1, [-1,1,mas]),
-                                tf.tensordot( Mr2, Rtensor1, [[1], [0]] ) )
-                                
+                                tf.tensordot( q_interp, Rtensor1, [[1], [0]] ) )
+             
             # yields a tensor of shape [batch_size, mas, mas]
             # each row of which is \sum_i q_i R^i, and this batch
             # of matrices is then applied to r to generate r_new
             # NOTE: These are actually batch matmuls (tf.batch_matmul
             # went away with v1.0, matmul now does it automatically on the
             # first index)
-                   
-            #r1_new = tf.matmul( tf.reshape(r1_new, [-1,1,mas]),
-            #        tf.tensordot( q1, Rtensor1, [[1], [0]] ) )
-                        
+                                           
             w1_new = tf.matmul( tf.reshape(w1, [-1,1,mas]),
                                 tf.tensordot( s1, Rtensor1, [[1], [0]] ) )
                                 
