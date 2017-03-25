@@ -393,7 +393,7 @@ class PatternNTM(RNNCell):
             
             # Interpolation
             W_interp = tf.get_variable("W_interp", [css, 2])
-            B_interp = tf.get_variable("B_interp", [2])
+            B_interp = tf.get_variable("B_interp", [2], initializer=init)
             interp = tf.nn.softmax(tf.matmul(h0,W_interp) + B_interp) # shape [batch_size,2]
             
             # Do the rotations of the read and write addresses
