@@ -30,7 +30,9 @@ It seems worth recording some of the decisions that led to the current version o
 
 The horizontal axis is the position in memory, the vertical axis is the time. This was generated with the hyperparameters `N = 30` (so sequences of length `30`, including the initial and terminal symbol), `num_classes = 10` (so there are `8` content symbols plus the initial and terminal symbols), `epoch = 100`, with a controller state size `100`, memory address space of dimension `128` and content space of dimension `20`. The generalisation to sequences of length `N = 60` was *perfect* (i.e. all `0.0`). Moreover these properties are all "statistically" robust, in the sense that almost every time we train the network with these hyperparameters, the results are this good.
 
-- **Version 4** (*current version*). The Pattern NTM has been updated to include sharpening, and the Jupyter notebook now has sensible initialisation for it as well. The Copy, Repeat Copy and Pattern tasks are all implemented. The visualisations were extended to include the second memory ring of the Pattern NTM, and a graph of the mean error during training. Currently the NTM performs well on all tasks (Copy, Repeat Copy, Pattern). The Pattern NTM, as described in the paper, is completely broken, but it seems to work when we add an *interpolation* between the NTM controlling the read address of the first memory ring directly (as in the standard NTM) and the NTM controlling this address only indirectly through the second memory ring (as in the paper version of the Pattern NTM). Tests ongoing.
+- **Version 4** (snapshot ??). The Pattern NTM has been updated to include sharpening, and the Jupyter notebook now has sensible initialisation for it as well. The Copy, Repeat Copy and Pattern tasks are all implemented. The visualisations were extended to include the second memory ring of the Pattern NTM, and a graph of the mean error during training. Currently the NTM performs well on all tasks (Copy, Repeat Copy, Pattern). The Pattern NTM, as described in the paper, is completely broken, but it seems to work when we add an *interpolation* between the NTM controlling the read address of the first memory ring directly (as in the standard NTM) and the NTM controlling this address only indirectly through the second memory ring (as in the paper version of the Pattern NTM).
+
+- **Version 5** (*current version*)
 
 ## Remarks on tasks
 
@@ -45,6 +47,7 @@ Here we collect some remarks on the algorithms learned by the models to solve th
 The TODO list items by category:
 
 - **Implement more models**
+    - Fixing the Pattern NTM
     - Multiple Pattern NTM
     - Polynomial step NTM
 - **Implement more tasks**
@@ -52,13 +55,9 @@ The TODO list items by category:
     - Multiple pattern task (as in Section 4.2 of the paper)
     - Polynomial pattern task (as in Section 4.3 of the paper)
 - **Inspection and visualisation**
-    - Setting up Tensorboard
     - Find a way of visualising memory contents
-- **Housekeeping**
-    - Organise nodes for TensorBoard graph
+    - Improve the quality of read and write address visualisations
 - **Experiments**
-    - Tests of v3 NTM on Copy algorithm
-    - Tests of v3 NTM on Repeat Copy, Pattern tasks
     - Tests of Pattern NTM on Copy, Repeat Copy, Pattern tasks
 - **Sparsity and scaling**
     - Add sparsity to v3 NTM
