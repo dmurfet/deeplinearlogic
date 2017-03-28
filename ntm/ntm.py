@@ -353,6 +353,8 @@ class PatternNTM(RNNCell):
             e_tensors = []
             a_tensors = []
             
+            use_logits = [False, True, True]
+            
             for i in range(num_rings):
                 W_s = tf.get_variable("W_s" + str(i+1), [css,len(powers[i])])
                 B_s = tf.get_variable("B_s" + str(i+1), [len(powers[i])], initializer=init)
@@ -371,10 +373,12 @@ class PatternNTM(RNNCell):
                 
                 W_a = tf.get_variable("W_a" + str(i+1), [css,mcs[i]])
                 B_a = tf.get_variable("B_a" + str(i+1), [mcs[i]], initializer=init)
-                a = tf.nn.relu(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
-                a_tensors.append(a)
                 
-            # DEBUG maybe add on ring 2 should be softmax?
+                if( use_logits == False ):
+                    a = tf.nn.relu(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
+                else:
+                    a = tf.matmul(h0,W_a) + B_a # shape [batch_size,mcs]
+                a_tensors.append(a)
             
             # Add and forget on the memory
             M_news = []
@@ -412,23 +416,25 @@ class PatternNTM(RNNCell):
             rot = rotation_tensor(mas[0], powers21)
                 
             Mr2 = tf.matmul( M[1], tf.reshape(r[1],[-1,mas[1],1]), transpose_a=True )
-            Mr2 = tf.reshape( Mr2, [-1,mcs[1]] )           
+            Mr2 = tf.nn.softmax( tf.reshape( Mr2, [-1,mcs[1]] ) )
             
             Mr3 = tf.matmul( M[2], tf.reshape(r[2],[-1,mas[2],1]), transpose_a=True ) 
-            Mr3 = tf.reshape( Mr3, [-1,1] )
+            Mr3 = tf.nn.softmax( tf.reshape( Mr3, [-1,2,1] ) )
             
             # ASSUME mcs[1] = len(powers21)
-            # We read the content of the third memory ring as a weight
             Mr2_rot = tf.tensordot( Mr2, rot, [[1], [0]] ) # shape [batch_size, mas[0], mas[0]]
+            r0_prime = tf.matmul( tf.reshape(r[0], [-1,1,mas[0]]), Mr2_rot )
+            r0_prime = tf.reshape( r_news[0], [-1,mas[0]] )
             
-            ident_mat = tf.diag(tf.ones([1,mas[0]], tf.float32)) # shape [mas[0], mas[0]]
-            ident_mat = tf.reshape( ident_mat, [1, mas[0], mas[0]] )
-            Mr3 = tf.tensordot( Mr3, ident_mat, [[1], [0]] ) # shape [batch_size, mas[0], mas[0]]
+            # We read the content of the third memory ring as a weight interpolating
+            # between the direct manipulation of the read address of the first ring
+            # by the controller (that is, r_news[0]) and the indirect manipulation
+            # via the contents of the second ring
             
-            rot_matrix = tf.matmul( Mr2_rot, Mr3 ) # shape [batch_size, mas[0], mas[0]]
-            r_news[0] = tf.matmul( tf.reshape(r_news[0], [-1,1,mas[0]]), rot_matrix )
-            r_news[0] = tf.reshape( r_news[0], [-1,mas[0]] )
-            
+            r0_new = tf.matmul( tf.stack([r_news[0], r0_prime], axis=2), Mr3 )
+            r0_new = tf.reshape( r0_new, [-1, mas[0]] )
+            r_news[0] = r0_new
+
             # Perform sharpening
             for i in range(num_rings):
                 r_new = r_news[i]
