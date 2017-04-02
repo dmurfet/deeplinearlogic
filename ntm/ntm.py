@@ -25,11 +25,14 @@ from random import shuffle
 from tensorflow.python.ops.rnn_cell_impl import _RNNCell as RNNCell
 from tensorflow.python.ops import array_ops
 from tensorflow.python.ops import init_ops
-from tensorflow.python.ops.math_ops import sigmoid
 from tensorflow.python.ops.math_ops import tanh
 
 ##################
 # Helper functions
+
+def sigmoid_hard(x):
+  """Hard sigmoid."""
+  return tf.minimum(1.0, tf.maximum(0.0, 0.25 * x + 0.5))
 
 def rotation_tensor(size,powers):
     """
@@ -198,7 +201,7 @@ class NTM(RNNCell):
 
             W_e = tf.get_variable("W_e", [css,mcs])
             B_e = tf.get_variable("B_e", [mcs], initializer=init)
-            e = tf.sigmoid(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
+            e = sigmoid_hard(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
 
             W_a = tf.get_variable("W_a", [css,mcs])
             B_a = tf.get_variable("B_a", [mcs], initializer=init)
@@ -333,7 +336,7 @@ class PatternNTM(RNNCell):
             # Interpolation
             W_interp = tf.get_variable("W_interp", [css,1])
             B_interp = tf.get_variable("B_interp", [1], initializer=init_ops.constant_initializer(self._direct_bias))
-            interp = tf.sigmoid(tf.matmul(h0,W_interp) + B_interp) # shape [batch_size,1]
+            interp = sigmoid_hard(tf.matmul(h0,W_interp) + B_interp) # shape [batch_size,1]
                         
             # Sharpening factor gamma, one for read and one for write, for each ring
             gamma_read_tensors = []
@@ -373,7 +376,7 @@ class PatternNTM(RNNCell):
                 
                 W_e = tf.get_variable("W_e" + str(i+1), [css,mcs[i]])
                 B_e = tf.get_variable("B_e" + str(i+1), [mcs[i]], initializer=init)
-                e = tf.sigmoid(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
+                e = sigmoid_hard(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
                 e_tensors.append(e)
                 
                 W_a = tf.get_variable("W_a" + str(i+1), [css,mcs[i]])
@@ -417,8 +420,6 @@ class PatternNTM(RNNCell):
             # second memory ring to generate a distribution over rotations
             # of the first memory ring, and then act with those rotations on
             # the read address of the first memory ring. 
-            
-            # w_g = g_t * w_c + (1. - g_t) * w_tm1
             
             rot = rotation_tensor(mas[0], powers21)
                 
