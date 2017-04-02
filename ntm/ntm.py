@@ -202,7 +202,8 @@ class NTM(RNNCell):
             W_e = tf.get_variable("W_e", [css,mcs])
             B_e = tf.get_variable("B_e", [mcs], initializer=init)
             e = sigmoid_hard(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
-
+            # DEBUG: tf.nn.sigmoid or sigmoid_hard?
+            
             W_a = tf.get_variable("W_a", [css,mcs])
             B_a = tf.get_variable("B_a", [mcs], initializer=init)
             a = tf.nn.relu(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
@@ -333,7 +334,7 @@ class PatternNTM(RNNCell):
             
             init = init_ops.constant_initializer(0.0)
             
-            # Interpolation
+            # Interpolation (note the nonzero initialisation for bias)
             W_interp = tf.get_variable("W_interp", [css,1])
             B_interp = tf.get_variable("B_interp", [1], initializer=init_ops.constant_initializer(self._direct_bias))
             interp = sigmoid_hard(tf.matmul(h0,W_interp) + B_interp) # shape [batch_size,1]
