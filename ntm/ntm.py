@@ -267,7 +267,7 @@ class PatternNTM(RNNCell):
     """
     def __init__(self, num_units, input_size, controller_state_size,
                 memory_address_sizes,memory_content_sizes, 
-                powers, powers21):
+                powers, powers21, direct_bias):
         self._num_units = num_units
         self._input_size = input_size
         self._controller_state_size = controller_state_size
@@ -275,6 +275,7 @@ class PatternNTM(RNNCell):
         self._memory_content_sizes = memory_content_sizes
         self._powers = powers
         self._powers21 = powers21
+        self._direct_bias = direct_bias
         
     @property
     def state_size(self):
@@ -331,7 +332,7 @@ class PatternNTM(RNNCell):
             
             # Interpolation
             W_interp = tf.get_variable("W_interp", [css,1])
-            B_interp = tf.get_variable("B_interp", [1], initializer=init_ops.constant_initializer(3.0))
+            B_interp = tf.get_variable("B_interp", [1], initializer=init_ops.constant_initializer(self._direct_bias))
             interp = tf.sigmoid(tf.matmul(h0,W_interp) + B_interp) # shape [batch_size,1]
                         
             # Sharpening factor gamma, one for read and one for write, for each ring
