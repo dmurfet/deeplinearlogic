@@ -319,17 +319,21 @@ class PatternNTM(RNNCell):
             powers = self._powers # the powers of the rotation matrix the controller uses on rings
             powers21 = self._powers21 # the powers applied by ring 2 to ring 1
 
-            h0, r1, w1, r2, w2, r3, w3, M1, M2, M3 = tf.split(state, [css, mas[0], mas[0], 
-                                                        mas[1], mas[1], mas[2], mas[2],
-                                                        mas[0] * mcs[0], mas[1] * mcs[1],
-                                                        mas[2] * mcs[2]], 1)
+            h0, r1, w1, r2, w2, M1, M2 = tf.split(state, [css, mas[0], mas[0], 
+                                                        mas[1], mas[1],
+                                                        mas[0] * mcs[0], mas[1] * mcs[1]], 1)
             
-            r = [r1,r2,r3]
-            w = [w1,w2,w3]
-            M = [M1,M2,M3]
+            r = [r1,r2]
+            w = [w1,w2]
+            M = [M1,M2]
             
             init = init_ops.constant_initializer(0.0)
             
+            # Interpolation
+            W_interp = tf.get_variable("W_interp", [css,1])
+            B_interp = tf.get_variable("B_interp", [1], initializer=init_ops.constant_initializer(3.0))
+            interp = tf.sigmoid(tf.matmul(h0,W_interp) + B_interp) # shape [batch_size,1]
+                        
             # Sharpening factor gamma, one for read and one for write, for each ring
             gamma_read_tensors = []
             gamma_write_tensors = []
@@ -353,7 +357,7 @@ class PatternNTM(RNNCell):
             e_tensors = []
             a_tensors = []
             
-            use_logits = [False, True, True]
+            use_logits = [False, True]
             
             for i in range(num_rings):
                 W_s = tf.get_variable("W_s" + str(i+1), [css,len(powers[i])])
@@ -413,25 +417,33 @@ class PatternNTM(RNNCell):
             # of the first memory ring, and then act with those rotations on
             # the read address of the first memory ring. 
             
+            # w_g = g_t * w_c + (1. - g_t) * w_tm1
+            
             rot = rotation_tensor(mas[0], powers21)
                 
             Mr2 = tf.matmul( M[1], tf.reshape(r[1],[-1,mas[1],1]), transpose_a=True )
             Mr2 = tf.nn.softmax( tf.reshape( Mr2, [-1,mcs[1]] ) )
-            
-            Mr3 = tf.matmul( M[2], tf.reshape(r[2],[-1,mas[2],1]), transpose_a=True ) 
-            Mr3 = tf.nn.softmax( tf.reshape( Mr3, [-1,2,1] ) )
-            
+                        
             # ASSUME mcs[1] = len(powers21)
             Mr2_rot = tf.tensordot( Mr2, rot, [[1], [0]] ) # shape [batch_size, mas[0], mas[0]]
             r0_prime = tf.matmul( tf.reshape(r[0], [-1,1,mas[0]]), Mr2_rot )
             r0_prime = tf.reshape( r_news[0], [-1,mas[0]] )
             
-            # We read the content of the third memory ring as a weight interpolating
+            # We view the scalar interp as a weight interpolating
             # between the direct manipulation of the read address of the first ring
             # by the controller (that is, r_news[0]) and the indirect manipulation
             # via the contents of the second ring
             
-            r0_new = tf.matmul( tf.stack([r_news[0], r0_prime], axis=2), Mr3 )
+            # For the version with interpolation based on contents of a memory
+            # ring see ntm-2-4-2017-snapshot
+            
+            interp_matrix = tf.stack([interp,
+                                    tf.ones_like(interp,dtype=tf.float32) - interp],
+                                    axis=1) # shape [-1,2,1]
+            
+            r0_new = tf.matmul( tf.stack([r_news[0], r0_prime], axis=2), interp_matrix )
+            #                   [---- this is shape [-1,mas[0],2] ----] 
+            
             r0_new = tf.reshape( r0_new, [-1, mas[0]] )
             r_news[0] = r0_new
 
@@ -465,7 +477,6 @@ class PatternNTM(RNNCell):
                     
             state_new = tf.concat([h0_new, r_news[0], w_news[0],
                                         r_news[1], w_news[1],
-                                        r_news[2], w_news[2],
-                                        M_news[0], M_news[1], M_news[2]], 1)   
+                                        M_news[0], M_news[1]], 1)   
         return h0_new, state_new
         # the return is output, state
