@@ -101,6 +101,9 @@ Name        Type        Port    vCPU    Mem     Price
 [Church]    p2.xlarge	8884    4       61      $0.9 per Hour
 [Godel]     p2.xlarge	8884    4       61      $0.9 per Hour
 [Bengio]    p2.xlarge	8884    4       61      $0.9 per Hour
+[Feynman]   p2.xlarge	8884    4       61      $0.9 per Hour
+[Boole]     p2.xlarge	8884    4       61      $0.9 per Hour
+[Babbage]   p2.xlarge	8884    4       61      $0.9 per Hour
 ```
 
 Here the "Port" denotes the port that we should use when creating an `ssh` tunnel to the remote server, in order to run Jupyter. That is, you should connect to the server with Port `<Port>` and IP `<IP>` using
@@ -121,6 +124,9 @@ For convenience of cut and paste here are the commands expanded in each case:
 [Church]  ssh -L localhost:8886:localhost:8888 -i Virginia.pem ubuntu@54.85.236.245
 [Godel]   ssh -L localhost:8887:localhost:8888 -i Virginia.pem ubuntu@34.206.183.83
 [Bengio]  ssh -L localhost:8889:localhost:8888 -i Virginia.pem ubuntu@34.199.73.11
+[Feynman]  ssh -L localhost:8870:localhost:8888 -i Virginia.pem ubuntu@
+[Boole]   ssh -L localhost:8871:localhost:8888 -i Virginia.pem ubuntu@
+[Babbage]  ssh -L localhost:8872:localhost:8888 -i Virginia.pem ubuntu@
 ```
 
 To verify that the GPUs are actually being used by TensorFlow within your Jupyter session, run the code [here](https://www.tensorflow.org/tutorials/using_gpu). Note that the output they describe there will appear in the *Jupyter log* not in your notebook. What we see for the `p2.xlarge` machines is
