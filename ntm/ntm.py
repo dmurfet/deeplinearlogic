@@ -201,7 +201,7 @@ class NTM(RNNCell):
 
             W_e = tf.get_variable("W_e", [css,mcs])
             B_e = tf.get_variable("B_e", [mcs], initializer=init)
-            e = sigmoid_hard(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
+            e = tf.nn.sigmoid(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
             # DEBUG: tf.nn.sigmoid or sigmoid_hard?
             
             W_a = tf.get_variable("W_a", [css,mcs])
@@ -337,7 +337,7 @@ class PatternNTM(RNNCell):
             # Interpolation (note the nonzero initialisation for bias)
             W_interp = tf.get_variable("W_interp", [css,1])
             B_interp = tf.get_variable("B_interp", [1], initializer=init_ops.constant_initializer(self._direct_bias))
-            interp = sigmoid_hard(tf.matmul(h0,W_interp) + B_interp) # shape [batch_size,1]
+            interp = tf.nn.sigmoid(tf.matmul(h0,W_interp) + B_interp) # shape [batch_size,1]
                         
             # Sharpening factor gamma, one for read and one for write, for each ring
             gamma_read_tensors = []
@@ -377,7 +377,7 @@ class PatternNTM(RNNCell):
                 
                 W_e = tf.get_variable("W_e" + str(i+1), [css,mcs[i]])
                 B_e = tf.get_variable("B_e" + str(i+1), [mcs[i]], initializer=init)
-                e = sigmoid_hard(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
+                e = tf.nn.sigmoid(tf.matmul(h0,W_e) + B_e) # shape [batch_size,mcs]
                 e_tensors.append(e)
                 
                 W_a = tf.get_variable("W_a" + str(i+1), [css,mcs[i]])
