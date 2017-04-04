@@ -74,7 +74,7 @@ def f_multpattern(seq,pattern1,pattern2,div_symbol):
         j = j + patterns[k][i % len(patterns[k])]
         i = i + 1
 
-        if(j < len(seq) and seq[j] == div_symbol ):
+        while(j < len(seq) and seq[j] == div_symbol ):
             k = (k + 1) % 2
             j = j + 1
     return t
