@@ -34,6 +34,8 @@ The horizontal axis is the position in memory, the vertical axis is the time. Th
 
 - **Version 5** (snapshot `3-4-2017`). Some small changes. We tried hard sigmoid but eventually abandoned it as not making much difference.
 
+- **Version 6** (*current version*). Implemented Multiple Pattern task.
+
 ## Remarks on tasks
 
 Here we collect some remarks on the algorithms learned by the models to solve the various tasks.
@@ -52,7 +54,6 @@ The TODO list items by category:
     - Polynomial step NTM
 - **Implement more tasks**
     - Other tasks from NTM, DNC and other papers
-    - Multiple pattern task (as in Section 4.2 of the paper)
     - Polynomial pattern task (as in Section 4.3 of the paper)
 - **Inspection and visualisation**
     - Find a way of visualising memory contents
