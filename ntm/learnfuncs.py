@@ -59,4 +59,22 @@ def f_repetitionpattern(seq, pattern):
         t.append(seq[j])
         j = j + pattern[i % len(pattern)]
         i = i + 1
-    return t        
+    return t
+
+    
+def f_multpattern(seq,pattern1,pattern2,div_symbol):
+    patterns = [pattern1,pattern2]
+    t = []
+    i = 0
+    j = 0
+    k = 0
+    while(j < len(seq)):        
+        t.append(seq[j])
+            
+        j = j + patterns[k][i % len(patterns[k])]
+        i = i + 1
+
+        if(j < len(seq) and seq[j] == div_symbol ):
+            k = (k + 1) % 2
+            j = j + 1
+    return t

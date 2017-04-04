@@ -32,7 +32,7 @@ The horizontal axis is the position in memory, the vertical axis is the time. Th
 
 - **Version 4** (snapshot `26-3-2017`). The Pattern NTM has been updated to include sharpening, and the Jupyter notebook now has sensible initialisation for it as well. The Copy, Repeat Copy and Pattern tasks are all implemented. The visualisations were extended to include the second memory ring of the Pattern NTM, and a graph of the mean error during training. Currently the NTM performs well on all tasks (Copy, Repeat Copy, Pattern). The Pattern NTM, as described in the paper, is completely broken, but it seems to work when we add an *interpolation* between the NTM controlling the read address of the first memory ring directly (as in the standard NTM) and the NTM controlling this address only indirectly through the second memory ring (as in the paper version of the Pattern NTM).
 
-- **Version 5** (snapshot `3-4-2017`). The interpolation between direct access and indirect access in the Pattern NTM has been switched to hard sigmoid, with a bias towards direct access. We are now using hard sigmoid everywhere there was a sigmoid in `v4`.
+- **Version 5** (snapshot `3-4-2017`). Some small changes. We tried hard sigmoid but eventually abandoned it as not making much difference.
 
 ## Remarks on tasks
 
@@ -124,9 +124,9 @@ For convenience of cut and paste here are the commands expanded in each case:
 [Church]  ssh -L localhost:8886:localhost:8888 -i Virginia.pem ubuntu@54.85.236.245
 [Godel]   ssh -L localhost:8887:localhost:8888 -i Virginia.pem ubuntu@34.206.183.83
 [Bengio]  ssh -L localhost:8889:localhost:8888 -i Virginia.pem ubuntu@34.199.73.11
-[Feynman]  ssh -L localhost:8870:localhost:8888 -i Virginia.pem ubuntu@52.6.43.48
+[Feynman] ssh -L localhost:8870:localhost:8888 -i Virginia.pem ubuntu@52.6.43.48
 [Boole]   ssh -L localhost:8871:localhost:8888 -i Virginia.pem ubuntu@34.203.182.65
-[Babbage]  ssh -L localhost:8872:localhost:8888 -i Virginia.pem ubuntu@34.200.112.121
+[Babbage] ssh -L localhost:8872:localhost:8888 -i Virginia.pem ubuntu@34.200.112.121
 ```
 
 To verify that the GPUs are actually being used by TensorFlow within your Jupyter session, run the code [here](https://www.tensorflow.org/tutorials/using_gpu). Note that the output they describe there will appear in the *Jupyter log* not in your notebook. What we see for the `p2.xlarge` machines is
