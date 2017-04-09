@@ -661,15 +661,15 @@ class MultPatternNTM(RNNCell):
             # the read address of the first memory ring. 
             
             rot = rotation_tensor(mas[0], powers21)
+                
+            Mr2 = tf.matmul( M[1], tf.reshape(r[1],[-1,mas[1],1]), transpose_a=True )
+            Mr2 = tf.nn.softmax( tf.reshape( Mr2, [-1,mcs[1]] ) )
             
-            Mr2 = tf.matmul( tf.nn.softmax(M[1]), tf.reshape(r[1],[-1,mas[1],1]), transpose_a=True )
-            Mr2 = tf.reshape( Mr2, [-1,mcs[1]] )
+            Mr3 = tf.matmul( M[2], tf.reshape(r[2],[-1,mas[2],1]), transpose_a=True )
+            Mr3 = tf.nn.softmax( tf.reshape( Mr3, [-1,mcs[2]] ) )
             
-            Mr3 = tf.matmul( tf.nn.softmax(M[2]), tf.reshape(r[2],[-1,mas[2],1]), transpose_a=True )
-            Mr3 = tf.reshape( Mr3, [-1,mcs[2]] )
-            
-            Mr4 = tf.matmul( tf.nn.softmax(M[3]), tf.reshape(r[3],[-1,mas[3],1]), transpose_a=True )
-            Mr4 = tf.reshape( Mr4, [-1,2,1] )
+            Mr4 = tf.matmul( M[3], tf.reshape(r[3],[-1,mas[3],1]), transpose_a=True )
+            Mr4 = tf.nn.softmax( tf.reshape( Mr4, [-1,2,1] ) )
                         
             # ASSUME mcs[1] = len(powers21)
             Mr2_rot = tf.tensordot( Mr2, rot, [[1], [0]] ) # shape [batch_size, mas[0], mas[0]]
