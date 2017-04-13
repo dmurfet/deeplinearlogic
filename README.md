@@ -36,7 +36,7 @@ The horizontal axis is the position in memory, the vertical axis is the time. Th
 
 - **Version 6** (snapshot `9-4-2017`). Implemented Multiple Pattern task. It looks like the NTM consistently fails to do well on this task, but the Multiple Pattern NTM (while it still struggles) does sometimes get close to a reasonable algorithm. See `doc/multpattern1/work-babbage-mult_pattern_ntm.html` for example.
 
-- **Version 7** (*current version*). Changed the way softmax is used in the Multiple Pattern NTM controller. It is now applied to the memory *before* contraction with the read address. Further, in `work.ipynb` we now plot the softmax of the memory contents, and we initialise the memory differently.
+- **Version 7** (*current version*). Changed the way softmax is used in the Multiple Pattern NTM controller. It is now applied to the memory *before* contraction with the read address. In `work.ipynb` we now plot the softmax of the memory contents. In all controllers we fixed the way the erase vector is computed (before this version it was not using the write address). The default of all memory rings except the first is to be a vector (5,0,...) which under softmax gives a distribution emphasising the identity operator.
 
 ## Remarks on tasks
 

@@ -210,7 +210,8 @@ class NTM(RNNCell):
             
             # Add and forget on the memory
             M = tf.reshape(M, [-1, mas, mcs])
-            erase_term = tf.matmul( M, tf.matrix_diag(e) ) # shape [batch_size, mas, mcs]
+            erase_term1 = tf.matmul( tf.reshape(w,[-1,mas,1]), tf.reshape(e,[-1,1,mcs]) ) # shape [batch_size, mas, mcs]
+            erase_term = tf.multiply( M, erase_term1 ) # shape [batch_size, mas, mcs]                
             add_term = tf.matmul( tf.reshape(w,[-1,mas,1]), tf.reshape(a,[-1,1,mcs]) ) # shape [batch_size, mas, mcs]
             M_new = M - erase_term + add_term
             M_new = tf.reshape(M_new, [-1, mas * mcs])
@@ -392,7 +393,8 @@ class PatternNTM(RNNCell):
             
             for i in range(num_rings):
                 M[i] = tf.reshape(M[i], [-1, mas[i], mcs[i]])
-                erase_term = tf.matmul( M[i], tf.matrix_diag(e_tensors[i]) ) # shape [batch_size, mas[i], mcs[i]]
+                erase_term1 = tf.matmul( tf.reshape(w[i],[-1,mas[i],1]), tf.reshape(e_tensors[i],[-1,1,mcs[i]]) ) # shape [batch_size, mas[i], mcs[i]]
+                erase_term = tf.multiply( M[i], erase_term1 ) # shape [batch_size, mas[i], mcs[i]]
                 add_term = tf.matmul( tf.reshape(w[i],[-1,mas[i],1]), tf.reshape(a_tensors[i],[-1,1,mcs[i]]) ) # shape [batch_size, mas[i], mcs[i]]
                 M_new = M[i] - erase_term + add_term
                 M_new = tf.reshape(M_new, [-1, mas[i] * mcs[i]])
@@ -632,7 +634,8 @@ class MultPatternNTM(RNNCell):
             
             for i in range(num_rings):
                 M[i] = tf.reshape(M[i], [-1, mas[i], mcs[i]])
-                erase_term = tf.matmul( M[i], tf.matrix_diag(e_tensors[i]) ) # shape [batch_size, mas[i], mcs[i]]
+                erase_term1 = tf.matmul( tf.reshape(w[i],[-1,mas[i],1]), tf.reshape(e_tensors[i],[-1,1,mcs[i]]) ) # shape [batch_size, mas[i], mcs[i]]
+                erase_term = tf.multiply( M[i], erase_term1 ) # shape [batch_size, mas[i], mcs[i]]
                 add_term = tf.matmul( tf.reshape(w[i],[-1,mas[i],1]), tf.reshape(a_tensors[i],[-1,1,mcs[i]]) ) # shape [batch_size, mas[i], mcs[i]]
                 M_new = M[i] - erase_term + add_term
                 M_new = tf.reshape(M_new, [-1, mas[i] * mcs[i]])
