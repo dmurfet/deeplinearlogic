@@ -188,7 +188,18 @@ sudo pip uninstall tensorflow
 sudo pip install tensorflow-gpu
 ```
 
-Then follow the instructions on the TensorFlow webpage to check the GPU is working. Then run `jupyter notebook` as usual. To open the server to the outside world follow the instructions [here](http://jupyter-notebook.readthedocs.io/en/latest/public_server.htm) and put the line `su ubuntu -c "/usr/local/bin/jupyter notebook&"` into your `/etc/rc.local`.
+Then follow the instructions on the TensorFlow webpage to check the GPU is working. Then run `jupyter notebook` as usual. To open the server to the outside world follow the instructions [here](http://jupyter-notebook.readthedocs.io/en/latest/public_server.html). Don't forget to generate the cert using OpenSSL first, and put
+
+```
+cd ~/.jupyter
+openssl req -x509 -nodes -days 365 -newkey rsa:1024 -keyout mykey.key -out mycert.pem
+cp /home/ubuntu/data/deeplinearlogic/jupyter_notebook_config.py .
+```
+Finally, put the line
+```
+su ubuntu -c "/usr/local/bin/jupyter notebook&"
+```
+into your `/etc/rc.local`. So far this upgrade has been done for Tesla, Babbage, Wiener, Bengio and Turing.
 
 ## Notes on other implementations
 
