@@ -188,7 +188,7 @@ sudo pip uninstall tensorflow
 sudo pip install tensorflow-gpu
 ```
 
-Then follow the instructions on the TensorFlow webpage to check the GPU is working. Then run `jupyter notebook` as usual. To open the server to the outside world follow the instructions [here](http://jupyter-notebook.readthedocs.io/en/latest/public_server.html). Don't forget to generate the cert using OpenSSL first, and put
+Then follow the instructions on the TensorFlow webpage to check the GPU is working. Then run `jupyter notebook` as usual. To open the server to the outside world follow the instructions [here](http://jupyter-notebook.readthedocs.io/en/latest/public_server.html), which amount to the following:
 
 ```
 cd ~/.jupyter
