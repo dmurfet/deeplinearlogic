@@ -61,20 +61,35 @@ def f_repetitionpattern(seq, pattern):
         i = i + 1
     return t
 
-    
 def f_multpattern(seq,pattern1,pattern2,div_symbol):
     patterns = [pattern1,pattern2]
-    t = []
-    i = 0
+    
+    # We parse the sequence and create a list of lists,
+    # of the form [n, L] where n = 0,1 is the pattern
+    # to use and L is a list of integers to which it should
+    # be applied
+    
+    parse_list = []
+    curr_subseq = []
+    curr_pattern = 0
     j = 0
-    k = 0
-    while(j < len(seq)):        
-        t.append(seq[j])
-            
-        j = j + patterns[k][i % len(patterns[k])]
-        i = i + 1
+    
+    while(j < len(seq)):
+        if(seq[j] != div_symbol):
+            curr_subseq.append(seq[j])
 
-        while(j < len(seq) and seq[j] == div_symbol ):
-            k = (k + 1) % 2
-            j = j + 1
+        if(seq[j] == div_symbol or j == len(seq)-1):
+            if( len(curr_subseq) != 0 ):
+                parse_list.append([curr_pattern,curr_subseq])
+
+        if(seq[j] == div_symbol):
+            curr_pattern = (curr_pattern + 1) % 2
+            curr_subseq = []
+        
+        j = j + 1
+
+    t = []    
+    for q in parse_list:
+        t = t + f_repetitionpattern(q[1],patterns[q[0]])
+
     return t
