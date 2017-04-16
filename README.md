@@ -38,7 +38,7 @@ The horizontal axis is the position in memory, the vertical axis is the time. Th
 
 - **Version 7** (snapshot `14-4-2017`). Changed the way softmax is used in the Multiple Pattern NTM controller. It is now applied to the memory *before* contraction with the read address. In `work.ipynb` we now plot the softmax of the memory contents. In all controllers we fixed the way the erase vector is computed (before this version it was not using the write address). The default of all memory rings except the first is to be a vector (1.0,0.0,...) which under softmax gives a distribution emphasising the identity operator. Changed the default size of the memory address spaces for the Multiple Pattern NTM.
 
-- **Version 8** (*current version*)
+- **Version 8** (snapshot `16-4-2017`). Added task Multiple Pattern 3, added some basic curriculum learning and improved the logging output. General cleanups. No important change to the old controllers or tasks, so the performance of `v8` should be the same as for `v7`.
 
 ## Remarks on tasks
 
