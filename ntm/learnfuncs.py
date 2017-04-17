@@ -61,9 +61,7 @@ def f_repetitionpattern(seq, pattern):
         i = i + 1
     return t
 
-def f_multpattern(seq,pattern1,pattern2,div_symbol):
-    patterns = [pattern1,pattern2]
-    
+def f_multpattern(seq,patterns,div_symbol):    
     # We parse the sequence and create a list of lists,
     # of the form [n, L] where n = 0,1 is the pattern
     # to use and L is a list of integers to which it should
@@ -83,7 +81,7 @@ def f_multpattern(seq,pattern1,pattern2,div_symbol):
                 parse_list.append([curr_pattern,curr_subseq])
 
         if(seq[j] == div_symbol):
-            curr_pattern = (curr_pattern + 1) % 2
+            curr_pattern = (curr_pattern + 1) % len(patterns)
             curr_subseq = []
         
         j = j + 1
