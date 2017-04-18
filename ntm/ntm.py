@@ -207,15 +207,7 @@ class NTM(RNNCell):
             W_a = tf.get_variable("W_a", [css,mcs])
             B_a = tf.get_variable("B_a", [mcs], initializer=init)
             a = tf.nn.relu(tf.matmul(h0,W_a) + B_a) # shape [batch_size,mcs]
-            
-            # Add and forget on the memory
-            M = tf.reshape(M, [-1, mas, mcs])
-            erase_term1 = tf.matmul( tf.reshape(w,[-1,mas,1]), tf.reshape(e,[-1,1,mcs]) ) # shape [batch_size, mas, mcs]
-            erase_term = tf.multiply( M, erase_term1 ) # shape [batch_size, mas, mcs]                
-            add_term = tf.matmul( tf.reshape(w,[-1,mas,1]), tf.reshape(a,[-1,1,mcs]) ) # shape [batch_size, mas, mcs]
-            M_new = M - erase_term + add_term
-            M_new = tf.reshape(M_new, [-1, mas * mcs])
-            
+                        
             # Do the rotations of the read and write addresses
             Rtensor = rotation_tensor(mas,powers)
 
@@ -244,6 +236,14 @@ class NTM(RNNCell):
                 sharp_w = tf.pow(w_new + 1e-6, sharpening_tensor_w)
                 denom_w = tf.reduce_sum(sharp_w, axis=1, keep_dims=True)
                 w_new = sharp_w / denom_w
+
+            # Add and forget on the memory
+            M = tf.reshape(M, [-1, mas, mcs])
+            erase_term1 = tf.matmul( tf.reshape(w_new,[-1,mas,1]), tf.reshape(e,[-1,1,mcs]) ) # shape [batch_size, mas, mcs]
+            erase_term = tf.multiply( M, erase_term1 ) # shape [batch_size, mas, mcs]                
+            add_term = tf.matmul( tf.reshape(w_new,[-1,mas,1]), tf.reshape(a,[-1,1,mcs]) ) # shape [batch_size, mas, mcs]
+            M_new = M - erase_term + add_term
+            M_new = tf.reshape(M_new, [-1, mas * mcs])
 
             # Construct new state
             H = tf.get_variable("H", [css,css])
@@ -387,19 +387,7 @@ class PatternNTM(RNNCell):
                 else:
                     a = tf.matmul(h0,W_a) + B_a # shape [batch_size,mcs]
                 a_tensors.append(a)
-            
-            # Add and forget on the memory
-            M_news = []
-            
-            for i in range(num_rings):
-                M[i] = tf.reshape(M[i], [-1, mas[i], mcs[i]])
-                erase_term1 = tf.matmul( tf.reshape(w[i],[-1,mas[i],1]), tf.reshape(e_tensors[i],[-1,1,mcs[i]]) ) # shape [batch_size, mas[i], mcs[i]]
-                erase_term = tf.multiply( M[i], erase_term1 ) # shape [batch_size, mas[i], mcs[i]]
-                add_term = tf.matmul( tf.reshape(w[i],[-1,mas[i],1]), tf.reshape(a_tensors[i],[-1,1,mcs[i]]) ) # shape [batch_size, mas[i], mcs[i]]
-                M_new = M[i] - erase_term + add_term
-                M_new = tf.reshape(M_new, [-1, mas[i] * mcs[i]])
-                M_news.append(M_new)
-                        
+                                    
             # Do the rotations of the read and write addresses
             r_news = []
             w_news = []
@@ -416,7 +404,10 @@ class PatternNTM(RNNCell):
                 w_new = tf.reshape( w_new, [-1,mas[i]] )
                 r_news.append(r_new)
                 w_news.append(w_new)
-            
+
+            for i in range(num_rings):
+                M[i] = tf.reshape(M[i], [-1, mas[i], mcs[i]])
+ 
             # Special Pattern NTM stuff. We use the current contents of the
             # second memory ring to generate a distribution over rotations
             # of the first memory ring, and then act with those rotations on
@@ -465,7 +456,18 @@ class PatternNTM(RNNCell):
                 denom_w = tf.reduce_sum(sharp_w, axis=1, keep_dims=True)
                 w_new = sharp_w / denom_w
                 w_news[i] = w_new
-                            
+ 
+            # Add and forget on the memory
+            M_news = []
+            
+            for i in range(num_rings):
+                erase_term1 = tf.matmul( tf.reshape(w_news[i],[-1,mas[i],1]), tf.reshape(e_tensors[i],[-1,1,mcs[i]]) ) # shape [batch_size, mas[i], mcs[i]]
+                erase_term = tf.multiply( M[i], erase_term1 ) # shape [batch_size, mas[i], mcs[i]]
+                add_term = tf.matmul( tf.reshape(w_news[i],[-1,mas[i],1]), tf.reshape(a_tensors[i],[-1,1,mcs[i]]) ) # shape [batch_size, mas[i], mcs[i]]
+                M_new = M[i] - erase_term + add_term
+                M_new = tf.reshape(M_new, [-1, mas[i] * mcs[i]])
+                M_news.append(M_new)
+                           
             # Now the usual RNN stuff
             H = tf.get_variable("H", [css,css])
             U = tf.get_variable("U", [self._input_size,css])
@@ -628,19 +630,7 @@ class MultPatternNTM(RNNCell):
                 else:
                     a = tf.matmul(h0,W_a) + B_a # shape [batch_size,mcs]
                 a_tensors.append(a)
-            
-            # Add and forget on the memory
-            M_news = []
-            
-            for i in range(num_rings):
-                M[i] = tf.reshape(M[i], [-1, mas[i], mcs[i]])
-                erase_term1 = tf.matmul( tf.reshape(w[i],[-1,mas[i],1]), tf.reshape(e_tensors[i],[-1,1,mcs[i]]) ) # shape [batch_size, mas[i], mcs[i]]
-                erase_term = tf.multiply( M[i], erase_term1 ) # shape [batch_size, mas[i], mcs[i]]
-                add_term = tf.matmul( tf.reshape(w[i],[-1,mas[i],1]), tf.reshape(a_tensors[i],[-1,1,mcs[i]]) ) # shape [batch_size, mas[i], mcs[i]]
-                M_new = M[i] - erase_term + add_term
-                M_new = tf.reshape(M_new, [-1, mas[i] * mcs[i]])
-                M_news.append(M_new)
-                        
+                                    
             # Do the rotations of the read and write addresses
             r_news = []
             w_news = []
@@ -657,7 +647,10 @@ class MultPatternNTM(RNNCell):
                 w_new = tf.reshape( w_new, [-1,mas[i]] )
                 r_news.append(r_new)
                 w_news.append(w_new)
-            
+
+            for i in range(num_rings):
+                M[i] = tf.reshape(M[i], [-1, mas[i], mcs[i]])
+         
             # Special Multiple Pattern NTM stuff. We use the current contents of the
             # second and third memory rings to generate a distribution over rotations
             # of the first memory ring, and then act with those rotations on
@@ -713,7 +706,18 @@ class MultPatternNTM(RNNCell):
                 denom_w = tf.reduce_sum(sharp_w, axis=1, keep_dims=True)
                 w_new = sharp_w / denom_w
                 w_news[i] = w_new
-                            
+ 
+            # Add and forget on the memory
+            M_news = []
+            
+            for i in range(num_rings):
+                erase_term1 = tf.matmul( tf.reshape(w_news[i],[-1,mas[i],1]), tf.reshape(e_tensors[i],[-1,1,mcs[i]]) ) # shape [batch_size, mas[i], mcs[i]]
+                erase_term = tf.multiply( M[i], erase_term1 ) # shape [batch_size, mas[i], mcs[i]]
+                add_term = tf.matmul( tf.reshape(w_news[i],[-1,mas[i],1]), tf.reshape(a_tensors[i],[-1,1,mcs[i]]) ) # shape [batch_size, mas[i], mcs[i]]
+                M_new = M[i] - erase_term + add_term
+                M_new = tf.reshape(M_new, [-1, mas[i] * mcs[i]])
+                M_news.append(M_new)
+                                           
             # Now the usual RNN stuff
             H = tf.get_variable("H", [css,css])
             U = tf.get_variable("U", [self._input_size,css])

@@ -40,7 +40,7 @@ The horizontal axis is the position in memory, the vertical axis is the time. Th
 
 - **Version 8** (snapshot `17-4-2017`). Added task Multiple Pattern 3, added some basic curriculum learning and improved the logging output. General cleanups. Overall the performance of the controllers and tasks should be the same as `v7`, but we did fix several bugs in `f_multpattern` which may make it easier to learn.
 
-- **Version 9** (*current version*). Fixed some small things in the Pattern NTM.
+- **Version 9** (*current version*). Fixed some small things in the Pattern NTM. Increased the minimum sequence length to `7` on all tasks (so `5` content symbols plus initial and terminal). In all controllers we are now updating the memory using the *current* write address, rather than the *previous* write address as we had been doing. That is, we now match the original NTM paper.
 
 ## Remarks on tasks
 
