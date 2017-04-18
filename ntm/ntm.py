@@ -424,8 +424,8 @@ class PatternNTM(RNNCell):
             
             rot = rotation_tensor(mas[0], powers21)
                 
-            Mr2 = tf.matmul( M[1], tf.reshape(r[1],[-1,mas[1],1]), transpose_a=True )
-            Mr2 = tf.nn.softmax( tf.reshape( Mr2, [-1,mcs[1]] ) )
+            Mr2 = tf.matmul( tf.nn.softmax(M[1]), tf.reshape(r[1],[-1,mas[1],1]), transpose_a=True )
+            Mr2 = tf.reshape( Mr2, [-1,mcs[1]] )
                         
             # ASSUME mcs[1] = len(powers21)
             Mr2_rot = tf.tensordot( Mr2, rot, [[1], [0]] ) # shape [batch_size, mas[0], mas[0]]

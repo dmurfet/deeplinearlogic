@@ -222,22 +222,101 @@ The relevance of this ``compositionality'' to NLP is remarked on in \cite{irsoy}
 
 \subsection{Neural Turing Machine}\label{example:ntm}
 
-The Neural Turing Machine (NTM) \cite{ntm} is an RNN augmented with a second hidden state space that functions like an external memory. This memory is read from and written to using attention vectors which are manipulated based on the hidden state of the RNN. To describe the precise form of this manipulation, it is important to know that the memory state can be viewed as a sequence of vectors arranged at the vertices of a regular polygon. An \emph{attention vector} is by definition a probability distribution over the vertices of this polygon. There is an natural action of rotation $R$ on both memory states and attention vectors, and the read and write attention vectors are manipulated by predicting, at each time step, which power of the linear operator $R$ to apply. % From this point of view, the NTM with location-based addressing may be described naturally using the LLRNN. 
+The Neural Turing Machine (NTM) \cite{ntm} is an RNN augmented with an additional memory. This memory is read from and written to using ``attention'' vectors that are manipulated at each time step based on the hidden state. Following our general philosophy, we give in this section a basis-free presentation which emphasises the underlying linear algebra. 
 
-To explain, we first introduce the \emph{address space}
+The model uses four vector spaces:
+\begin{itemize}
+\item the input space $\mathscr{I}$ and hidden state space $\mathscr{H}_0$ of the underlying RNN, and
+\item the \emph{address space} $\mathscr{W}$ and \emph{coefficient space} $\mathscr{V}$ of the memory system.
+\end{itemize}
+The \emph{space of memory states} is the space of linear maps
 \[
-\mathscr{W} = (\mathbb{Z}/N\mathbb{Z})^{\mathbb{R}} \cong \mathbb{R} \bar{0} \oplus \cdots \oplus \mathbb{R} \overline{N-1}
+\mathscr{S} = \Hom_{\mathbb{R}}(\mathscr{W}, \mathscr{V})\,.
 \]
-and given a \emph{memory coefficient space} $\mathscr{V}$ the \emph{memory space} is the tensor product
+We think of a basis $e_1,\ldots,e_N$ for $\mathscr{W}$ as ``locations'' at which may be stored a vector from the coefficient space $\mathscr{V}$. A memory state $M \in \mathscr{S}$ is determined by the vectors $M(e_i) \in \mathscr{V}$, which we view as being stored at the locations $e_i$. While we will use the basis $\{ e_i \}_i$ in the following to illustrate the definitions, it is important to note that the model is defined in a way which avoids explicit reference to any basis.% In this way we are open to the possibility that the controller learns to use $e_1 + e_2$ and $e_1 - e_2$ as the relevant orthogonal directions.
+
+% To describe the precise form of this manipulation, it is important to know that the memory state can be viewed as a sequence of vectors arranged at the vertices of a regular polygon. An \emph{attention vector} is by definition a probability distribution over the vertices of this polygon. There is an natural action of rotation $R$ on both memory states and attention vectors, and the read and write attention vectors are manipulated by predicting, at each time step, which power of the linear operator $R$ to apply. % From this point of view, the NTM with location-based addressing may be described naturally using the LLRNN. 
+
+\begin{definition} A \emph{read address} is a vector $r \in \mathscr{W}$ and a \emph{write address} is a vector $w \in \mathscr{W}^*$.
+\end{definition}
+
+\begin{remark} We may evaluate a memory state $M$ at a read address $r$ to obtain a vector $M(r) \in \mathscr{V}$, and if the read address is \emph{focused} at location $i$, by which we mean that $r = e_i$, this produces the vector $M(e_i)$ stored at that location. In general a read address specifies a linear combination of the stored vectors. To explain the thinking behind the use of dual vectors as write addresses, consider the canonical isomorphism
 \[
-\mathscr{S} = \mathscr{W}^* \otimes \mathscr{V} \cong \Hom_{\mathbb{R}}(\mathscr{W}, \mathscr{V})\,.
+\Psi: \mathscr{W}^* \otimes \mathscr{V} \lto \Hom_{\mathbb{R}}(\mathscr{W},\mathscr{V})
 \]
-A memory state $M$ is a linear map $M: \mathscr{W} \lto \mathscr{V}$ which we view as an arrangement of the vectors $u_j = M(\bar{j})$ on the vertices of the regular $N$-gon:
+under which a tensor $\alpha \otimes v$ with $\alpha \in \mathscr{W}^*, v \in V$ corresponds to the linear map
+\[
+\Psi( \alpha \otimes v )(w) = \alpha(w) v\,.
+\]
+Given a state $M$ of the memory, a location $e_i$ and a vector $v$ to write to this location, the new memory state $M' = M + \Psi( e_i^* \otimes v )$ has the property that
+\[
+M'(e_j) = M(e_j) + \Psi( e_i^* \otimes v )(e_j) = M(e_j) + \delta_{i=j} v\,.
+\]
+Note that in this construction it is the dual vector $w = e_i^*$ which specifies \emph{where to write}, and this explains why we refer to vectors in $\mathscr{W}^*$ as write addresses. 
+\end{remark}
+
+A closer examination of the model in \cite{ntm} leads us to posit the following:
+
+\begin{itemize}
+\item[(i)] The RNN controller manipulates read and write addresses by invertible linear transformations, which suggests that we take $\mathscr{W}$ to be a \emph{representation} of a finite group $G$. At each time step the controller will produce distributions over $G$ which are used to act on the read and write addresses by the action maps
+\[
+G \lto \End_{\mathbb{R}}(\mathscr{W}), \qquad G \lto \End_{\mathbb{R}}(\mathscr{W}^*)\,.
+\]
+The second of these maps arises since $\mathscr{W}^*$ is also naturally a representation of $G$.
+\item[(ii)] In the erase step (see below) we need to \emph{copy} memory addresses and \emph{multiply} vectors in the coefficient space, so we take $\mathscr{W}$ to be a coalgebra and $\mathscr{V}$ to be an algebra. %For simplicity we assume $\mathscr{W}$ is a coassociative cocommutative counital coalgebra, and that $\mathscr{V}$ is an associative commutative unital algebra.
+\end{itemize}
+
+The simplest way to realise these constraints is using a finite group $G = \{ g_0, g_1,\ldots, g_N\}$ with identity $g_0 = e$ acting by linear transformations on the group algebra
+\[
+\mathscr{W} = \mathbb{R} G = \bigoplus_{g \in G} \mathbb{R} g = \mathbb{R} e \oplus \mathbb{R} g_1 \oplus \cdots \oplus \mathbb{R} g_N
+\]
+which is a vector space with basis $G$. This is a coalgebra, with comultiplication
+\begin{gather*}
+\Delta: \mathbb{R} G \lto \mathbb{R} G \otimes \mathbb{R} G\,,\\
+\Delta(g) = g \otimes g\,.
+\end{gather*}
+Th group $G$ acts on $\mathbb{R} G$ by the rule
+\begin{gather*}
+G \times \mathbb{R} G \lto \mathbb{R} G\,,\\
+(g, \sum_{h \in G} \lambda_h h ) \longmapsto \sum_{h \in G} \lambda_h gh\,.
+\end{gather*}
+In this section we take the group $G$ to be the group of $N$th roots of unity
+\[
+G = \{ e^{\frac{2\pi i}{N}} \l 0 \le i \le N - 1 \} \cong \mathbb{Z}/N \mathbb{Z}
+\]
+and we write $e_i$ for $e^{\frac{2\pi i}{N}}$ viewed as a basis vector of $\mathscr{W}$. Since we are thinking of these basis vectors as memory locations, we may view a memory state $M$ as an arrangement of the vectors $u_j = M(e_j)$ on the vertices of the regular $N$-gon in the complex plane
 \begin{center}
 \includegraphics[scale=0.3]{dia1}
 \end{center}
-Sometimes we refer to this structure as a \emph{memory ring}. In the notation of \cite{ntm} we may take $\mathscr{W} = \mathbb{R}^N$ and $\mathscr{V} = \mathbb{R}^M$ so that elements of $\mathscr{S}$ are identified with $N \times M$ matrices. 
+Sometimes we refer to this structure as a \emph{memory ring}.
 
+Finally we take some commutative algebra structure on $\mathscr{V}$. The use of an algebra structure is implicit in \cite{ntm} and the deep learning literature in general, and enters  via the so-called \emph{Hadamard product} $\odot$ which makes $\mathbb{R}^n$ into an algebra via the rule
+\begin{gather*}
+\odot: \mathbb{R}^n \otimes \mathbb{R}^n \lto \mathbb{R}^n\,,\\
+\bold{x} \odot \bold{y} = ( x_i y_i )_{i=1}^n\,.
+\end{gather*}
+We take $\mathscr{V} = \mathbb{R}^M$ with the Hadamard product in what follows. This involves choosing a basis, of course, but we will only refer to the product (a tensor $\odot \in \mathscr{V}^* \otimes \mathscr{V}^* \otimes \mathscr{V}$) and not the basis in what follows.
+
+\begin{definition}[(Erase step)] Given a vector $e \in \mathscr{V}$ and a write address $w \in \mathscr{W}^*$ we define an action on the space of memory states $\mathscr{S}$ which we think of as ``erasing by $e$ at the address $w$'' as follows. Using
+\[
+\Psi( w \otimes e ) \in \Hom_{\mathbb{R}}(\mathscr{W}, \mathscr{V})
+\]
+we may form the composite
+\[
+\xymatrix@C+3pc{
+\mathscr{W} \ar[r]^-{\Delta} & \mathscr{W} \otimes \mathscr{W} \ar[r]^-{M \otimes \Psi( w \otimes e )} & \mathscr{V} \otimes \mathscr{V} \ar[r]^-{m} & \mathscr{V}\,.
+}
+\]
+\end{definition}
+
+This is actually the multiplication in a canonical algebra structure on the space $\Hom_{\mathbb{R}}(\mathscr{W}, \mathscr{V})$ which arises from the fact that $\mathscr{W}$ is a coalgebra and $\mathscr{V}$ is an algebra. It is the \emph{convolution product} on the space of memory states. If we write
+\[
+M' = m \circ (M \otimes \Psi( w \otimes e )) \circ \Delta
+\]
+then 
+\[
+M'(e_i) = m \left( M(e_i) \otimes \Psi( w \otimes e )(e_i) \right) = M(e_i) \odot w(e_i) e\,.
+\]
 The space of memory states has a natural action of the cyclic group of order $N$, which acts by rotation on $\mathscr{W}$ and therefore on $\mathscr{S}$. The rotated state assigns the vector $u_{j+1}$ to the position $j$ (we index the positions in the clockwise order) with $j + 1$ computed modulo $N$. Said differently, let $R: \mathscr{W} \lto \mathscr{W}$ be the linear map defined by
 \[
 R( \overline{a} ) = \overline{a+1}\,,
@@ -256,10 +335,10 @@ The components of this vector are interpreted as the \emph{controller internal s
 \begin{gather*}
 s^{(t+1)} = \zeta( W_s h^{(t)} + B_s ) \in \mathscr{W}^*\,,\\
 q^{(t+1)} = \zeta( W_q h^{(t)} + B_q ) \in \mathscr{W}^*\,,\\
-e^{(t+1)} = \sigma( W_e h^{(t)} + B_e ) \in \End_{\mathbb{R}}(\mathscr{V})\,,\\
+e^{(t+1)} = \sigma( W_e h^{(t)} + B_e ) \in \mathscr{V}\,,\\
 a^{(t+1)} = \sigma( W_u h^{(t)} + B_u ) \in \mathscr{V}\,.
 \end{gather*}
-In practice we will assume that $e^{(t+1)}$ is diagonal with respect to a chosen basis of $\mathscr{V}$. The update equation for the addresses \cite[Eq. (8)]{ntm} and memory \cite[Eq. (3),(4)]{ntm} are
+The update equation for the addresses \cite[Eq. (8)]{ntm} and memory \cite[Eq. (3),(4)]{ntm} are
 \begin{align}
 w^{(t+1)} &= \sum_{i=0}^{N-1} s^{(t+1)}(\bar{i}) \cdot (R^*)^i( w^{(t)} )\,,\label{eq:ntm_update1}
 \\
@@ -681,6 +760,15 @@ Finally, the evolution equation is
 h_0^{(t+1)} = \sigma\Big( Q\big( M_1^{(t)}(r_1^{(t)}) \big) + H_0 h_0^{(t)} + U_0 x^{(t+1)} + B_0 \Big)\,.
 \ee
 The main difference between the ordinary NTM and the pattern NTM is in \eqref{eq:pattern_ntm_distinction} where the content $M_2(r_2) \in \mathbb{R}^{L+1}$ of the second memory ring is used to determine the coefficients of each rotation $R^j$ of the first memory ring's read address.
+\end{remark}
+
+\begin{remark} The idea is that the linear logic lets us program algebraic geometry stuff, which pipes linear data around and acts on it. In the context of the pattern NTM the evaluation function gives a morphism of schemes $s: \mathscr{V}_2 \times \End_{\mathbb{R}}(\mathscr{W}) \lto \End_{\mathbb{R}}(\mathscr{W})$ and evaluation of another kind gives a morphism $\mathscr{S}_2 \times \mathscr{W} \lto \mathscr{V}_2$. 
+\[
+\xymatrix@C+2pc{
+\mathscr{S}_2 \times \mathscr{W}_2 \times G \ar[r] & \mathscr{V}_2 \times G \ar[r]^-{1 \otimes a} & \mathscr{V}_2 \times \End_{\mathbb{R}}(\mathscr{W}) \ar[r]^-s & \End_{\mathbb{R}}(\mathscr{W})
+}
+\]
+which maps a memory state and read address for the second memory ring, plus a group element (think of it as $R$) to a linear operator on the read address of the first memory ring.
 \end{remark}
 
 \subsection{Multiple pattern NTM}\label{example:ntm_super}
