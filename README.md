@@ -42,7 +42,7 @@ The horizontal axis is the position in memory, the vertical axis is the time. Th
 
 - **Version 9** (snapshot `19-4-2017`). Fixed some small things in the Pattern NTM. Increased the minimum sequence length to `7` on all tasks (so `5` content symbols plus initial and terminal). In all controllers we are now updating the memory using the *current* write address, rather than the *previous* write address as we had been doing. That is, we now match the original NTM paper.
 
-- **Version 10** (*current version*). Fixed the masking of sequences by having terminal symbols instead of zeros in the encoded output.
+- **Version 10** (snapshot `20-4-2017`). Fixed the masking of sequences by having terminal symbols instead of zeros in the encoded output. This to **much** better performance of all controllers on all tasks; we can basically ignore the previous runs on Multiple Pattern tasks, for example.
 
 ## Remarks on tasks
 
