@@ -117,6 +117,9 @@
 \def\repeat{\underline{\textup{repeat}}}
 \def\master{\underline{\textup{master}}}
 \def\feed{\underline{\textup{feed}}}
+\def\relu{\sigma}
+\def\softmax{\sigma_{soft}}
+\def\sigmoid{\sigma_{sigm}}
 
 \DeclarePairedDelimiter\bra{\langle}{\rvert}
 \DeclarePairedDelimiter\ket{\lvert}{\rangle}
@@ -130,12 +133,14 @@
 
 \section{Introduction}
 
-Deep neural networks have proven to be proficient at learning hierarchical vector representations of natural data, including images and language \cite{dlnature}. If we follow Leibniz \cite{frege} in believing that reasoning is the algebraic manipulation of such representations or ``symbols" then it is natural to look for systems which augment the capacity of neural networks for performing these kinds of manipulations. This is a foundational problem in the field of artificial intelligence which remains far from solved, despite renewed attention in recent years \cite{ntm, joulin, dnc, graves_etal, grefen, weston, tarlow, freitas, neuralprog}. Arguably one obstacle is that some of the underlying mathematical ideas are still unclear; to help remedy this we investigate a new approach, based on the Curry-Howard correspondence and linear logic.
+Deep neural networks have proven to be proficient at learning hierarchical vector representations of natural data, including images and language \cite{dlnature}. If we follow Leibniz \cite{frege} in believing that reasoning is the algebraic manipulation of such representations or ``symbols" then it is natural to look for systems which augment the capacity of neural networks for performing these kinds of manipulations. This is a foundational problem in the field of artificial intelligence which remains far from solved, despite renewed attention in recent years \cite{ntm, joulin, dnc, graves_etal, grefen, weston, tarlow, freitas, neuralprog}. Arguably this is because some of the fundamental mathematical ideas are still unclear, or even missing. To help remedy this we investigate a new approach, based on the Curry-Howard correspondence and linear logic.
 
 The Curry-Howard correspondence \cite{sorensen} is a bijection between a prototypical system of formal reasoning (Gentzen's natural deduction) and a prototypical algorithmic system (Church's simply-typed lambda calculus). For this reason lambda calculus and derivative languages such as LISP have played an important role in the symbolic approach to reasoning in the modern field of artificial intelligence. While these methods may have been overshadowed in recent decades by the rise of the connectionist approach, now called deep learning, it has been argued that a synthesis of the two approaches is necessary to achieve general reasoning in a connectionist system \cite{minsky}. The main obstacle to this synthesis is the discrepancy between the discrete symbolic nature of natural deduction, or equivalently lambda calculus, and the differentiable nature of neural networks. One way to overcome this obstacle is to augment a neural network not directly with symbolic logic, but rather with a \emph{differentiable model} of logic; and the most natural way to construct such a model is not to work directly with simply-typed lambda calculus but rather with a refinement due to Girard known as linear logic \cite{girard} which has a canonical model (called a denotational semantics) in differentiable maps between vector spaces \cite{ehrhard-survey,blutecon,murfetclift}. 
 \\
 
-In this paper we realise these ideas in the form of a Recurrent Neural Network (RNN) controller \cite{elman} augmented with smooth denotations of linear logic programs. We call the resulting system the \emph{Linear Logic Recurrent Neural Network} or LLRNN. This architecture is inspired by many papers in the neural network literature, most notably the second-order RNN \cite{joulin}, multiplicative RNN \cite{sutskever} and Neural Turing Machine \cite{ntm}. Conceptually, all of these models augment the basic RNN by generating, at each time step, a \emph{linear operator} from the previous hidden state and the current input. This linear operator is then applied to the previous hidden state to generate the new hidden state. The LLRNN generalises these models by using algorithms from linear logic to generate the linear operator.
+In this paper we realise these ideas in the form of a Recurrent Neural Network (RNN) controller \cite{elman} augmented with smooth denotations of linear logic programs. We call the resulting system the \emph{Linear Logic Recurrent Neural Network} or LLRNN. This architecture is inspired by many papers in the neural network literature, most notably the second-order RNN \cite{joulin}, multiplicative RNN \cite{sutskever} and Neural Turing Machine \cite{ntm}. Conceptually, all of these models augment the basic RNN by generating, at each time step, a linear operator from the previous hidden state and the current input. This \emph{update operator} is then applied to the previous hidden state to generate the new hidden state. The LLRNN generalises these models by using algorithms from linear logic to generate the update operator.
+
+Our primary motivation is to provide a new perspective on the problem of reconciling symbolic logic and neural networks, based on differentiable semantics. We view the current work as a preliminary step, which describes the theory and demonstrates its content by showing how ideas from linear logic manifest themselves in the context of ``neural reasoning'' about a few select example tasks. We have not tested the LLRNN on large scale data, or attempted to systematically probe its limits; it is likely new ideas beyond those presented here will be needed to achieve anything of substantial practical value with the LLRNN. We hope the code published alongside this paper will be useful for developing the intuitions that will guide these future developments.
 
 % Linear logic programs are quite general, and some existing augmentations of RNNs can be realised as special cases of the LLRNN. This is theoretically attractive as it gives a unified construction, but the main point is that the framework suggests natural extensions of these models. For example, an important subset of the memory augmentations in the Neural Turing Machine (NTM) \cite{ntm} and Differentiable Neural Computer (DNC) of \cite{dnc} can be realised as special cases of the LLRNN. Since these systems have good properties, our experiments explore extensions of the DNC which add read and write heads storing linear logic programs, which can be applied to stored vectors as a generalisation of the ``read'' operation of the DNC.
 
@@ -151,33 +156,36 @@ It is our hope that the paper is accessible both for readers coming from the dee
 
 \subsection{Recurrent Neural Network}
 
-We begin with a review of the ordinary Recurrent Neural Network (RNN). A good textbook introduction to deep learning in general and RNNs is \cite{dlbook}. As usual we use ``weight'' as a synonym for variable, or more precisely, the variables which we will vary during gradient descent. We denote by $\sigma$ the function
-\begin{gather*}
-\sigma: \mathbb{R}^k \lto \mathbb{R}^k\,\\
-\sigma( \bold{x} )_i = \frac{1}{2}( x_i + |x_i| )
-\end{gather*}
-and by $\zeta$ the \emph{softmax} function
-\begin{gather*}
-\zeta: \mathbb{R}^k \lto \mathbb{R}^k\,,\\
-\zeta(\bold{x})_i = \frac{e^{x_i}}{\sum_{j=1}^k e^{x_j}}\,.
-\end{gather*}
+We begin with a review of the ordinary Recurrent Neural Network (RNN). A good textbook introduction to deep learning in general and RNNs is \cite{dlbook}. As usual we use ``weight'' as a synonym for variable, or more precisely, the variables which we will vary during gradient descent. We use the \emph{rectified linear} function
+\be
+\relu: \mathbb{R}^k \lto \mathbb{R}^k\, \qquad \relu( \bold{x} )_i = \frac{1}{2}( x_i + |x_i| )\,,
+\ee
+the \emph{softmax} function
+\be
+\softmax: \mathbb{R}^k \lto \mathbb{R}^k\,, \qquad \softmax(\bold{x})_i = \frac{e^{x_i}}{\sum_{j=1}^k e^{x_j}}\,,
+\ee
+and the \emph{sigmoid} function
+\be
+\sigmoid: \mathbb{R}^k \lto \mathbb{R}^k\,, \qquad
+\sigmoid(\bold{x})_i = \frac{1}{1 + e^{-x_i}}\,.
+\ee
 An RNN is defined by its \emph{evolution equation} which expresses $h^{(t+1)}$ as a function of $h^{(t)}, x^{(t)}$ and its \emph{output equation} which gives the output $y^{(t)}$ as a function of $h^{(t)}$. At time $t \ge 1$ we denote the hidden state by $h^{(t)}$ and the input by $x^{(t)}$. 
 
 \begin{definition} A standard Elman-style RNN \cite{elman} is defined by weight matrices $H, U, B$ and the evolution equation
 \be\label{eq:update_eqn}
-h^{(t+1)} = \sigma\big( H h^{(t)} + U x^{(t+1)} + B\big)
+h^{(t+1)} = \relu\big( H h^{(t)} + U x^{(t+1)} + B\big)
 \ee
 where $h^{(0)}$ is some specified initial state. The outputs are defined by
 \be\label{eq:output_rnn}
-y^{(t)} = \sigma\big( W_y h^{(t)} + B_y \big)\,.
+y^{(t)} = \relu\big( W_y h^{(t)} + B_y \big)\,.
 \ee
 \end{definition}
-Suppose the input vector space is $\mathscr{I}$ and the hidden state space is $\mathscr{H}$, so that $x^{(t)} \in \mathscr{I}$ and $h^{(t)} \in \mathscr{H}$ for all $t$. The value of the RNN on a sequence $\bold{x} = \big( x^{(1)}, \ldots, x^{(T)} \big) \in \mathscr{I}^{\oplus T}$ is computed by applying \eqref{eq:update_eqn} for $0 \le t \le T - 1$, accumulating the values $\bold{y} = (y^{(1)}, \ldots, y^{(T)})$ from each time step, and finally applying a fully-connected layer and the softmax function $\tau$ obtain the output sequence $o^{(t)} = \zeta( W_o y^{(t)} + B_o )$. Each $o^{(t)}$ has the property that its components in our chosen basis add to $1$. We view such a vector as a probability distribution over the basis, sampling from which gives the output of the RNN on $\bold{x}$.
+Suppose the input vector space is $\mathscr{I}$ and the hidden state space is $\mathscr{H}$, so that $x^{(t)} \in \mathscr{I}$ and $h^{(t)} \in \mathscr{H}$ for all $t$. The value of the RNN on a sequence $\bold{x} = \big( x^{(1)}, \ldots, x^{(T)} \big) \in \mathscr{I}^{\oplus T}$ is computed by applying \eqref{eq:update_eqn} for $0 \le t \le T - 1$, accumulating the values $\bold{y} = (y^{(1)}, \ldots, y^{(T)})$ from each time step, and finally applying a fully-connected layer and the softmax function $\tau$ obtain the output sequence $o^{(t)} = \softmax( W_o y^{(t)} + B_o )$. Each $o^{(t)}$ has the property that its components in our chosen basis add to $1$. We view such a vector as a probability distribution over the basis, sampling from which gives the output of the RNN on $\bold{x}$.
 \\
 %Note that the evolution equation implicitly determines a piecewise-linear function
 %\begin{gather*}
 %\mathscr{I} \lto \operatorname{Func}(\mathscr{H}, \mathscr{H} )\,,\\
-%x \mapsto \sigma\big( H (-) + U x + B\big)\,,
+%x \mapsto \relu\big( H (-) + U x + B\big)\,,
 %\end{gather*}
 %which specifies how we may view inputs as transforming the internal state of the RNN. One class of modifications of the RNN architecture adds more complicated (for example, piecewise-polynomial of higher degree) transformations of the internal state.
 
@@ -195,7 +203,7 @@ Identifying the tensor $V$ with a linear map from the input space $\mathscr{I}$ 
 
 \begin{definition} The second-order RNN \cite{highorderrec,pollack} is defined by weights $H,U,B,V$ and
 \be\label{eq:second_order_evolution}
-h^{(t+1)} = \sigma\big( V( x^{(t+1)} )(h^{(t)}) + H h^{(t)} + U x^{(t+1)} + B\big)\,,
+h^{(t+1)} = \relu\big( V( x^{(t+1)} )(h^{(t)}) + H h^{(t)} + U x^{(t+1)} + B\big)\,,
 \ee 
 with $y^{(t)}, o^{(t)}$ as before.
 \end{definition}
@@ -222,9 +230,46 @@ The relevance of this ``compositionality'' to NLP is remarked on in \cite{irsoy}
 
 \subsection{Neural Turing Machine}\label{example:ntm}
 
-The Neural Turing Machine (NTM) \cite{ntm} is an RNN augmented with an additional memory. This memory is read from and written to using ``attention'' vectors that are manipulated at each time step based on the hidden state. Following our general philosophy, we give in this section a basis-free presentation which emphasises the underlying linear algebra. 
+The Neural Turing Machine (NTM) \cite{ntm} is an RNN augmented with an additional memory. This memory is read from and written to using ``attention'' vectors that are manipulated at each time step based on the hidden state. In this section we first give a presentation of the NTM following \cite[\S 3]{ntm}, and then in Section \ref{section:abstract_ntm} we give a basis-free presentation.
 
-The model uses four vector spaces:
+Let $N$ be the number of memory locations and $M$ the size of the vector stored at each location. Then the internal state space of the NTM is decomposed as
+\be\label{eq:decomp}
+\mathscr{H} = \mathscr{H}_0 \oplus \mathbb{R}^N \oplus \mathbb{R}^N \oplus \operatorname{Mat}_{M \times N}(\mathbb{R})
+\ee
+where $\mathscr{H}_0$ is the hidden state space of the underlying RNN and $\operatorname{Mat}_{M \times N}(\mathbb{R})$ is the space of $M \times N$ matrices. These matrices are identified with states of the memory, with the $i$th column being the vector stored at location $i$ (we index columns in the range $0,\ldots,N-1$). Note that \cite{ntm} uses $N \times M$ matrices and thus identifies rows with the vectors stored at memory locations. The state at time $t$ may therefore be written
+\[
+h^{(t)} = (h_0^{(t)}, r^{(t)}, w^{(t)}, M^{(t)}) \in \mathscr{H}\,.
+\]
+The components are interpreted as the \emph{controller internal state} $h_0^{(t)}$, \emph{read address weighting} $r^{(t)} \in \mathbb{R}^N$, \emph{write address weighting} $w^{(t)} \in \mathbb{R}^N$ and \emph{memory state} $M^{(t)} \in \operatorname{Mat}_{M \times N}(\mathbb{R})$. We index memory locations from $0$ to $N - 1$, so that for example
+\[
+r^{(t)} = (r^{(t)}_0, \ldots, r^{(t)}_{N-1})\,.
+\]
+At time $t$ the RNN generates from its hidden state $h^{(t)}_0$ a distribution $s^{(t+1)}$ over rotations of the write address, a distribution $q^{(t+1)}$ over rotations of the read address, an \emph{erase vector} $e^{(t+1)}$ and an \emph{add vector} $a^{(t+1)}$ \cite[\S 3.2]{ntm} via the formulas
+\begin{gather*}
+s^{(t+1)} = \softmax( W_s h_0^{(t)} + B_s ) \in \mathbb{R}^N\,,\\
+q^{(t+1)} = \softmax( W_q h_0^{(t)} + B_q ) \in \mathbb{R}^N\,,\\
+e^{(t+1)} = \sigmoid( W_e h_0^{(t)} + B_e ) \in \mathbb{R}^M\,,\\
+a^{(t+1)} = \relu( W_u h_0^{(t)} + B_u ) \in \mathbb{R}^M\,.
+\end{gather*}
+The update equation for the addresses \cite[Eq. (8)]{ntm} and memory \cite[Eq. (3),(4)]{ntm} are
+\begin{gather}
+w^{(t+1)}_i = \sum_{j=0}^{N-1} s^{(t+1)}_{i-j} w^{(t)}_j \,, \qquad r^{(t+1)}_i = \sum_{j=0}^{N-1} q^{(t+1)}_{i-j} r^{(t)}_j \label{eq:ntm_update2}\\
+M^{(t+1)}_{\bullet,i} = M^{(t)}_{\bullet,i} - w^{(t+1)}_i (M^{(t)}_{\bullet,i} \odot e^{(t+1)}) + w^{(t+1)}_i a^{(t+1)} \label{eq:ntm_update3}
+\end{gather}
+where $M_{\bullet,i}$ stands for the $i$th column of the matrix $M \in \operatorname{Mat}_{M \times N}(\mathbb{R})$ and $\odot$ is the so-called \emph{Hadamard product} which is defined by
+\begin{gather*}
+\odot: \mathbb{R}^M \otimes \mathbb{R}^M \lto \mathbb{R}^M\,,\\
+\bold{x} \odot \bold{y} = ( x_i y_i )_{i=1}^M\,.
+\end{gather*}
+ Finally, the evolution equation is
+\be\label{eq:NTMequation}
+h_0^{(t+1)} = \relu\Big( M^{(t)} r^{(t)} + H_0 h_0^{(t)} + U_0 x^{(t+1)} + B_0 \Big)
+\ee 
+where $H_0: \mathscr{H}_0 \lto \mathscr{H}_0$, $U_0: \mathscr{I} \lto \mathscr{H}_0$ and $B_0 \in \mathscr{H}_0$ are weight matrices.
+
+\subsubsection{Abstract reformulation}\label{section:abstract_ntm}
+
+In Section \ref{section:ntmasllrnn} we will reformulate the NTM in the context of linear logic and use that as a foundation on which to build some more interesting models. As a starting point we will need a description of the NTM which does not depend on a choice of basis, and which makes clear the underlying algebraic principles. The model uses four vector spaces:
 \begin{itemize}
 \item the input space $\mathscr{I}$ and hidden state space $\mathscr{H}_0$ of the underlying RNN, and
 \item the \emph{address space} $\mathscr{W}$ and \emph{coefficient space} $\mathscr{V}$ of the memory system.
@@ -233,7 +278,7 @@ The \emph{space of memory states} is the space of linear maps
 \[
 \mathscr{S} = \Hom_{\mathbb{R}}(\mathscr{W}, \mathscr{V})\,.
 \]
-We think of a basis $e_1,\ldots,e_N$ for $\mathscr{W}$ as ``locations'' at which may be stored a vector from the coefficient space $\mathscr{V}$. A memory state $M \in \mathscr{S}$ is determined by the vectors $M(e_i) \in \mathscr{V}$, which we view as being stored at the locations $e_i$. While we will use the basis $\{ e_i \}_i$ in the following to illustrate the definitions, it is important to note that the model is defined in a way which avoids explicit reference to any basis.% In this way we are open to the possibility that the controller learns to use $e_1 + e_2$ and $e_1 - e_2$ as the relevant orthogonal directions.
+We think of a basis $e_1,\ldots,e_N$ for $\mathscr{W}$ as ``locations'' at which may be stored a vector from the coefficient space $\mathscr{V}$. A memory state $M \in \mathscr{S}$ is determined by the vectors $M(e_i) \in \mathscr{V}$, which we view as being stored at the locations $e_i$. While we will use the basis $\{ e_i \}_i$ in the following to illustrate the definitions, it is important to note that the model is defined in a way which avoids explicit reference to any basis. Taking $\mathscr{W} = \mathbb{R}^N$ and $\mathscr{V} = \mathbb{R}^M$ puts us back in the situation of the previous section, with $\mathscr{S} \cong \operatorname{Mat}_{M \times N}(\mathbb{R})$.
 
 % To describe the precise form of this manipulation, it is important to know that the memory state can be viewed as a sequence of vectors arranged at the vertices of a regular polygon. An \emph{attention vector} is by definition a probability distribution over the vertices of this polygon. There is an natural action of rotation $R$ on both memory states and attention vectors, and the read and write attention vectors are manipulated by predicting, at each time step, which power of the linear operator $R$ to apply. % From this point of view, the NTM with location-based addressing may be described naturally using the LLRNN. 
 
@@ -241,9 +286,9 @@ We think of a basis $e_1,\ldots,e_N$ for $\mathscr{W}$ as ``locations'' at which
 \end{definition}
 
 \begin{remark} We may evaluate a memory state $M$ at a read address $r$ to obtain a vector $M(r) \in \mathscr{V}$, and if the read address is \emph{focused} at location $i$, by which we mean that $r = e_i$, this produces the vector $M(e_i)$ stored at that location. In general a read address specifies a linear combination of the stored vectors. To explain the thinking behind the use of dual vectors as write addresses, consider the canonical isomorphism
-\[
+\be\label{defn:psimap}
 \Psi: \mathscr{W}^* \otimes \mathscr{V} \lto \Hom_{\mathbb{R}}(\mathscr{W},\mathscr{V})
-\]
+\ee
 under which a tensor $\alpha \otimes v$ with $\alpha \in \mathscr{W}^*, v \in V$ corresponds to the linear map
 \[
 \Psi( \alpha \otimes v )(w) = \alpha(w) v\,.
@@ -255,6 +300,10 @@ M'(e_j) = M(e_j) + \Psi( e_i^* \otimes v )(e_j) = M(e_j) + \delta_{i=j} v\,.
 Note that in this construction it is the dual vector $w = e_i^*$ which specifies \emph{where to write}, and this explains why we refer to vectors in $\mathscr{W}^*$ as write addresses. 
 \end{remark}
 
+The state space of the model is defined to be
+\[
+\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{W} \oplus \mathscr{W}^* \oplus \mathscr{S}\,.
+\]
 A closer examination of the model in \cite{ntm} leads us to posit the following:
 
 \begin{itemize}
@@ -263,24 +312,81 @@ A closer examination of the model in \cite{ntm} leads us to posit the following:
 G \lto \End_{\mathbb{R}}(\mathscr{W}), \qquad G \lto \End_{\mathbb{R}}(\mathscr{W}^*)\,.
 \]
 The second of these maps arises since $\mathscr{W}^*$ is also naturally a representation of $G$.
-\item[(ii)] In the erase step (see below) we need to \emph{copy} memory addresses and \emph{multiply} vectors in the coefficient space, so we take $\mathscr{W}$ to be a coalgebra and $\mathscr{V}$ to be an algebra. %For simplicity we assume $\mathscr{W}$ is a coassociative cocommutative counital coalgebra, and that $\mathscr{V}$ is an associative commutative unital algebra.
+\item[(ii)] In the memory update equation \eqref{eq:ntm_update3} we need to \emph{copy} memory addresses (the subscript $i$ appears twice in the second summand on the right hand side) and \emph{multiply} vectors in $\mathscr{V}$ (using $\odot$) so we take $\mathscr{W}$ to be a coalgebra and $\mathscr{V}$ to be an algebra. %For simplicity we assume $\mathscr{W}$ is a coassociative cocommutative counital coalgebra, and that $\mathscr{V}$ is an associative commutative unital algebra.
 \end{itemize}
 
-The simplest way to realise these constraints is using a finite group $G = \{ g_0, g_1,\ldots, g_N\}$ with identity $g_0 = e$ acting by linear transformations on the group algebra
+One way to realise these constraints is using a finite group $G = \{ g_0, g_1,\ldots, g_{N-1}\}$ with identity $g_0 = e$ acting by linear transformations on the group algebra
 \[
-\mathscr{W} = \mathbb{R} G = \bigoplus_{g \in G} \mathbb{R} g = \mathbb{R} e \oplus \mathbb{R} g_1 \oplus \cdots \oplus \mathbb{R} g_N
+\mathbb{R} G = \bigoplus_{g \in G} \mathbb{R} g = \mathbb{R} e \oplus \mathbb{R} g_1 \oplus \cdots \oplus \mathbb{R} g_{N-1}
 \]
 which is a vector space with basis $G$. This is a coalgebra, with comultiplication
 \begin{gather*}
 \Delta: \mathbb{R} G \lto \mathbb{R} G \otimes \mathbb{R} G\,,\\
 \Delta(g) = g \otimes g\,.
 \end{gather*}
-Th group $G$ acts on $\mathbb{R} G$ by the rule
+Th group $G$ acts on the space $\mathscr{W} = \mathbb{R} G$ by the rule
 \begin{gather*}
-G \times \mathbb{R} G \lto \mathbb{R} G\,,\\
-(g, \sum_{h \in G} \lambda_h h ) \longmapsto \sum_{h \in G} \lambda_h gh\,.
+G \times \mathscr{W} \lto \mathscr{W}\,,\\
+\big(g, \sum_{h \in G} \lambda_h h \big) \longmapsto \sum_{h \in G} \lambda_h gh\,.
 \end{gather*}
-In this section we take the group $G$ to be the group of $N$th roots of unity
+This action of $G$ extends to a linear map $A: \mathbb{R} G \lto \End_{\mathbb{R}}(\mathscr{W})$.
+% which is the tensor
+%\begin{gather*}
+%A \in \mathscr{W}^* \otimes \mathscr{W}^* \otimes \mathscr{W}\,,\\
+%A = \sum_{g,h \in G} g^* \otimes h^* \otimes gh\,.
+%\end{gather*}
+
+Finally we take some commutative algebra structure on $\mathscr{V}$. The use of an algebra structure is implicit in \cite{ntm} and the deep learning literature in general, and enters via the \emph{Hadamard product} $\odot$ described above. Since this is ultimately our example of interest, we denote the product structure on $\mathscr{V}$ by $\odot$, although it need not be the Hadamard product.
+
+Since $\mathscr{W}$ is a coalgebra and $\mathscr{V}$ is an algebra we have:
+
+\begin{definition}[(Convolution product)] The vector space $\Hom_{\mathbb{R}}(\mathscr{W}, \mathscr{V})$ is an associative algebra with multiplication of $M_1, M_2$ given by the composite
+\[
+\xymatrix@C+3pc{
+\mathscr{W} \ar[r]^-{\Delta} & \mathscr{W} \otimes \mathscr{W} \ar[r]^-{M_1 \otimes M_2} & \mathscr{V} \otimes \mathscr{V} \ar[r]^-{\odot} & \mathscr{V}\,.
+}
+\]
+We write $M_1 \star M_2$ for this \emph{convolution product}, so that
+\[
+M_1 \star M_2 = m \circ (M_1 \otimes M_2) \circ \Delta\,.
+\]
+Explicitly,
+\[
+(M_1 \star M_2)(g) = M_1(g) \odot M_2(g)\,.
+\]
+\end{definition}
+
+% The space of memory states has a natural action of the cyclic group of order $N$, which acts by rotation on $\mathscr{W}$ and therefore on $\mathscr{S}$. The rotated state assigns the vector $u_{j+1}$ to the position $j$ (we index the positions in the clockwise order) with $j + 1$ computed modulo $N$. Said differently, let $R: \mathscr{W} \lto \mathscr{W}$ be the linear map defined by
+%\[
+%R( \overline{a} ) = \overline{a+1}\,,
+%\]
+%with dual map $R^*: \mathscr{W}^* \lto \mathscr{W}^*$. The rotation of the memory state $M$ is the composition $M \circ R$, or what is the same thing, $R^*( M )$. Thus, applying the $j$-th power of $R^*$ to a memory state has the effect of rotating the state $j$ times around the regular polygon.
+
+Given these definitions we can state the abstract form of the evolution equation:
+
+\begin{definition}[(Evolution equations)] Suppose the current state of the NTM is
+\[
+h = (h_0, r, w, M) \in \mathscr{H} = \mathscr{H}_0 \oplus \mathscr{W} \oplus \mathscr{W}^* \oplus \Hom_{\mathbb{R}}(\mathscr{W},\mathscr{V})\,.
+\]
+With the same formulas as above we generate from the hidden state $h_0$ the vectors
+\[
+s,q \in \mathscr{W}, \qquad e,a \in \mathscr{V}\,.
+\]
+The new state $h' = (h_0', r', w', M')$ is defined by the formulas
+\begin{align}
+w' &= s \cdot w
+\\
+r' &= q \cdot r\\
+M' &= M - M \star \Psi( w' \otimes e ) + \Psi(w' \otimes a)\\
+h_0' &= \relu\Big( M(r) + H_0 h_0 + U_0 x + B_0 \Big)\,.
+\end{align}
+where $s \cdot w$ is shorthand for $A(s)(w)$, the action of $s \in \mathbb{R}G$ on $\mathscr{W}$, $\Psi$ is from \eqref{defn:psimap} and $\star$ is the convolution product.
+\end{definition}
+
+\begin{remark} However, using $w'$ in the $M'$ equation messes up our division of linear and nonlinear operations.
+\end{remark}
+
+\begin{remark} For concreteness, take $G$ to be the group of $N$th roots of unity
 \[
 G = \{ e^{\frac{2\pi i}{N}} \l 0 \le i \le N - 1 \} \cong \mathbb{Z}/N \mathbb{Z}
 \]
@@ -288,83 +394,16 @@ and we write $e_i$ for $e^{\frac{2\pi i}{N}}$ viewed as a basis vector of $\math
 \begin{center}
 \includegraphics[scale=0.3]{dia1}
 \end{center}
-Sometimes we refer to this structure as a \emph{memory ring}.
-
-Finally we take some commutative algebra structure on $\mathscr{V}$. The use of an algebra structure is implicit in \cite{ntm} and the deep learning literature in general, and enters  via the so-called \emph{Hadamard product} $\odot$ which makes $\mathbb{R}^n$ into an algebra via the rule
-\begin{gather*}
-\odot: \mathbb{R}^n \otimes \mathbb{R}^n \lto \mathbb{R}^n\,,\\
-\bold{x} \odot \bold{y} = ( x_i y_i )_{i=1}^n\,.
-\end{gather*}
-We take $\mathscr{V} = \mathbb{R}^M$ with the Hadamard product in what follows. This involves choosing a basis, of course, but we will only refer to the product (a tensor $\odot \in \mathscr{V}^* \otimes \mathscr{V}^* \otimes \mathscr{V}$) and not the basis in what follows.
-
-\begin{definition}[(Erase step)] Given a vector $e \in \mathscr{V}$ and a write address $w \in \mathscr{W}^*$ we define an action on the space of memory states $\mathscr{S}$ which we think of as ``erasing by $e$ at the address $w$'' as follows. Using
-\[
-\Psi( w \otimes e ) \in \Hom_{\mathbb{R}}(\mathscr{W}, \mathscr{V})
-\]
-we may form the composite
-\[
-\xymatrix@C+3pc{
-\mathscr{W} \ar[r]^-{\Delta} & \mathscr{W} \otimes \mathscr{W} \ar[r]^-{M \otimes \Psi( w \otimes e )} & \mathscr{V} \otimes \mathscr{V} \ar[r]^-{m} & \mathscr{V}\,.
-}
-\]
-\end{definition}
-
-This is actually the multiplication in a canonical algebra structure on the space $\Hom_{\mathbb{R}}(\mathscr{W}, \mathscr{V})$ which arises from the fact that $\mathscr{W}$ is a coalgebra and $\mathscr{V}$ is an algebra. It is the \emph{convolution product} on the space of memory states. If we write
-\[
-M' = m \circ (M \otimes \Psi( w \otimes e )) \circ \Delta
-\]
-then 
-\[
-M'(e_i) = m \left( M(e_i) \otimes \Psi( w \otimes e )(e_i) \right) = M(e_i) \odot w(e_i) e\,.
-\]
-The space of memory states has a natural action of the cyclic group of order $N$, which acts by rotation on $\mathscr{W}$ and therefore on $\mathscr{S}$. The rotated state assigns the vector $u_{j+1}$ to the position $j$ (we index the positions in the clockwise order) with $j + 1$ computed modulo $N$. Said differently, let $R: \mathscr{W} \lto \mathscr{W}$ be the linear map defined by
-\[
-R( \overline{a} ) = \overline{a+1}\,,
-\]
-with dual map $R^*: \mathscr{W}^* \lto \mathscr{W}^*$. The rotation of the memory state $M$ is the composition $M \circ R$, or what is the same thing, $R^*( M )$. Thus, applying the $j$-th power of $R^*$ to a memory state has the effect of rotating the state $j$ times around the regular polygon.
-
-The internal state space of the RNN underlying the NTM is decomposed as
-\be\label{eq:decomp}
-\mathscr{H} = \mathscr{H}_0 \oplus \mathscr{W} \oplus \mathscr{W}^* \oplus \mathscr{S}
-\ee
-and the state at time $t$ is written
-\[
-h^{(t)} = (h_0^{(t)}, r^{(t)}, w^{(t)}, M^{(t)}) \in \mathscr{H}\,.
-\]
-The components of this vector are interpreted as the \emph{controller internal state} $h_0^{(t)}$, \emph{read address weights} $r^{(t)}$, \emph{write address weights} $w^{(t)}$ and \emph{memory contents} $M^{(t)}$. For convenience we will refer to the read address weight as the \emph{read address}, even though the vector represents a distribution over the available addresses rather than a specific address. At each time step the RNN generates from its hidden state a distribution $s$ over rotations of the write address, a distribution $q$ over rotations of the read address, an operator $e$ to be applied to each coefficient vector in the memory state (this encodes ``forgetting'') and a vector $a$ to be written to memory, via the formulas
-\begin{gather*}
-s^{(t+1)} = \zeta( W_s h^{(t)} + B_s ) \in \mathscr{W}^*\,,\\
-q^{(t+1)} = \zeta( W_q h^{(t)} + B_q ) \in \mathscr{W}^*\,,\\
-e^{(t+1)} = \sigma( W_e h^{(t)} + B_e ) \in \mathscr{V}\,,\\
-a^{(t+1)} = \sigma( W_u h^{(t)} + B_u ) \in \mathscr{V}\,.
-\end{gather*}
-The update equation for the addresses \cite[Eq. (8)]{ntm} and memory \cite[Eq. (3),(4)]{ntm} are
-\begin{align}
-w^{(t+1)} &= \sum_{i=0}^{N-1} s^{(t+1)}(\bar{i}) \cdot (R^*)^i( w^{(t)} )\,,\label{eq:ntm_update1}
-\\
-r^{(t+1)} &= \sum_{i=0}^{N-1} q^{(t+1)}(\bar{i}) \cdot R^i( r^{(t)} )\,,\label{eq:ntm_update2}\\
-M^{(t+1)} &= (1_{\mathscr{V}} - e^{(t+1)} ) \circ M^{(t)} + w^{(t)} \otimes a^{(t+1)}\,.\label{eq:ntm_update3}
-\end{align}
-Finally, the evolution equation is
-\be\label{eq:NTMequation}
-h_0^{(t+1)} = \sigma\Big( M^{(t)}(r^{(t)}) + H_0 h_0^{(t)} + U_0 x^{(t+1)} + B_0 \Big)\,.
-\ee 
-where
-\begin{gather*}
-H_0: \mathscr{H}_0 \lto \mathscr{H}_0\,,\\
-U_0: \mathscr{I} \lto \mathscr{H}_0\,,
-\end{gather*}
-and $B_0 \in \mathscr{H}_0$ are weight matrices. We assume for simplicity that the memory coefficient space is the same as the hidden state space, that is, $\mathscr{V} = \mathscr{H}$. Following \cite[\S 3.2]{ntm} we write $e$ for the \emph{erase vector} and $a$ for the \emph{add vector}. These equations define the NTM with location-based addressing, with an RNN controller and memory of size $N$ with a single read and write head.\footnote{We omit the sharpening step \cite[Eq. (9)]{ntm} for simplicity. The original NTM paper \cite{ntm} is not specific about how the output $M^{(t)}(r^{(t)})$ of the read heads enters the RNN evolution equation; the form we have given above follows the construction of the differentiable neural computer \cite[p. 7]{dnc}. Note that the term appearing in the equation for $h^{(t+1)}$ is the memory state at time $t$ applied to the output of the read heads at time $t$. That is, the output of the read heads is incorporated into the hidden state of the RNN at the \emph{next} time step; again, in this architectural choice we are following \cite{dnc}. Similarly, the write address used to define $M^{(t+1)}$ is $w^{(t)}$ rather than $w^{(t+1)}$. In this it seems we actually \emph{disagree} with \cite{ntm,dnc}. It makes the formulas cleaner, but maybe it is wrong (TODO). }
-
-\begin{remark} To connect the above more explicitly to the notation of \cite[Eq. (8)]{ntm} observe that \eqref{eq:ntm_update2} can be rewritten, writing $r[j]$ for the component of $r \in \mathscr{W}$ for $\bar{j}$, as
-\be\label{eq:moreexplicah}
-r^{(t+1)}[i] = \sum_j q^{(t+1)}(\bar{j}) r^{(t)}[i-j]\,.
-\ee
+Sometimes we refer to this structure as a \emph{memory ring}. 
 \end{remark}
+
+ We assume for simplicity that the memory coefficient space is the same as the hidden state space, that is, $\mathscr{V} = \mathscr{H}$.\footnote{The original NTM paper \cite{ntm} is not specific about how the output $M^{(t)}(r^{(t)})$ of the read heads enters the RNN evolution equation; the form we have given above follows the construction of the differentiable neural computer \cite[p. 7]{dnc}. Note that the term appearing in the equation for $h^{(t+1)}$ is the memory state at time $t$ applied to the output of the read heads at time $t$. That is, the output of the read heads is incorporated into the hidden state of the RNN at the \emph{next} time step; again, in this architectural choice we are following \cite{dnc}.}
 
 \subsection{Linear Logic}
 
 Linear logic is the universal way of describing algorithms which manipulate tensors and linear maps using the basic constructions of linear algebra (such as composition and tensor contraction) and iterations of such constructions. At the level of \emph{syntax} these algorithms may be thought of as programs written in a functional programming language much like the simply-typed lambda calculus. This programming language has a functorial \emph{semantics} denoted here by $\den{-}$ which realises the abstract algorithms as concrete functions.
+
+The universality of linear logic means that one can expect any form of ``abstract reasoning'' which manifests itself mathematically in the context of linear algebra (for example, reasoning in neural networks) to be, in a certain limit, coincident with the kind of reasoning axiomitised by linear logic. Put differently, linear logic identifies those structures on the category of vector spaces which we are ``forced'' to care about in this context, and nothing more.
 
 In this section we give a very brief introduction to linear logic; for a longer survey see \cite{murfet_ll,murfetclift}. We divide the introduction into three parts, covering the \emph{types}, \emph{terms} (meaning programs) and \emph{semantics} of intuitionistic linear logic.
 
@@ -507,12 +546,12 @@ Obviously $Z$ should be a (piece-wise) differentiable function of the hidden sta
 
 In fact it is natural to consider two linear operators $Z_{\operatorname{in}}, Z_{\operatorname{out}}$, with the former appearing within the evolution equation \emph{inside} the nonlinearity and the latter appearing \emph{outside} the nonlinearity. Thus the evolution equation of the LLRNN model is
 \be\label{eq:masterh}
-h^{(t+1)} = \sigma\Big( Z_{\mathrm{in}}(h^{(t)}) + H h^{(t)} + U x^{(t+1)} + B\Big) + Z_{\mathrm{out}}(h^{(t)})
+h^{(t+1)} = \relu\Big( Z_{\mathrm{in}}(h^{(t)}) + H h^{(t)} + U x^{(t+1)} + B\Big) + Z_{\mathrm{out}}(h^{(t)})
 \ee
 where the linear operators $Z_z \in \End_{\mathbb{R}}(\mathscr{H})$ for $z \in \{\mathrm{in},\mathrm{out}\}$ depend on $h^{(t)}, x^{(t+1)}$ via the aforementioned feed-forward networks
 \begin{align*}
-p_i^{(t+1)} &= \zeta( W^p_i h^{(t)} + B^p_i ) \in \mathscr{P}_i\,, \qquad 1 \le i \le r\,,\\
-b_j^{(t+1)} &= \sigma( W^b_j h^{(t)} + B^b_j ) \in \mathscr{B}_j\,, \qquad 1 \le j \le s\,,\\
+p_i^{(t+1)} &= \softmax( W^p_i h^{(t)} + B^p_i ) \in \mathscr{P}_i\,, \qquad 1 \le i \le r\,,\\
+b_j^{(t+1)} &= \relu( W^b_j h^{(t)} + B^b_j ) \in \mathscr{B}_j\,, \qquad 1 \le j \le s\,,\\
 c^{(t+1)} &=  W^c x^{(t+1)} \in \mathscr{C}\,.
 \end{align*}
 and the denotation of a term $\master^z$ in linear logic, via the formula
@@ -529,9 +568,9 @@ We give the vectors generated in the first step names; we have
 
 % The non-linear function which computes the operator to be applied to the hidden state at each time step is called the \emph{master algorithm}. It is itself the denotation of a proof in linear logic. The arguments to the master algorithm are:
 \begin{itemize}
-\item A sequence of \emph{command vectors} $p_i^{(t+1)}$ generated via softmax $\zeta$ from $h^{(t)}$,
-\item a sequence of \emph{data vectors} $b_i^{(t+1)}$ generated via $\sigma$ from $h^{(t)}$,
-\item an \emph{input vector} $c^{(t+1)}$ generated via $\sigma$ from $x^{(t+1)}$.
+\item A sequence of \emph{command vectors} $p_i^{(t+1)}$ generated via softmax $\softmax$ from $h^{(t)}$,
+\item a sequence of \emph{data vectors} $b_i^{(t+1)}$ generated via $\relu$ from $h^{(t)}$,
+\item an \emph{input vector} $c^{(t+1)}$ generated via $\relu$ from $x^{(t+1)}$.
 \end{itemize}
 The idea is that the command vectors give distributions over finite-dimensional spaces of linear logic programs, while the data vectors and input vector give the inputs to be fed in some way into the selected programs; the exact details of this ``feeding'' are specified by the master algorithm. 
 
@@ -587,7 +626,7 @@ The most elementary coupling of an RNN to linear logic adds the ability to raise
 
 \begin{example}[(Higher-order RNN)] Consider the generalisation of the second-order RNN where the controller predicts at each time step an integer power of the linear operator $W^c(x^{(t+1)})$ to apply to the hidden state. Suppose we allow powers in the range $\{0,\ldots,L\}$. Then at each time step the RNN will generate a distribution $p^{(t+1)}$ over $\{0,\ldots,L\}$ from the current hidden state $h^{(t)}$ by the formula
 \[
-p^{(t+1)} = \zeta( W_p h^{(t)} + B_p )
+p^{(t+1)} = \softmax( W_p h^{(t)} + B_p )
 \]
 and therefore
 \be\label{eq:higherorderRNN}
@@ -647,7 +686,7 @@ We restrict the functions $\den{\master^z}_{nl}$ to the subset of inputs where $
 
 We assume the weight matrix $H$ of \eqref{eq:masterh} is the projection from $\mathscr{H}$ to $\mathscr{H}_0$ followed by the weight $H_0$ above, and similarly for $U,B$. Then with the current notation the evolution equation \eqref{eq:masterh} of the LLRNN reads
 \begin{align*}
-(h_0^{(t+1)}, r^{(t+1)}, w^{(t+1)}, M^{(t+1)}) &= \Big( \sigma\big( M^{(t)}(r^{(t)}) + H_0 h_0^{(t)} + U_0 x^{(t+1)} + B_0 \big)\,,\\
+(h_0^{(t+1)}, r^{(t+1)}, w^{(t+1)}, M^{(t+1)}) &= \Big( \relu\big( M^{(t)}(r^{(t)}) + H_0 h_0^{(t)} + U_0 x^{(t+1)} + B_0 \big)\,,\\
 &\qquad \sum_{i=0}^{N-1} (p_1^{(t+1)})_i R^i( r^{(t)} )\,, \sum_{i=0}^{N-1} (p_2^{(t+1)})_i (R^*)^i( w^{(t)} )\,,\\
 &\qquad (1_{\mathscr{V}} - e^{(t+1)} ) \circ M^{(t)} + w^{(t)} \otimes a \Big)\,,
 \end{align*}
@@ -746,10 +785,10 @@ As above we set $\alpha_1 = \alpha_2 = R$ and $\beta_1 = \beta_2 = R^*$. We take
 
 \begin{remark}\label{remark:alt_presentation} The pattern NTM can be presented without linear logic as follows. Suppose we allow rotations given by powers of $R$ in the set $\{0,\ldots,L\}$. Then $\mathscr{V}_2 = \mathbb{R}^{L+1}$ and if we take $N = 5$ as in the above pictures, then $\mathscr{W} = \mathbb{R}^5$. The system is a modified RNN with state space \eqref{eq:patternntm_state}, and equations (for $1 \le i \le 2$ in all cases)
 \begin{align}
-s_i^{(t+1)} &= \zeta( W_{i,s} h^{(t)} + B_{i,s} ) \in \mathscr{W}^* \cong \mathbb{R}^5\,\\
-q_2^{(t+1)} &= \zeta( W_q h^{(t)} + B_q ) \in \mathscr{W}^* \cong \mathbb{R}^5\,,\\
-e_i^{(t+1)} &= \sigma( W_{i,e} h^{(t)} + B_{i,e} ) \in \End_{\mathbb{R}}(\mathscr{V}_i)\,,\\
-a_i^{(t+1)} &= \sigma( W_{i,a} h^{(t)} + B_{i,a} ) \in \mathscr{V}_i\,,\\
+s_i^{(t+1)} &= \softmax( W_{i,s} h^{(t)} + B_{i,s} ) \in \mathscr{W}^* \cong \mathbb{R}^5\,\\
+q_2^{(t+1)} &= \softmax( W_q h^{(t)} + B_q ) \in \mathscr{W}^* \cong \mathbb{R}^5\,,\\
+e_i^{(t+1)} &= \relu( W_{i,e} h^{(t)} + B_{i,e} ) \in \End_{\mathbb{R}}(\mathscr{V}_i)\,,\\
+a_i^{(t+1)} &= \relu( W_{i,a} h^{(t)} + B_{i,a} ) \in \mathscr{V}_i\,,\\
 w_i^{(t+1)} &= \sum_{i=0}^{N-1} s^{(t+1)}(\bar{i}) \cdot (R^*)^i( w^{(t)}_i )\,,\\
 r_1^{(t+1)} &= \sum_{j=0}^L M_2^{(t)}(r_2^{(t)})_j \cdot R^j(r_1^{(t)})\,,\label{eq:pattern_ntm_distinction}\\
 r_2^{(t+1)} &= \sum_{i=0}^{N-1} q_2^{(t+1)}(\bar{i}) \cdot R^i( r_2^{(t)} )\,,\\
@@ -757,7 +796,7 @@ M_i^{(t+1)} &= (1_{\mathscr{V}_i} - e_i^{(t+1)}) \circ M_i^{(t)} + w_i^{(t)} \ot
 \end{align}
 Finally, the evolution equation is
 \be
-h_0^{(t+1)} = \sigma\Big( Q\big( M_1^{(t)}(r_1^{(t)}) \big) + H_0 h_0^{(t)} + U_0 x^{(t+1)} + B_0 \Big)\,.
+h_0^{(t+1)} = \relu\Big( Q\big( M_1^{(t)}(r_1^{(t)}) \big) + H_0 h_0^{(t)} + U_0 x^{(t+1)} + B_0 \Big)\,.
 \ee
 The main difference between the ordinary NTM and the pattern NTM is in \eqref{eq:pattern_ntm_distinction} where the content $M_2(r_2) \in \mathbb{R}^{L+1}$ of the second memory ring is used to determine the coefficients of each rotation $R^j$ of the first memory ring's read address.
 \end{remark}
@@ -940,40 +979,7 @@ These correlations ultimately arise from the fact that the coefficient spaces of
 \begin{remark} What is the link between attention mechanisms and the vanishing gradient problem? Clearly one of the purposes of attention mechanisms and external memories is to avoid the problem of ``forgetting'' large scale structure in the input to a recurrent network. The explicit way to do this is to restrict one part of the recurrent matrix $H$ to be the identity \cite{mikolovmemory}. More generally, we could restrict a part of the current matrix to be an element of the orthogonal group, i.e. a rotation. But then if look at that matrix, one part of it is precisely predicting a ``rotation'' to apply to the other part, and we are basically in the situation of a NTM.
 \end{remark}
 
-We write $\Phi = \den{\mathrm{less}}$ for the proof of Definition \ref{definition:proofless}.
 
-\begin{lemma}\label{lemma:lessmore} There is a proof $\underline{\mathrm{more}}$ such that denotation gives a linear map
-\begin{align*}
-\Psi &= \den{\mathrm{more}}: \den{\binta_{W}} \lto \den{\binta_{W \& W}}
-\end{align*}
-with the following properties:
-\begin{itemize}
-\item[(i)] $\Phi \circ \Psi = 1$.
-\item[(ii)] On the subspace of block matrices
-\[
-B = \Bigg\{ \begin{pmatrix} \gamma_1 & 0 \\ 0 & \gamma_2 \end{pmatrix} \;\;\Bigg| \;\; \gamma_i \in \End_{\mathbb{R}}(\mathscr{W}) \Bigg\} \subseteq \End_{\mathbb{R}}( \mathscr{W} \oplus \mathscr{W} )
-\]
-we have
-\be
-\Psi\big( \den{\underline{S}_W} \big)|_{B \times B} = \den{\underline{S}_{W \& W}}|_{B \times B}
-\ee
-for all $S \in \{0,1\}^*$.
-\end{itemize}
-\end{lemma}
-\begin{proof}
-Let $\pi_i, \iota_i$ denote the projections from and injections into $\den{W \& W} = \mathscr{W} \oplus \mathscr{W}$. We define for $p \in \den{\binta_W}$
-\[
-\Psi( p )( \alpha, \beta ) = \big( p( \pi_1 \alpha \iota_1, \pi_1 \beta \iota_1 ) , p( \pi_2 \alpha \iota_2, \pi_2 \beta \iota_2 ) \big)\,.
-\]
-It is clear that this the denotations of a proof. We observe that
-\begin{align*}
-\big( \Phi \Psi(p) \big)(\alpha, \beta) &= \pi_1 \Psi(p)( \alpha \oplus 1_{\mathscr{W}}, \beta \oplus 1_{\mathscr{W}} )\\
-&= \pi_1 \Big( p( \pi_1 (\alpha \oplus 1_{\mathscr{W}}) \iota_1, \pi_1(\beta \oplus 1_{\mathscr{W}}) \iota_1 ), p( \pi_2 (\alpha \oplus 1_{\mathscr{W}}) \iota_2, \pi_2(\beta \oplus 1_{\mathscr{W}}) \iota_2 \Big)\\
-&= \pi_1 \big( p(\alpha, \beta), p(1_{\mathscr{W}}, 1_{\mathscr{W}}) \big)\\
-&= p(\alpha, \beta)
-\end{align*}
-which proves (i). It is clear that (ii) holds.
-\end{proof}
 
 \begin{remark} The purpose of linear logic in this context is to give a coherent and general way of writing down such polynomials, which realise a given computational idea when inserted into the evolution equation of an RNN.
 
@@ -986,59 +992,6 @@ which can be expanded as
 \sum_{u_0 + \cdots + u_L = a}\sum_{v_0 + \cdots + v_L = b} \frac{a!}{u_0! \cdots u_L!} \frac{b!}{v_0! \cdots v_L!} \lambda_0^{u_0} \cdots \lambda_L^{u_L} \mu_0^{v_0} \cdots \mu_L^{v_L}  R^{\sum_t t (u_t + v_t)}(r_1)\,.
 \ee
 This may be written as $\sum_p f_p(\lambda, \mu) R^p(r_1)$ for some polynomials $f_p$ in variables $\{ \lambda_i, \mu_j \}_{i,j}$. 
-\end{remark}
-
-\subsection{Decaying pattern NTM}
-
-We take the same alphabet $\mathfrak{a}$ as in the multiple pattern NTM, and the same coefficient space $\mathscr{V}_1$ for the first memory ring. There are two additional memory rings, with
-\[
-\mathscr{V}_2 \subseteq \den{\binta_{W \& W}}\,, \qquad \mathscr{V}_3 \subseteq \den{\binta_{W \& W} \multimap \binta_W \,\&\, \binta_W}\,.
-\]
-An example of a proof in $\mathscr{V}_3$ is the algorithm $\underline{\mathrm{tail}}$ which takes a binary sequence and returns a pair by separating the tail, for example
-\[
-\den{\underline{\mathrm{tail}}}\big( \underline{1101}_{W \& W} \big) = (\underline{110}_W, \underline{1}_W)\,.
-\]
-The idea is that if the third memory ring is sharply focused at $\underline{\mathrm{tail}}$ then we update the second memory ring by replacing a vector $\den{\underline{1101}}$ at a vertex of the ring by its truncation $\den{\underline{110}}$, and we moreover use the tail $\den{\underline{1}}$ to update the first memory ring by reading it as a power of the rotation operator. In this way the contents of the second memory ring \emph{decay} over time. To realise this we need the following auxiliary maps:
-
-\begin{definition}\label{definition:proofless} Given a type $W$ with $\mathscr{W} = \den{W}$ let $\underline{\mathrm{less}}$ be the proof of
-\[
-\binta_{W \& W} \vdash \binta_W
-\]
-with the property that for $\alpha, \beta \in \End_{\mathbb{R}}(\den{W})$ and $q \in \den{\binta_{W \& W}}$
-\[
-\den{\underline{\mathrm{less}}}(q)( \alpha, \beta ) = \pi_1 q( \alpha \oplus 1_{\mathscr{W}}, \beta \oplus 1_{\mathscr{W}} )
-\]
-where $\pi_i$ denote the projections from $\mathscr{W} \oplus \mathscr{W}$. Then
-\[
-\Phi \den{\underline{S}_{W \& W}} = \den{\underline{S}_W}
-\]
-for all $S \in \{0,1\}^*$.
-\end{definition}
-
-There does not appear to be a proof $\underline{\mathrm{more}}$ in linear logic which gives a section of $\underline{\mathrm{less}}$ in the sense that its denotation maps $\den{\underline{S}_W}$ to $\den{\underline{S}_{W \& W}}$ (see however Lemma \ref{lemma:lessmore}). But we can just fix one ad hoc (this is simulating second order linear logic in an ugly way).
-
-\begin{definition} We fix a linear map $\psi: \den{\binta_W} \lto \den{\binta_{W \& W}}$ with the property that
-\[
-\psi \den{\underline{S}_W} = \den{\underline{S}_{W \& W}}
-\]
-for a finite collection of sequences $S$ that are relevant to the model.
-\end{definition}
-
-The master algorithm at a given time step applies $M_3(r_3) \in \mathscr{V}_3$ to $M_2(r_2) \in \mathscr{V}_2$ to get
-\[
-\den{\feed}( M_2(r_2), M_3(r_3)) \in \den{\binta_W} \oplus \den{\binta_W}\,.
-\]
-The second component is then applied to the contents of the first memory ring, as in
-\[
-r_1^{(t+1)} = \Big( \pi_2\den{\feed}( M_2(r_2), M_3(r_3)) \Big)(1_{\mathscr{W}}, R)(r_1^{(t)})\,.
-\]
-Simultaneously, we update the memory state of the second ring according to the following rule: it becomes the linear map $\mathscr{W} \lto \mathscr{V}_2$ defined by
-\[
-w \longmapsto \psi \pi_1\den{\feed}( M_2(w), M_3(r_3))\,.
-\]
-This kind of structure could in principle be used by the controller to predict that an event will happen a fixed amount of time in the future, by pushing ``countdowns'' $\den{\underline{10000}}$ onto the memory ring, and have the controller react to a symbol coming off the first memory ring after it is shifted by the final $\den{\underline{1}}$.
-
-\begin{remark} Actually we seem to have been confused about the kinds of polynomials we get. It seems that unless $\feed$ uses non-linear inputs we never get powers of variables. So we should find an example where this is the case.
 \end{remark}
 
 \bibliographystyle{amsalpha}
@@ -1074,7 +1027,7 @@ M.~H.~S\o rensen and P.~Urzyczyn, \textsl{Lectures on the Curry-Howard isomorphi
 Y.~LeCun, Y.~Bengio and G.~Hinton, \textsl{Deep learning},  Nature, 521(7553), pp.436--444 (2015).
 
 \bibitem{elman}
-J.~Elman, \textsl{Finding structure in time}, Cognitive science, 14(2):179–211, 1990.
+J.~Elman, \textsl{Finding structure in time}, Cognitive science, 14(2):179â211, 1990.
 
 \bibitem{ntm}
 A.~Graves, G.~Wayne and I.~Danihelka, \textsl{Neural turing machines}, arXiv preprint arXiv:1410.5401 (2014).
@@ -1149,10 +1102,10 @@ T.~Ehrhard, \textsl{An introduction to Differential Linear Logic: proof-nets, mo
 J.~Clift and D.~Murfet, \textsl{Cofree coalgebras and differential linear logic}, preprint.
 
 \bibitem{tensorflow}
-Abadi, Martín, et al. \textsl{TensorFlow: A system for large-scale machine learning} arXiv preprint arXiv:1605.08695 (2016).
+Abadi, MartÃ­n, et al. \textsl{TensorFlow: A system for large-scale machine learning} arXiv preprint arXiv:1605.08695 (2016).
 
 \bibitem{tensorflow2}
-Abadi, Martın, et al. \textsl{Tensorflow: Large-scale machine learning on heterogeneous distributed systems}, arXiv preprint arXiv:1603.04467 (2016).
+Abadi, MartÄ±n, et al. \textsl{Tensorflow: Large-scale machine learning on heterogeneous distributed systems}, arXiv preprint arXiv:1603.04467 (2016).
 
 \bibitem{griewank}
 A.~Griewank and A.~Walther, \textsl{Evaluating derivatives: principles and techniques of algorithmic differentiation}, Siam (2008).
@@ -1161,7 +1114,7 @@ A.~Griewank and A.~Walther, \textsl{Evaluating derivatives: principles and techn
 T.~Ehrhard and L.~Regnier, \textsl{The differential $\lambda$-calculus}, Theoretical Computer Science 309, pp. 1--41, (2003).
 
 \bibitem{manzyuk}
-O.~Manzyuk, \textsl{A simply typed $\lambda$-calculus of forward automatic differentiation}, In Mathematical Foundations of Programming Semantics Twenty-eighth Annual Conference, pages 259--73, Bath, UK, June 6–9 2012. \href{http://dauns.math.tulane.edu/~mfps/mfps28proc.pdf}{[URL]}.
+O.~Manzyuk, \textsl{A simply typed $\lambda$-calculus of forward automatic differentiation}, In Mathematical Foundations of Programming Semantics Twenty-eighth Annual Conference, pages 259--73, Bath, UK, June 6â9 2012. \href{http://dauns.math.tulane.edu/~mfps/mfps28proc.pdf}{[URL]}.
 
 \bibitem{minsky}
 M.~Minsky, \textsl{Logical versus analogical or symbolic versus connectionist or neat versus scruffy}, AI magazine, 12(2), 34 (1991).

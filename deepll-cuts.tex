@@ -251,3 +251,91 @@ The value of the master function is, for $h = \big(h_0, \{r_i, w_i\}_{i=1}^4, \{
 &\qquad \beta_1^{n_1}(w_1), \big\{\alpha_i^{m_i}(r_i), \beta_i^{n_i}(w_i)\big\}_{i=2}^4, \big\{M_i + \beta_i^{n_i}(w_i) \otimes u_i \big\}_{i=1}^4 \Big)\,.
 \end{align*}
 As above we set $\alpha_i = R$ and $\beta_i = R^*$ for $1 \le i \le 4$.
+
+We write $\Phi = \den{\mathrm{less}}$ for the proof of Definition \ref{definition:proofless}.
+
+\begin{lemma}\label{lemma:lessmore} There is a proof $\underline{\mathrm{more}}$ such that denotation gives a linear map
+\begin{align*}
+\Psi &= \den{\mathrm{more}}: \den{\binta_{W}} \lto \den{\binta_{W \& W}}
+\end{align*}
+with the following properties:
+\begin{itemize}
+\item[(i)] $\Phi \circ \Psi = 1$.
+\item[(ii)] On the subspace of block matrices
+\[
+B = \Bigg\{ \begin{pmatrix} \gamma_1 & 0 \\ 0 & \gamma_2 \end{pmatrix} \;\;\Bigg| \;\; \gamma_i \in \End_{\mathbb{R}}(\mathscr{W}) \Bigg\} \subseteq \End_{\mathbb{R}}( \mathscr{W} \oplus \mathscr{W} )
+\]
+we have
+\be
+\Psi\big( \den{\underline{S}_W} \big)|_{B \times B} = \den{\underline{S}_{W \& W}}|_{B \times B}
+\ee
+for all $S \in \{0,1\}^*$.
+\end{itemize}
+\end{lemma}
+\begin{proof}
+Let $\pi_i, \iota_i$ denote the projections from and injections into $\den{W \& W} = \mathscr{W} \oplus \mathscr{W}$. We define for $p \in \den{\binta_W}$
+\[
+\Psi( p )( \alpha, \beta ) = \big( p( \pi_1 \alpha \iota_1, \pi_1 \beta \iota_1 ) , p( \pi_2 \alpha \iota_2, \pi_2 \beta \iota_2 ) \big)\,.
+\]
+It is clear that this the denotations of a proof. We observe that
+\begin{align*}
+\big( \Phi \Psi(p) \big)(\alpha, \beta) &= \pi_1 \Psi(p)( \alpha \oplus 1_{\mathscr{W}}, \beta \oplus 1_{\mathscr{W}} )\\
+&= \pi_1 \Big( p( \pi_1 (\alpha \oplus 1_{\mathscr{W}}) \iota_1, \pi_1(\beta \oplus 1_{\mathscr{W}}) \iota_1 ), p( \pi_2 (\alpha \oplus 1_{\mathscr{W}}) \iota_2, \pi_2(\beta \oplus 1_{\mathscr{W}}) \iota_2 \Big)\\
+&= \pi_1 \big( p(\alpha, \beta), p(1_{\mathscr{W}}, 1_{\mathscr{W}}) \big)\\
+&= p(\alpha, \beta)
+\end{align*}
+which proves (i). It is clear that (ii) holds.
+\end{proof}
+
+\subsection{Decaying pattern NTM}
+
+We take the same alphabet $\mathfrak{a}$ as in the multiple pattern NTM, and the same coefficient space $\mathscr{V}_1$ for the first memory ring. There are two additional memory rings, with
+\[
+\mathscr{V}_2 \subseteq \den{\binta_{W \& W}}\,, \qquad \mathscr{V}_3 \subseteq \den{\binta_{W \& W} \multimap \binta_W \,\&\, \binta_W}\,.
+\]
+An example of a proof in $\mathscr{V}_3$ is the algorithm $\underline{\mathrm{tail}}$ which takes a binary sequence and returns a pair by separating the tail, for example
+\[
+\den{\underline{\mathrm{tail}}}\big( \underline{1101}_{W \& W} \big) = (\underline{110}_W, \underline{1}_W)\,.
+\]
+The idea is that if the third memory ring is sharply focused at $\underline{\mathrm{tail}}$ then we update the second memory ring by replacing a vector $\den{\underline{1101}}$ at a vertex of the ring by its truncation $\den{\underline{110}}$, and we moreover use the tail $\den{\underline{1}}$ to update the first memory ring by reading it as a power of the rotation operator. In this way the contents of the second memory ring \emph{decay} over time. To realise this we need the following auxiliary maps:
+
+\begin{definition}\label{definition:proofless} Given a type $W$ with $\mathscr{W} = \den{W}$ let $\underline{\mathrm{less}}$ be the proof of
+\[
+\binta_{W \& W} \vdash \binta_W
+\]
+with the property that for $\alpha, \beta \in \End_{\mathbb{R}}(\den{W})$ and $q \in \den{\binta_{W \& W}}$
+\[
+\den{\underline{\mathrm{less}}}(q)( \alpha, \beta ) = \pi_1 q( \alpha \oplus 1_{\mathscr{W}}, \beta \oplus 1_{\mathscr{W}} )
+\]
+where $\pi_i$ denote the projections from $\mathscr{W} \oplus \mathscr{W}$. Then
+\[
+\Phi \den{\underline{S}_{W \& W}} = \den{\underline{S}_W}
+\]
+for all $S \in \{0,1\}^*$.
+\end{definition}
+
+There does not appear to be a proof $\underline{\mathrm{more}}$ in linear logic which gives a section of $\underline{\mathrm{less}}$ in the sense that its denotation maps $\den{\underline{S}_W}$ to $\den{\underline{S}_{W \& W}}$ (see however Lemma \ref{lemma:lessmore}). But we can just fix one ad hoc (this is simulating second order linear logic in an ugly way).
+
+\begin{definition} We fix a linear map $\psi: \den{\binta_W} \lto \den{\binta_{W \& W}}$ with the property that
+\[
+\psi \den{\underline{S}_W} = \den{\underline{S}_{W \& W}}
+\]
+for a finite collection of sequences $S$ that are relevant to the model.
+\end{definition}
+
+The master algorithm at a given time step applies $M_3(r_3) \in \mathscr{V}_3$ to $M_2(r_2) \in \mathscr{V}_2$ to get
+\[
+\den{\feed}( M_2(r_2), M_3(r_3)) \in \den{\binta_W} \oplus \den{\binta_W}\,.
+\]
+The second component is then applied to the contents of the first memory ring, as in
+\[
+r_1^{(t+1)} = \Big( \pi_2\den{\feed}( M_2(r_2), M_3(r_3)) \Big)(1_{\mathscr{W}}, R)(r_1^{(t)})\,.
+\]
+Simultaneously, we update the memory state of the second ring according to the following rule: it becomes the linear map $\mathscr{W} \lto \mathscr{V}_2$ defined by
+\[
+w \longmapsto \psi \pi_1\den{\feed}( M_2(w), M_3(r_3))\,.
+\]
+This kind of structure could in principle be used by the controller to predict that an event will happen a fixed amount of time in the future, by pushing ``countdowns'' $\den{\underline{10000}}$ onto the memory ring, and have the controller react to a symbol coming off the first memory ring after it is shifted by the final $\den{\underline{1}}$.
+
+\begin{remark} Actually we seem to have been confused about the kinds of polynomials we get. It seems that unless $\feed$ uses non-linear inputs we never get powers of variables. So we should find an example where this is the case.
+\end{remark}
