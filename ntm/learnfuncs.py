@@ -91,3 +91,24 @@ def f_multpattern(seq,patterns,div_symbol):
         t = t + f_repetitionpattern(q[1],patterns[q[0]])
 
     return t
+    
+def f_varpattern(seq, init_symbol):    
+    # We parse seq into A.S.B where "." stands for concatentation,
+    # A, B are sequences and S is the init_symbol. Then we run A
+    # as a pattern on B using f_repetitionpattern
+    
+    A = []
+    B = []
+    
+    Sfound = False
+    for x in seq:
+        if( x == init_symbol ):
+            Sfound = True
+        else:
+            if( Sfound == False ):
+                A.append(x)
+            else:
+                B.append(x)
+    
+    t = f_repetitionpattern(B,A)
+    return t
