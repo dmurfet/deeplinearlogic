@@ -124,7 +124,7 @@
 \DeclarePairedDelimiter\bra{\langle}{\rvert}
 \DeclarePairedDelimiter\ket{\lvert}{\rangle}
 
-\title{Linear logic and recurrent neural networks}
+\title{The logic of tensors: linear logic and recurrent neural networks}
 \author{Huiyi Hu, Daniel Murfet}
 
 \maketitle
@@ -810,6 +810,9 @@ The main difference between the ordinary NTM and the pattern NTM is in \eqref{eq
 which maps a memory state and read address for the second memory ring, plus a group element (think of it as $R$) to a linear operator on the read address of the first memory ring.
 \end{remark}
 
+\begin{remark} THe interpolation and simultaneous direct control + indirect control of Ring 1 in the current implementation needs to be fed back to the theory.
+\end{remark}
+
 \subsection{Multiple pattern NTM}\label{example:ntm_super}
 
 In the previous example the second memory ring stores patterns of memory access in the form of sequences of integers, or more precisely, proofs of linear logic of type $\inta_W$. More complex patterns (this word being of course a euphemism for \emph{algorithms}) can be encoded using more rings and higher types, in various ways. In this section we give an example in which, in addition to the original memory ring from the standard NTM, there are two rings with coefficients in $\den{\inta_W}$ and a ring with coefficients in $\den{\binta_W}$. The idea is that the second and third memory rings encode two patterns of memory access, and we allow the controller to switch between the two patterns at any time using the fourth ring. For ease of reference in the sequel we call this the \emph{multiple pattern NTM}.
@@ -967,6 +970,9 @@ R'RR \longmapsto R'RRR'RR\,.
 \end{remark}
 
 \begin{remark} In functional programming languages like differential $\lambda$-calculus \cite{difflambda} and differential linear logic \cite{ehrhard-survey} it is possible to differentiate programs with respect to their inputs, even if the programs are higher-order (that is, take functions as input and return them as output). This is a generalisation of automatic differentiation \cite{griewank} which is widely used to compute derivatives of complicated real-valued functions, for example in the backpropagation algorithms of machine learning packages like TensorFlow \cite[\S 4.1]{tensorflow}. The idea is to augment every computation in a code fragment so that derivatives with respect to a chosen variable are computed along with the main result. In TensorFlow this is done by adding special nodes in the dataflow graph.\footnote{See the ``gradients'' method of tensorflow/python/ops/gradients.py in TensorFlow 0.10} The idea of differential $\lambda$-calculus is similar, but more complex \cite{manzyuk}. It would be interesting to explore augmenting the dataflow graph of TensorFlow directly with terms of differential linear logic, in a way that generalises the coupling between semantics and RNNs in this paper.
+\end{remark}
+
+\begin{remark} Starting from the pov of LL led us to prioritize operators etc. this is one contribution LL can make, to point to the most "natural" forms within the zoo of algorithmic manopulations of tensors.
 \end{remark}
 
 \begin{remark} One method of adding algorithmic elements to deep neural networks that has been explored extensively is the idea of \emph{attention networks} which implement a form of ``distributed decision making'' \cite[p.1]{cho}.

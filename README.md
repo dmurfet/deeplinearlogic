@@ -44,6 +44,8 @@ The horizontal axis is the position in memory, the vertical axis is the time. Th
 
 - **Version 10** (snapshot `20-4-2017`). Fixed the masking of sequences by having terminal symbols instead of zeros in the encoded output. This to **much** better performance of all controllers on all tasks; we can basically ignore the previous runs on Multiple Pattern tasks, for example.
 
+- **Version 11** (snapshot `26-4-2017`). Added Variable Pattern tasks 1 and 2.
+
 ## Remarks on tasks
 
 Here we collect some remarks on the algorithms learned by the models to solve the various tasks.
