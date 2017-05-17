@@ -85,15 +85,13 @@ def get_nb_params_shape(shape):
     
 ##################
 # Standard RNN controller
-# TODO(5-3-2017): not tested
 
 class StandardRNN(RNNCell):
     """
     The main NTM code.
     """
-    def __init__(self, num_units, input_size, activation=tanh):
+    def __init__(self, num_units, input_size):
         self._num_units = num_units
-        self._activation = activation
         self._input_size = input_size
         
     @property
@@ -113,11 +111,11 @@ class StandardRNN(RNNCell):
             # input has shape [batch_size, input_size]
             # state has shape [batch_size, state_size]
 
-            H = tf.get_variable("H", [_num_units,_num_units])
-            U = tf.get_variable("U", [_input_size,_num_units])
-            B = tf.get_variable("B", [_num_units], initializer=init_ops.constant_initializer(0.0))
+            H_enc = tf.get_variable("H_enc", [self._num_units,self._num_units])
+            U_enc = tf.get_variable("U_enc", [self._input_size,self._num_units])
+            B_enc = tf.get_variable("B_enc", [self._num_units], initializer=init_ops.constant_initializer(0.0))
             
-            state_new = self._activation(tf.matmul(state, H) + tf.matmul(input,U) + B)
+            state_new = tf.nn.tanh(tf.matmul(state, H_enc) + tf.matmul(input,U_enc) + B_enc)
             
         return state_new, state_new
         # the return is output, state
@@ -782,7 +780,7 @@ class EncodedPatternNTM(RNNCell):
     def input_size(self):
         return self._input_size
 
-    def __call__(self, input, state, scope, enc_pattern, reuse=True, test=False):
+    def __call__(self, input, state, scope, reuse=True):
         # the scope business gives a namespace to our weight variable matrix names
         with tf.variable_scope(scope,reuse=reuse): 
             # input has shape [batch_size, input_size]
@@ -823,19 +821,6 @@ class EncodedPatternNTM(RNNCell):
             
             init = init_ops.constant_initializer(0.0)
             
-            # This is the special encoded pattern NTM stuff
-            if( test == False ):
-                varname_E = "enc_E"
-                varname_F = "enc_F"
-            else:
-                varname_E = "enc_E_test"
-                varname_F = "enc_F_test"
-            
-            enc_E = tf.get_variable(varname_E,[enc_pattern.get_shape()[1],mas[1] * mcs[1]])
-            enc_F = tf.get_variable(varname_F,[mas[1] * mcs[1]],initializer=init_ops.constant_initializer(0.0))
-            
-            M[1] = tf.matmul(enc_pattern, enc_E) + enc_F
-
             # Interpolation (note the nonzero initialisation for bias)
             W_interp = tf.get_variable("W_interp", [css,1])
             B_interp = tf.get_variable("B_interp", [1], initializer=init_ops.constant_initializer(self._direct_bias))
