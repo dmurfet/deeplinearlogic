@@ -46,6 +46,8 @@ The horizontal axis is the position in memory, the vertical axis is the time. Th
 
 - **Version 11** (snapshot `26-4-2017`). Added Variable Pattern tasks 1 and 2.
 
+- **Version 12** (snapshot `16-5-2017`). Various small changes. This version was created as a prelude to the major changes in Version 13.
+
 On 22-July we deleted all hosts except for Tesla and Turing.
 
 ## Remarks on tasks
@@ -134,6 +136,8 @@ For convenience of cut and paste here are the commands expanded in each case:
 [Boole]   ssh -L localhost:8871:localhost:8888 -i Virginia.pem ubuntu@34.203.182.65
 [Babbage] ssh -L localhost:8872:localhost:8888 -i Virginia.pem ubuntu@34.200.112.121
 ```
+
+Actually the servers now run Jupyter headless, so you can access them from a Browser using the URL `https://IP-address:8888`.
 
 To verify that the GPUs are actually being used by TensorFlow within your Jupyter session, run the code [here](https://www.tensorflow.org/tutorials/using_gpu). Note that the output they describe there will appear in the *Jupyter log* not in your notebook. What we see for the `p2.xlarge` machines is
 
