@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.9.17)  7 FEB 2017 22:10
+This is pdfTeX, Version 3.14159265-2.6-1.40.17 (TeX Live 2016) (preloaded format=pdflatex 2016.9.17)  20 APR 2017 11:01
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -861,175 +861,159 @@ LaTeX Info: Redefining \nameref on input line 97.
 \@outlinefile=\write5
 \openout5 = `deepll.out'.
 
+ (./deepll.toc)
+\tf@toc=\write6
+\openout6 = `deepll.toc'.
 
-
-LaTeX Warning: Citation `freitas' on page 1 undefined on input line 129.
-
-
-LaTeX Warning: Citation `neuralprog' on page 1 undefined on input line 129.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 131--133
-
- []
-
-[1
+ [1
 
 {/usr/local/texlive/2016/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
-
-Package amsfonts Warning: Obsolete command \bold; \mathbf should be used instea
-d on input line 152.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 169--177
+Underfull \hbox (badness 10000) in paragraph at lines 138--140
 
  []
 
-[2] [3]
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 221.
+[2]
+
+Package amsfonts Warning: Obsolete command \bold; \mathbf should be used instea
+d on input line 161.
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 183--191
+
+ []
+
+[3]
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 233.
 
  (/usr/local/texlive/2016/texmf-dist/tex/latex/base/omscmr.fd
 File: omscmr.fd 2014/09/29 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <12> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 221.
-
-Underfull \hbox (badness 10000) in paragraph at lines 225--227
-
- []
-
-[4] [5] [6] [7] [8] <dia1.pdf, id=198, 472.40822pt x 450.3247pt>
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 233.
+ [4] [5]
+[6] <xymatrix 4x1 150> [7] <dia1.pdf, id=244, 472.40822pt x 450.3247pt>
 File: dia1.pdf Graphic file (type pdf)
 
 <use dia1.pdf>
-Package pdftex.def Info: dia1.pdf used on input line 390.
+Package pdftex.def Info: dia1.pdf used on input line 395.
 (pdftex.def)             Requested size: 141.72356pt x 135.09845pt.
- [9 <./dia1.pdf>] [10] [11]
-LaTeX Font Info:    Try loading font information for U+euf on input line 498.
+ [8] [9 <./dia1.pdf>] <xymatrix 5x4 300> [10] [11]
 
-(/usr/local/texlive/2016/texmf-dist/tex/latex/amsfonts/ueuf.fd
+LaTeX Warning: Reference `??' on page 12 undefined on input line 483.
+
+<xymatrix 3x1 92>
+
+LaTeX Warning: Reference `??' on page 12 undefined on input line 512.
+
+[12]
+
+LaTeX Warning: Reference `??' on page 13 undefined on input line 543.
+
+
+LaTeX Warning: Reference `??' on page 13 undefined on input line 543.
+
+[13] [14] [15] [16]
+
+LaTeX Warning: Reference `eq:ntm_update1' on page 17 undefined on input line 69
+3.
+
+[17]
+LaTeX Font Info:    Try loading font information for U+euf on input line 723.
+ (/usr/local/texlive/2016/texmf-dist/tex/latex/amsfonts/ueuf.fd
 File: ueuf.fd 2013/01/14 v3.01 Euler Fraktur
 )
-<dia2.pdf, id=272, 948.11638pt x 422.70232pt>
+<dia2.pdf, id=392, 948.11638pt x 422.70232pt>
 File: dia2.pdf Graphic file (type pdf)
  <use dia2.pdf>
-Package pdftex.def Info: dia2.pdf used on input line 504.
+Package pdftex.def Info: dia2.pdf used on input line 729.
 (pdftex.def)             Requested size: 284.4371pt x 126.81166pt.
- [12]
+ [18]
 \myBox1=\box52
 \myScoreStart1=\dimen290
 \myCenter1=\dimen291
 \myScoreEnd1=\dimen292
- [13 <./dia2.pdf>]
+ [19 <./dia2.pdf>] [20] <xymatrix 4x1 140> [21] [22]
 
-LaTeX Warning: Reference `eq:patternntm_state' on page 14 undefined on input li
-ne 563.
+LaTeX Warning: Reference `eq:moreexplicah' on page 23 undefined on input line 8
+58.
 
-[14]
-
-LaTeX Warning: Reference `eq:pattern_ntm_distinction' on page 15 undefined on i
-nput line 578.
-
-[15] [16]
-
-LaTeX Warning: Reference `eq:example_seq_func' on page 17 undefined on input li
-ne 630.
-
-
-LaTeX Warning: Reference `eq:pattern_ntm_distinction' on page 17 undefined on i
-nput line 645.
-
-[17]
-
-LaTeX Warning: Reference `eq:summerevening_after' on page 18 undefined on input
- line 687.
-
-
-LaTeX Warning: Reference `eq:summerevening2' on page 18 undefined on input line
- 687.
-
-[18]
-
-LaTeX Warning: Citation `cho' on page 19 undefined on input line 723.
-
-
-LaTeX Warning: Citation `cho' on page 19 undefined on input line 725.
-
-[19]
-Missing character: There is no â in font cmr12!
-Missing character: There is no € in font cmr12!
-Missing character: There is no “ in font cmr12!
- [20] [21]
+[23] [24] [25] [26]
 Missing character: There is no Ã in font cmr12!
-Missing character: There is no ­ in font cmr12!
-Missing character: There is no Ä in font cmr12!
-Missing character: There is no ± in font cmr12!
-Missing character: There is no â in font cmr12!
+Missing character: There is no ¢ in font cmr12!
+Missing character: There is no Â in font cmr12!
 Missing character: There is no € in font cmr12!
+Missing character: There is no Â in font cmr12!
 Missing character: There is no “ in font cmr12!
- [22] [23]
-Package atveryend Info: Empty hook `BeforeClearDocument' on input line 869.
-Package atveryend Info: Empty hook `AfterLastShipout' on input line 869.
+ [27] [28]
+Missing character: There is no Ã in font cmr12!
+Missing character: There is no ƒ in font cmr12!
+Missing character: There is no Â in font cmr12!
+Missing character: There is no ­ in font cmr12!
+Missing character: There is no Ã in font cmr12!
+Missing character: There is no „ in font cmr12!
+Missing character: There is no Â in font cmr12!
+Missing character: There is no ± in font cmr12!
+Missing character: There is no Ã in font cmr12!
+Missing character: There is no ¢ in font cmr12!
+Missing character: There is no Â in font cmr12!
+Missing character: There is no € in font cmr12!
+Missing character: There is no Â in font cmr12!
+Missing character: There is no “ in font cmr12!
+ [29] [30]
+Package atveryend Info: Empty hook `BeforeClearDocument' on input line 1139.
+Package atveryend Info: Empty hook `AfterLastShipout' on input line 1139.
  (./deepll.aux)
-Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 869.
-Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 869.
+Package atveryend Info: Executing hook `AtVeryEndDocument' on input line 1139.
+Package atveryend Info: Executing hook `AtEndAfterFileList' on input line 1139.
 
+Package rerunfilecheck Info: File `deepll.out' has not changed.
+(rerunfilecheck)             Checksum: A7905EF77FE5C745877CFB8A7AF9C057;1264.
 
-Package rerunfilecheck Warning: File `deepll.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `deepll.out':
-(rerunfilecheck)             Before: 09AF25822D5AAD42C6E156D8A7804993;535
-(rerunfilecheck)             After:  9B67782866B34B64F377FC6494341CA2;756.
 
 LaTeX Warning: There were undefined references.
 
-
-LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
-
-Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 869.
+Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 1139.
  ) 
 Here is how much of TeX's memory you used:
- 19944 strings out of 493014
- 351134 string characters out of 6133351
- 466262 words of memory out of 5000000
- 22931 multiletter control sequences out of 15000+600000
+ 20054 strings out of 493014
+ 352318 string characters out of 6133351
+ 467229 words of memory out of 5000000
+ 22997 multiletter control sequences out of 15000+600000
  22077 words of font info for 92 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 55i,14n,54p,3239b,477s stack positions out of 5000i,500n,10000p,200000b,80000s
-pdfTeX warning (dest): name{appendix.A} has been referenced but does not exis
-t, replaced by a fixed one
-
-</usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb><
-/usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></
-usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex8.pfb
-></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb>
-</usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb><
-/usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></u
-sr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr
-/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/l
-ocal/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/loc
-al/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/local
-/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local/t
-exlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texl
-ive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive
-/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/20
-16/texmf-dist/fonts/type1/public/amsfonts/cm/cmsl12.pfb></usr/local/texlive/201
-6/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2016
-/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2016/t
-exmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2016/tex
-mf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2016/texm
-f-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/local/texlive/2016/texmf
--dist/fonts/type1/public/amsfonts/euler/eufm10.pfb></usr/local/texlive/2016/tex
-mf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr/local/texlive/2016
-/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/
-2016/texmf-dist/fonts/type1/public/rsfs/rsfs10.pfb></usr/local/texlive/2016/tex
-mf-dist/fonts/type1/public/stmaryrd/stmary10.pfb>
-Output written on deepll.pdf (23 pages, 435248 bytes).
+ 55i,14n,54p,3239b,484s stack positions out of 5000i,500n,10000p,200000b,80000s
+</usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx12.pfb
+></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb>
+</usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cmextra/cmex8.p
+fb></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pf
+b></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb
+></usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb><
+/usr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></u
+sr/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr
+/local/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/l
+ocal/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb></usr/loc
+al/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr17.pfb></usr/local
+/texlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/te
+xlive/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texli
+ve/2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/
+2016/texmf-dist/fonts/type1/public/amsfonts/cm/cmsl12.pfb></usr/local/texlive/2
+016/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/20
+16/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2016
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2016/t
+exmf-dist/fonts/type1/public/amsfonts/cm/cmti10.pfb></usr/local/texlive/2016/te
+xmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb></usr/local/texlive/2016/tex
+mf-dist/fonts/type1/public/amsfonts/euler/eufm10.pfb></usr/local/texlive/2016/t
+exmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr/local/texlive/20
+16/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texliv
+e/2016/texmf-dist/fonts/type1/public/rsfs/rsfs10.pfb></usr/local/texlive/2016/t
+exmf-dist/fonts/type1/public/stmaryrd/stmary10.pfb></usr/local/texlive/2016/tex
+mf-dist/fonts/type1/public/stmaryrd/stmary8.pfb></usr/local/texlive/2016/texmf-
+dist/fonts/type1/public/xypic/xycmat12.pfb></usr/local/texlive/2016/texmf-dist/
+fonts/type1/public/xypic/xycmbt12.pfb>
+Output written on deepll.pdf (30 pages, 470514 bytes).
 PDF statistics:
- 539 PDF objects out of 1000 (max. 8388607)
- 477 compressed objects within 5 object streams
- 140 named destinations out of 1000 (max. 500000)
- 95 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 695 PDF objects out of 1000 (max. 8388607)
+ 621 compressed objects within 7 object streams
+ 181 named destinations out of 1000 (max. 500000)
+ 175 words of extra memory for PDF output out of 10000 (max. 10000000)
 

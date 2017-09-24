@@ -46,6 +46,8 @@ The horizontal axis is the position in memory, the vertical axis is the time. Th
 
 - **Version 11** (snapshot `26-4-2017`). Added Variable Pattern tasks 1 and 2.
 
+On 22-July we deleted all hosts except for Tesla and Turing.
+
 ## Remarks on tasks
 
 Here we collect some remarks on the algorithms learned by the models to solve the various tasks.

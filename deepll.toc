@@ -1,0 +1,19 @@
+\contentsline {section}{\numberline {1}Introduction}{1}{section.1}
+\contentsline {section}{\numberline {2}Background}{3}{section.2}
+\contentsline {subsection}{\numberline {2.1}Recurrent Neural Network}{3}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}Second-order Recurrent Neural Network}{4}{subsection.2.2}
+\contentsline {subsection}{\numberline {2.3}Neural Turing Machine}{5}{subsection.2.3}
+\contentsline {subsubsection}{\numberline {2.3.1}Abstract reformulation}{6}{subsubsection.2.3.1}
+\contentsline {subsection}{\numberline {2.4}Linear Logic}{9}{subsection.2.4}
+\contentsline {subsubsection}{\numberline {2.4.1}Types}{9}{subsubsection.2.4.1}
+\contentsline {subsubsection}{\numberline {2.4.2}Terms}{10}{subsubsection.2.4.2}
+\contentsline {subsubsection}{\numberline {2.4.3}Semantics}{11}{subsubsection.2.4.3}
+\contentsline {section}{\numberline {3}The Linear Logic Recurrent Neural Network}{13}{section.3}
+\contentsline {subsection}{\numberline {3.1}Examples}{15}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}NTM as an LLRNN}{17}{subsection.3.2}
+\contentsline {section}{\numberline {4}Generalisations of the NTM}{18}{section.4}
+\contentsline {subsection}{\numberline {4.1}Pattern NTM}{18}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}Multiple pattern NTM}{21}{subsection.4.2}
+\contentsline {subsection}{\numberline {4.3}Polynomial step NTM}{24}{subsection.4.3}
+\contentsline {subsubsection}{\numberline {4.3.1}Dihedral polynomial step NTM}{25}{subsubsection.4.3.1}
+\contentsline {section}{\numberline {5}Unpolished remarks}{25}{section.5}
