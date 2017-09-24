@@ -1,20 +1,24 @@
 # Linear Logic and Recurrent Neural Networks
 
-This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. At the moment the repo is private. The aim is to find a sequence-to-sequence task on which the Pattern NTM substantially outperforms the NTM. A good overview of attention and augmented RNNs is [this paper](http://distill.pub/2016/augmented-rnns/) by Chris Olah and Shan Carter.
+This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. At the moment the repo is private. The aim is to find a sequence-to-sequence task on which one of our models, created with the help of linear logic, substantially outperforms the NTM. A good overview of attention and augmented RNNs is [this paper](http://distill.pub/2016/augmented-rnns/) by Chris Olah and Shan Carter.
 
-The **models** that have been implemented so far are
+The **models** that have been implemented so far in `ntm/ntm.py` are
 
-- The ordinary NTM (see class `NTM` in `ntm.py`).
-- The pattern NTM (see class `PatternNTM` in `ntm.py`) which is the model described in Section 4.1 of the paper.
-- The alternative pattern NTM (see class `PatternNTM_alt` in `ntm.py`) which is the pattern NTM but with the controller allowed to manipulate the read address of the first memory ring directly.
+- The ordinary NTM (`NTM`).
+- The pattern NTM (`PatternNTM`) which has two rings. The first is analogous to the ordinary NTM, while the second stores powers that may be used to manipulate the read address of the first ring. There is an interpolation parameter which controls whether the controller directly manipulates the read address of the first ring, or has it manipulated by the contents of the second ring.
+- The multiple pattern NTM (`MultPatternNTM`) has four rings, with the second and third both acting like the second ring in the pattern NTM, and the fourth ring storing essentially interpolation factors that determine whether to use the power on ring two or three.
 
-The **tasks** that have been implemented are
+We have found no convincing reason to use the multiple pattern NTM, and most of our experiments are a comparison of the ordinary NTM and the pattern NTM.
+
+The **tasks** that have been implemented in `ntm/learnfuncs.py` include
 
 - Copy task (as in the NTM paper),
 - Repeat copy task (as in the NTM paper),
-- Pattern task (defined in Section 4.1 of our paper).
+- Pattern tasks 1-5 (defined in Section 4.1 of our paper), which consist of a (fixed) *pattern* (some sequence of integers) which is applied to all possible strings,
+- Multiple pattern tasks 1-4, which consist of multiple patterns to be applied to a string, where there is some special symbol in the string which instructs the algorithm to switch between patterns,
+- Variable pattern tasks 1-4, where the input is both the pattern to apply and the string to apply it to.
 
-The actual training and testing is done through the Python notebook `ntm/work.ipynb`. The results of experiments are posted on the [spreadsheet](https://docs.google.com/spreadsheets/d/1s7kOUL3OI9Ps4MTPLclvXZ_wRJnrwxyxIiqFqZZDspY/edit?usp=sharing) (the old version of the spreadsheet is [here](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing)). There are HTML records of some of the Jupyter sessions, including visualisations of the read and write addresses in the folder `/doc`. **Note:** it is probably a good idea for each contributor to maintain their own Jupyter workbook, but share the same `ntm/ntm.py`.
+The actual training and testing is done through the Python notebook `ntm/work.ipynb`. The results of experiments are posted on the [spreadsheet](https://docs.google.com/spreadsheets/d/1s7kOUL3OI9Ps4MTPLclvXZ_wRJnrwxyxIiqFqZZDspY/edit?usp=sharing) (the old version of the spreadsheet is [here](https://docs.google.com/spreadsheets/d/1GqwW3ma7Cd1W8X8Txph9MPmLSkQ0C-i0tP0YHeINzMs/edit?usp=sharing)). There are HTML records of some of the Jupyter sessions, including visualisations of the read and write addresses in the folder `/doc`. 
 
 ## History
 
@@ -59,17 +63,6 @@ Here we collect some remarks on the algorithms learned by the models to solve th
 - **NTM** on **Repeat copy task**. Again all models learned a similar algorithm. The input sequence is written to memory as for the Copy task (i.e. advancing one position in each time step) and the read address is manipulated to pause at each position for one time step (see e.g. `doc/repeat copy task/work-tesla.html`).
 
 ## TODOs
-
-The TODO list items by category:
-
-- **Implement more tasks**
-    - Other tasks from NTM, DNC and other papers
-    - Polynomial pattern task (as in Section 4.3 of the paper)
-- **Sparsity and scaling**
-    - Add sparsity to v3 NTM
-    - Add sparsity to Pattern NTM and other models
-    - Tests of sparse NTM
-    - Tests of sparse Pattern NTM
 
 See Raffel, Luong, Liu, Weiss, Eck "Online and linear-time attention by enforcing monotonic alignments" Section 2.5 about encouraging discreteness by adding noise before sigmoids. We could try doing the `softmax` on memory entries *before* contracting with the read address. If we are reading the content of the memory rings as logits, then initialising them to zero is a mistake. It will have the effect of blurring out the read address. Note also that the "add vector" in this case becomes a multiplicative factor (since we are adding to the logit). This is all quite strange. 
 
