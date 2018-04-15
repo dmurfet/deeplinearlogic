@@ -1,19 +1,20 @@
-\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
-\BOOKMARK [1][-]{section.2}{Background}{}% 2
-\BOOKMARK [2][-]{subsection.2.1}{Recurrent Neural Network}{section.2}% 3
-\BOOKMARK [2][-]{subsection.2.2}{Second-order Recurrent Neural Network}{section.2}% 4
-\BOOKMARK [2][-]{subsection.2.3}{Neural Turing Machine}{section.2}% 5
-\BOOKMARK [3][-]{subsubsection.2.3.1}{Abstract reformulation}{subsection.2.3}% 6
-\BOOKMARK [2][-]{subsection.2.4}{Linear Logic}{section.2}% 7
-\BOOKMARK [3][-]{subsubsection.2.4.1}{Types}{subsection.2.4}% 8
-\BOOKMARK [3][-]{subsubsection.2.4.2}{Terms}{subsection.2.4}% 9
-\BOOKMARK [3][-]{subsubsection.2.4.3}{Semantics}{subsection.2.4}% 10
-\BOOKMARK [1][-]{section.3}{The Linear Logic Recurrent Neural Network}{}% 11
-\BOOKMARK [2][-]{subsection.3.1}{Examples}{section.3}% 12
-\BOOKMARK [2][-]{subsection.3.2}{NTM as an LLRNN}{section.3}% 13
-\BOOKMARK [1][-]{section.4}{Generalisations of the NTM}{}% 14
-\BOOKMARK [2][-]{subsection.4.1}{Pattern NTM}{section.4}% 15
-\BOOKMARK [2][-]{subsection.4.2}{Multiple pattern NTM}{section.4}% 16
-\BOOKMARK [2][-]{subsection.4.3}{Polynomial step NTM}{section.4}% 17
-\BOOKMARK [3][-]{subsubsection.4.3.1}{Dihedral polynomial step NTM}{subsection.4.3}% 18
-\BOOKMARK [1][-]{section.5}{Unpolished remarks}{}% 19
+\BOOKMARK [1][-]{section.1}{Warning}{}% 1
+\BOOKMARK [1][-]{section.2}{Introduction}{}% 2
+\BOOKMARK [1][-]{section.3}{Background}{}% 3
+\BOOKMARK [2][-]{subsection.3.1}{Recurrent Neural Network}{section.3}% 4
+\BOOKMARK [2][-]{subsection.3.2}{Second-order Recurrent Neural Network}{section.3}% 5
+\BOOKMARK [2][-]{subsection.3.3}{Neural Turing Machine}{section.3}% 6
+\BOOKMARK [3][-]{subsubsection.3.3.1}{Abstract reformulation}{subsection.3.3}% 7
+\BOOKMARK [2][-]{subsection.3.4}{Linear Logic}{section.3}% 8
+\BOOKMARK [3][-]{subsubsection.3.4.1}{Types}{subsection.3.4}% 9
+\BOOKMARK [3][-]{subsubsection.3.4.2}{Terms}{subsection.3.4}% 10
+\BOOKMARK [3][-]{subsubsection.3.4.3}{Semantics}{subsection.3.4}% 11
+\BOOKMARK [1][-]{section.4}{The Linear Logic Recurrent Neural Network}{}% 12
+\BOOKMARK [2][-]{subsection.4.1}{Examples}{section.4}% 13
+\BOOKMARK [2][-]{subsection.4.2}{NTM as an LLRNN}{section.4}% 14
+\BOOKMARK [1][-]{section.5}{Generalisations of the NTM}{}% 15
+\BOOKMARK [2][-]{subsection.5.1}{Pattern NTM}{section.5}% 16
+\BOOKMARK [2][-]{subsection.5.2}{Multiple pattern NTM}{section.5}% 17
+\BOOKMARK [2][-]{subsection.5.3}{Polynomial step NTM}{section.5}% 18
+\BOOKMARK [3][-]{subsubsection.5.3.1}{Dihedral polynomial step NTM}{subsection.5.3}% 19
+\BOOKMARK [1][-]{section.6}{Unpolished remarks}{}% 20

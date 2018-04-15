@@ -124,16 +124,20 @@
 \DeclarePairedDelimiter\bra{\langle}{\rvert}
 \DeclarePairedDelimiter\ket{\lvert}{\rangle}
 
-\title{The logic of tensors: linear logic and recurrent neural networks}
+\title{Linear logic and recurrent neural networks}
 \author{Huiyi Hu, Daniel Murfet}
 
 \maketitle
 
 \tableofcontents
 
-\section{Introduction}
+\section{Warning}
 
-Deep neural networks have proven to be proficient at learning hierarchical vector representations of natural data, including images and language \cite{dlnature}. If we follow Leibniz \cite{frege} in believing that reasoning is the algebraic manipulation of such representations or ``symbols" then it is natural to look for systems which augment the capacity of neural networks for performing these kinds of manipulations. This is a foundational problem in the field of artificial intelligence which remains far from solved, despite renewed attention in recent years \cite{ntm, joulin, dnc, graves_etal, grefen, weston, tarlow, freitas, neuralprog}. Arguably this is because some of the fundamental mathematical ideas are still unclear, or even missing. To help remedy this we investigate a new approach, based on the Curry-Howard correspondence and linear logic.
+% If we follow Leibniz \cite{frege} in believing that reasoning is the algebraic manipulation of such representations or ``symbols" then it is natural to look for systems which augment the capacity of neural networks for performing these kinds of manipulations. This is a foundational problem in the field of artificial intelligence which remains far from solved, despite renewed attention in recent years \cite{ntm, joulin, dnc, graves_etal, grefen, weston, tarlow, freitas, neuralprog}. Arguably this is because some of the fundamental mathematical ideas are still unclear, or even missing. To help remedy this we investigate a new approach, based on the Curry-Howard correspondence and linear logic.
+
+This is an incomplete and unpublished note, abandoned in early 2017, which was intended as an exploration of the synthesis of linear logic and its semantics in vector spaces with neural networks. Some of the ideas were described in the talk ``Linear logic and deep learning'' which is accessible on my website (\emph{therisingsea.org}). The project was abandoned firstly because the associated experiments in TensorFlow were unsuccessful and expensive, and secondly because further thought revealed that a different theoretical approach (based on Turing machines) was better. This second approach will be published in the papers ``Encodings of Turing machines in linear logic'' and ``Derivatives of Turing machines in linear logic'' joint with James Clift, which you can find on the arXiv. However, despite abandoning this project, I am leaving this note available in the GitHub repo since it provides the definition of terms like ``Pattern NTM'' that are referred to in the code.
+
+\section{Introduction}
 
 The Curry-Howard correspondence \cite{sorensen} is a bijection between a prototypical system of formal reasoning (Gentzen's natural deduction) and a prototypical algorithmic system (Church's simply-typed lambda calculus). For this reason lambda calculus and derivative languages such as LISP have played an important role in the symbolic approach to reasoning in the modern field of artificial intelligence. While these methods may have been overshadowed in recent decades by the rise of the connectionist approach, now called deep learning, it has been argued that a synthesis of the two approaches is necessary to achieve general reasoning in a connectionist system \cite{minsky}. The main obstacle to this synthesis is the discrepancy between the discrete symbolic nature of natural deduction, or equivalently lambda calculus, and the differentiable nature of neural networks. One way to overcome this obstacle is to augment a neural network not directly with symbolic logic, but rather with a \emph{differentiable model} of logic; and the most natural way to construct such a model is not to work directly with simply-typed lambda calculus but rather with a refinement due to Girard known as linear logic \cite{girard} which has a canonical model (called a denotational semantics) in differentiable maps between vector spaces \cite{ehrhard-survey,blutecon,murfetclift}. 
 \\
@@ -801,18 +805,6 @@ h_0^{(t+1)} = \relu\Big( Q\big( M_1^{(t)}(r_1^{(t)}) \big) + H_0 h_0^{(t)} + U_0
 The main difference between the ordinary NTM and the pattern NTM is in \eqref{eq:pattern_ntm_distinction} where the content $M_2(r_2) \in \mathbb{R}^{L+1}$ of the second memory ring is used to determine the coefficients of each rotation $R^j$ of the first memory ring's read address.
 \end{remark}
 
-\begin{remark} The idea is that the linear logic lets us program algebraic geometry stuff, which pipes linear data around and acts on it. In the context of the pattern NTM the evaluation function gives a morphism of schemes $s: \mathscr{V}_2 \times \End_{\mathbb{R}}(\mathscr{W}) \lto \End_{\mathbb{R}}(\mathscr{W})$ and evaluation of another kind gives a morphism $\mathscr{S}_2 \times \mathscr{W} \lto \mathscr{V}_2$. 
-\[
-\xymatrix@C+2pc{
-\mathscr{S}_2 \times \mathscr{W}_2 \times G \ar[r] & \mathscr{V}_2 \times G \ar[r]^-{1 \otimes a} & \mathscr{V}_2 \times \End_{\mathbb{R}}(\mathscr{W}) \ar[r]^-s & \End_{\mathbb{R}}(\mathscr{W})
-}
-\]
-which maps a memory state and read address for the second memory ring, plus a group element (think of it as $R$) to a linear operator on the read address of the first memory ring.
-\end{remark}
-
-\begin{remark} THe interpolation and simultaneous direct control + indirect control of Ring 1 in the current implementation needs to be fed back to the theory.
-\end{remark}
-
 \subsection{Multiple pattern NTM}\label{example:ntm_super}
 
 In the previous example the second memory ring stores patterns of memory access in the form of sequences of integers, or more precisely, proofs of linear logic of type $\inta_W$. More complex patterns (this word being of course a euphemism for \emph{algorithms}) can be encoded using more rings and higher types, in various ways. In this section we give an example in which, in addition to the original memory ring from the standard NTM, there are two rings with coefficients in $\den{\inta_W}$ and a ring with coefficients in $\den{\binta_W}$. The idea is that the second and third memory rings encode two patterns of memory access, and we allow the controller to switch between the two patterns at any time using the fourth ring. For ease of reference in the sequel we call this the \emph{multiple pattern NTM}.
@@ -972,32 +964,11 @@ R'RR \longmapsto R'RRR'RR\,.
 \begin{remark} In functional programming languages like differential $\lambda$-calculus \cite{difflambda} and differential linear logic \cite{ehrhard-survey} it is possible to differentiate programs with respect to their inputs, even if the programs are higher-order (that is, take functions as input and return them as output). This is a generalisation of automatic differentiation \cite{griewank} which is widely used to compute derivatives of complicated real-valued functions, for example in the backpropagation algorithms of machine learning packages like TensorFlow \cite[\S 4.1]{tensorflow}. The idea is to augment every computation in a code fragment so that derivatives with respect to a chosen variable are computed along with the main result. In TensorFlow this is done by adding special nodes in the dataflow graph.\footnote{See the ``gradients'' method of tensorflow/python/ops/gradients.py in TensorFlow 0.10} The idea of differential $\lambda$-calculus is similar, but more complex \cite{manzyuk}. It would be interesting to explore augmenting the dataflow graph of TensorFlow directly with terms of differential linear logic, in a way that generalises the coupling between semantics and RNNs in this paper.
 \end{remark}
 
-\begin{remark} Starting from the pov of LL led us to prioritize operators etc. this is one contribution LL can make, to point to the most "natural" forms within the zoo of algorithmic manopulations of tensors.
-\end{remark}
-
 \begin{remark} One method of adding algorithmic elements to deep neural networks that has been explored extensively is the idea of \emph{attention networks} which implement a form of ``distributed decision making'' \cite[p.1]{cho}.
 
 According to \cite[\S III.A]{cho} one of the problems with the original encoder-decoder network approach to machine translation \cite{sutskever2} is that the model compresses the information in the input sequence into a vector without any presupposed structure; intuitively this makes the representations learned by the model harder to understand, and the output sequence harder to construct. From this perspective the LLRNN versions of the NTM models in previous sections can be thought of as structured encoder-decoder models with attention, where the representation learned by the encoder is the vector state of the memory rings after all input symbols have been read, as well as the matrix $V$ mapping symbols to hidden state vectors. In our examples these vectors are highly structured, in the precise sense that the coefficients are highly correlated under the dynamics of the RNN.
 
 These correlations ultimately arise from the fact that the coefficient spaces of the memory rings are spanned by linear logic denotations which imbue the coefficients with a dynamic meaning. Thus linear logic provides a structured algorithmic ``scaffolding'' which is populated by the encoder. For example, in Section \ref{example:ntm_extended} the meaning of the symbol $S$ (which is implicit in the training data) is made explicit by learning the contents of the fourth memory ring, and the association between $S$ and a manipulation of this ring, which is encoded by the coefficients of $V(S)$.
-\end{remark}
-
-\begin{remark} What is the link between attention mechanisms and the vanishing gradient problem? Clearly one of the purposes of attention mechanisms and external memories is to avoid the problem of ``forgetting'' large scale structure in the input to a recurrent network. The explicit way to do this is to restrict one part of the recurrent matrix $H$ to be the identity \cite{mikolovmemory}. More generally, we could restrict a part of the current matrix to be an element of the orthogonal group, i.e. a rotation. But then if look at that matrix, one part of it is precisely predicting a ``rotation'' to apply to the other part, and we are basically in the situation of a NTM.
-\end{remark}
-
-
-
-\begin{remark} The purpose of linear logic in this context is to give a coherent and general way of writing down such polynomials, which realise a given computational idea when inserted into the evolution equation of an RNN.
-
-In this case the term in \eqref{eq:summerevening} is
-\be\label{eq:crazyhorse_alt}
-\big( \sum_i \lambda_i R^{i} \big)^a \big( \sum_j \mu_j R^{j} \big)^b (r_1)
-\ee 
-which can be expanded as
-\be
-\sum_{u_0 + \cdots + u_L = a}\sum_{v_0 + \cdots + v_L = b} \frac{a!}{u_0! \cdots u_L!} \frac{b!}{v_0! \cdots v_L!} \lambda_0^{u_0} \cdots \lambda_L^{u_L} \mu_0^{v_0} \cdots \mu_L^{v_L}  R^{\sum_t t (u_t + v_t)}(r_1)\,.
-\ee
-This may be written as $\sum_p f_p(\lambda, \mu) R^p(r_1)$ for some polynomials $f_p$ in variables $\{ \lambda_i, \mu_j \}_{i,j}$. 
 \end{remark}
 
 \bibliographystyle{amsalpha}
