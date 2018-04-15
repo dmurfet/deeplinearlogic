@@ -1,6 +1,8 @@
 # Linear Logic and Recurrent Neural Networks
 
-This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. At the moment the repo is private. The aim is to find a sequence-to-sequence task on which one of our models, created with the help of linear logic, substantially outperforms the NTM. A good overview of attention and augmented RNNs is [this paper](http://distill.pub/2016/augmented-rnns/) by Chris Olah and Shan Carter.
+This is the repository of the paper "Linear Logic and Recurrent Neural Networks" and the associated TensorFlow implementation. This was originally a private personal repo, but since the project has been abandoned since early 2017 I am now making it public (*as is!* there is no guarantee this even runs on the latest version of TensorFlow). For the theoretical background see the note `deepll.pdf`.
+
+The aim of the project was to find a sequence-to-sequence task on which one of our models, created with the help of linear logic, substantially outperforms the NTM. This was a failure, but the implementation of the NTM seems solid and may be useful to someone. A good overview of attention and augmented RNNs is [this paper](http://distill.pub/2016/augmented-rnns/) by Chris Olah and Shan Carter.
 
 The **models** that have been implemented so far in `ntm/ntm.py` are
 
