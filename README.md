@@ -4,9 +4,9 @@ This is the repository of the paper "Linear Logic and Recurrent Neural Networks"
 
 The aim of the project was to find a sequence-to-sequence task on which one of our models, created with the help of linear logic, substantially outperforms the Neural Turing Machine (NTM). This was a failure, but the implementation of the NTM seems solid and may be useful to someone. A guide to the contents of this repository:
 
-- `doc` logs of iPython notebooks containing results of experiments.
-- `ntm` contains the implementation of the NTM and other models in `ntm.py`, and the iPython notebook `work.ipynb` containing the TensorFlow model.
-- `snapshots` contains several old versions of the code, explained below.
+- `/doc` logs of iPython notebooks containing results of experiments.
+- `/ntm` contains the implementation of the NTM and other models in `ntm.py`, and the iPython notebook `work.ipynb` containing the TensorFlow model.
+- `/snapshots` contains several old versions of the code, explained below.
 
 A good overview of attention and augmented RNNs is [this paper](http://distill.pub/2016/augmented-rnns/) by Chris Olah and Shan Carter.
 
